@@ -16,6 +16,7 @@ if not hasattr(Quantity, "__array_function__"):
 if not IS_NEP18_ACTIVE:
     raise ImportError("NUMPY_EXPERIMENTAL_ARRAY_FUNCTION is not enabled")
 
+# TODO do we need this? xarray chooses it's own labels anyway
 try:
     mpl = import_module("matplotlib")
     has_mpl = True
