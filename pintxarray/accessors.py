@@ -24,7 +24,6 @@ if not IS_NEP18_ACTIVE:
 
 # TODO docstrings
 # TODO type hints
-# TODO f-strings
 
 
 def _array_attach_units(data, unit, convert_from=None):
@@ -68,6 +67,35 @@ def _array_attach_units(data, unit, convert_from=None):
 
     return quantity
 
+def _get_registry(unit_registry, registry_kwargs):
+    if unit_registry is None:
+        if registry_kwargs is None:
+            registry_kwargs = {}
+        registry_kwargs.update(force_ndarray=True)
+        # TODO should this registry object then be stored somewhere global?
+        unit_registry = pint.UnitRegistry(**registry_kwargs)
+    return unit_registry
+
+def _decide_units(units, registry, attrs):
+    if units is None:
+        # TODO option to read and decode units according to CF conventions (see MetPy)?
+        attr_units = attrs['units']
+        units = registry.parse_expression(attr_units)
+    elif isinstance(units, Unit):
+        # TODO do we have to check what happens if someone passes a Unit instance
+        # without creating a unit registry?
+        # TODO and what happens if they pass in a Unit from a different registry
+        pass
+    else:
+        units = registry.Unit(units)
+    return units
+
+def _quantify_variable(var, units):
+    new_data = _array_attach_units(var.data, units, convert_from=None)
+    new_var = Variable(dims=var.dims, data=new_data,
+                       attrs=var.attrs)
+    new_var.attrs['units'] = str(var.data.units)
+    return new_var
 
 def _dequantify_variable(var):
     new_var = Variable(dims=var.dims, data=var.data.magnitude,
@@ -128,24 +156,9 @@ class PintDataArrayAccessor:
             raise ValueError(f"Cannot attach unit {units} to quantity: data "
                              f"already has units {self.da.data.units}")
 
-        if unit_registry is None:
-            if registry_kwargs is None:
-                registry_kwargs = {}
-            registry_kwargs.update(force_ndarray=True)
-            # TODO should this registry object then be stored somewhere global?
-            unit_registry = pint.UnitRegistry(**registry_kwargs)
+        registry = _get_registry(unit_registry, registry_kwargs)
 
-        if units is None:
-            # TODO option to read and decode units according to CF conventions (see MetPy)?
-            attr_units = self.da.attrs['units']
-            units = unit_registry.parse_expression(attr_units)
-        elif isinstance(units, Unit):
-            # TODO do we have to check what happens if someone passes a Unit instance
-            # without creating a unit registry?
-            # TODO and what happens if they pass in a Unit from a different registry
-            pass
-        else:
-            units = unit_registry.Unit(units)
+        units = _decide_units(units, registry, self.da.attrs)
 
         quantity = _array_attach_units(self.da.data, units, convert_from=None)
 
@@ -240,12 +253,20 @@ class PintDatasetAccessor:
     def __init__(self, ds):
         self.ds = ds
 
-    def quantify(self, unit_registry=None, decode_cf=False):
-        quantified_vars = {name: da.pint.quantify(unit_registry=unit_registry,
-                                                  decode_cf=decode_cf)
-                           for name, da in self.ds.items()}
-        return Dataset(quantified_vars, attrs=self.ds.attrs,
-                       encoding=self.ds.encoding)
+    def quantify(self, unit_registry=None, registry_kwargs=None):
+
+        registry = _get_registry(unit_registry, registry_kwargs)
+
+        var_units = [_decide_units(None, registry, var.attrs)
+                     for var in self.ds.data_vars]
+
+        new_vars = {name: _quantify_variable(var, units)
+                    for name, var, units in zip(self.ds.data_vars(), var_units)}
+
+        # TODO should also quantify coordinates (once explicit indexes ready)
+        # TODO should we (temporarily) remove the attrs here so that they don't become inconsistent?
+        return Dataset(data_vars=new_vars, coords=self.coords,
+                       attrs=self.ds.attrs)
 
     def dequantify(self):
         dequantified_vars = {name: da.pint.to_base_units()
@@ -258,7 +279,9 @@ class PintDatasetAccessor:
                      for name, da in self.ds.items()}
         return Dataset(base_vars, attrs=self.ds.attrs, encoding=self.ds.encoding)
 
-    # TODO way to change every variable in ds to be expressed in a new units system?
+    # TODO unsure if the upstream capability exists in pint for this yet.
+    def to_system(self, system):
+        raise NotImplementedError
 
     def sel(self, indexers=None, method=None, tolerance=None, drop=False,
             **indexers_kwargs):
