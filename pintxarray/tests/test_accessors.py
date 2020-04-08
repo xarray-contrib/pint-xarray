@@ -37,6 +37,13 @@ def example_quantity_da():
 
 
 class TestQuantifyDataArray:
+    def test_attach_units_from_str(self, example_unitless_da):
+        orig = example_unitless_da
+        result = orig.pint.quantify('m')
+        assert_array_equal(result.data.magnitude, orig.data)
+        # TODO better comparisons for when you can't access the unit_registry?
+        assert str(result.data.units) == 'meter'
+
     def test_attach_units_given_registry(self, example_unitless_da):
         orig = example_unitless_da
         ureg = UnitRegistry(force_ndarray=True)
@@ -44,20 +51,13 @@ class TestQuantifyDataArray:
         assert_array_equal(result.data.magnitude, orig.data)
         assert result.data.units == ureg.Unit('m')
 
-    def test_attach_units(self, example_unitless_da):
-        orig = example_unitless_da
-        result = orig.pint.quantify('m')
-        assert_array_equal(result.data.magnitude, orig.data)
-        # TODO better comparisons for when you can't access the unit_registry?
-        assert str(result.data.units) == 'meter'
-
     def test_attach_units_from_attrs(self, example_unitless_da):
         orig = example_unitless_da
         result = orig.pint.quantify()
         assert_array_equal(result.data.magnitude, orig.data)
         assert str(result.data.units) == 'meter'
 
-    def test_attach_unit_class(self, example_unitless_da):
+    def test_attach_units_given_unit_objs(self, example_unitless_da):
         orig = example_unitless_da
         ureg = UnitRegistry(force_ndarray=True)
         result = orig.pint.quantify(ureg.Unit('m'), unit_registry=ureg)
@@ -103,6 +103,29 @@ class TestDequantifyDataArray:
         assert_equal(result, orig)
 
 
+@pytest.fixture()
+def example_unitless_ds():
+    users = np.linspace(0, 10, 20)
+    funds = np.logspace(0, 10, 20)
+    t = np.arange(20)
+    ds = xr.Dataset(data_vars={'users': (['t'], users),
+                               'funds': (['t'], funds)},
+                    coords={"t": t})
+    ds['users'].attrs['units'] = ''
+    ds['funds'].attrs['units'] = 'pound'
+    return ds
+
+@pytest.fixture()
+def example_quantity_ds():
+    users = np.linspace(0, 10, 20) * unit_registry.dimensionless
+    funds = np.logspace(0, 10, 20) * unit_registry.pound
+    t = np.arange(20)
+    ds = xr.Dataset(data_vars={'users': (['t'], users),
+                               'funds': (['t'], funds)},
+                    coords={"t": t})
+    return ds
+
+
 @pytest.mark.skip(reason="Not yet implemented")
 class TestPropertiesDataArray:
     def test_units(self):
@@ -121,16 +144,53 @@ class TestUncertainties:
         ...
 
 
-@pytest.mark.skip(reason="Not yet implemented")
 class TestQuantifyDataSet:
-    def test_attach_units(self):
-        ...
+    def test_attach_units_from_str(self, example_unitless_ds):
+        orig = example_unitless_ds
+        result = orig.pint.quantify()
+        assert_array_equal(result['users'].data.magnitude,
+                           orig['users'].data)
+        assert str(result['users'].data.units) == 'dimensionless'
 
-    def test_attach_str_units(self):
-        ...
+    def test_attach_units_given_registry(self, example_unitless_ds):
+        orig = example_unitless_ds
+        orig['users'].attrs.clear()
+        result = orig.pint.quantify({'users': 'dimensionless'},
+                                    unit_registry=unit_registry)
+        assert_array_equal(result['users'].data.magnitude,
+                           orig['users'].data)
+        assert str(result['users'].data.units) == 'dimensionless'
 
-    def test_attach_units_from_registry(self):
-        ...
+    def test_attach_units_from_attrs(self, example_unitless_ds):
+        orig = example_unitless_ds
+        orig['users'].attrs.clear()
+        result = orig.pint.quantify({'users': 'dimensionless'})
+        assert_array_equal(result['users'].data.magnitude,
+                           orig['users'].data)
+        assert str(result['users'].data.units) == 'dimensionless'
+
+    def test_attach_units_given_unit_objs(self, example_unitless_ds):
+        orig = example_unitless_ds
+        orig['users'].attrs.clear()
+        dimensionless = unit_registry.Unit('dimensionless')
+        result = orig.pint.quantify({'users': dimensionless})
+        assert_array_equal(result['users'].data.magnitude,
+                           orig['users'].data)
+        assert str(result['users'].data.units) == 'dimensionless'
+
+    def test_error_when_already_units(self, example_quantity_ds):
+        with raises_regex(ValueError, "already has units"):
+            example_quantity_ds.pint.quantify()
+
+    def test_error_on_nonsense_units(self, example_unitless_ds):
+        ds = example_unitless_ds
+        with pytest.raises(UndefinedUnitError):
+            ds.pint.quantify(units={'users': 'aecjhbav'})
+
+
+@pytest.mark.skip(reason="Not yet implemented")
+class TestDequantifyDataSet:
+    ...
 
 
 @pytest.mark.skip(reason="Not yet implemented")

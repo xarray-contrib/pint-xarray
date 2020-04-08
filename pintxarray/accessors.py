@@ -94,12 +94,11 @@ def _quantify_variable(var, units):
     new_data = _array_attach_units(var.data, units, convert_from=None)
     new_var = Variable(dims=var.dims, data=new_data,
                        attrs=var.attrs)
-    new_var.attrs['units'] = str(var.data.units)
     return new_var
 
 def _dequantify_variable(var):
     new_var = Variable(dims=var.dims, data=var.data.magnitude,
-                  attrs=var.attrs)
+                       attrs=var.attrs)
     new_var.attrs['units'] = str(var.data.units)
     return new_var
 
@@ -119,9 +118,9 @@ class PintDataArrayAccessor:
         """
         Attaches units to the DataArray.
 
-        Units can be specified as a pint.Unit or as a string, which will will
-        be parsed by the given unit registry. If no units are specified then
-        the units will be parsed from the `'units'` entry of the DataArray's
+        Units can be specified as a pint.Unit or as a string, which will be
+        parsed by the given unit registry. If no units are specified then the
+        units will be parsed from the `'units'` entry of the DataArray's
         `.attrs`. Will raise a ValueError if the DataArray already contains a
         unit-aware array.
 
@@ -193,10 +192,6 @@ class PintDataArrayAccessor:
     def magnitude(self):
         return self.da.data.magnitude
 
-    @magnitude.setter
-    def magnitude(self, da):
-        self.da = DataArray(dim=self.da.dims, data=da.data,
-                            coords=self.da.coords, attrs=self.da.attrs)
     @property
     def units(self):
         return self.da.data.units
@@ -250,34 +245,76 @@ class PintDataArrayAccessor:
 
 @register_dataset_accessor("pint")
 class PintDatasetAccessor:
+    """
+    Access methods for DataArrays with units using Pint.
+
+    Methods and attributes can be accessed through the `.pint` attribute.
+    """
     def __init__(self, ds):
         self.ds = ds
 
-    def quantify(self, unit_registry=None, registry_kwargs=None):
+    def quantify(self, units=None, unit_registry=None, registry_kwargs=None):
+        """
+        Attaches units to each variable in the Dataset.
+
+        Units can be specified as a pint.Unit or as a string, which will
+        be parsed by the given unit registry. If no units are specified then
+        the units will be parsed from the `'units'` entry of the DataArray's
+        `.attrs`. Will raise a ValueError if any of the DataArrays already
+        contain a unit-aware array.
+
+        Parameters
+        ----------
+        units : mapping from variable names to pint.Unit or str, optional
+            Physical units to use for particular DataArrays in this Dataset. If
+            not provided, will try to read them from
+            `Dataset[var].attrs['units']` using pint's parser.
+        unit_registry : `pint.UnitRegistry`, optional
+            Unit registry to be used for the units attached to each DataArray
+            in this Dataset. If not given then a default registry will be
+            created.
+        registry_kwargs : dict, optional
+            Keyword arguments to be passed to `pint.UnitRegistry`.
+
+        Returns
+        -------
+        quantified - Dataset whose variables will now contain Quantity
+        arrays with units.
+        """
+
+        for var in self.ds.data_vars:
+            if isinstance(self.ds[var].data, Quantity):
+                raise ValueError(f"Cannot attach unit to quantity: data "
+                                 f"variable {var} already has units "
+                                 f"{self.ds[var].data.units}")
 
         registry = _get_registry(unit_registry, registry_kwargs)
 
-        var_units = [_decide_units(None, registry, var.attrs)
-                     for var in self.ds.data_vars]
+        if units is None:
+            units = {name: None for name in self.ds}
 
-        new_vars = {name: _quantify_variable(var, units)
-                    for name, var, units in zip(self.ds.data_vars(), var_units)}
+        units = {name: _decide_units(units.get(name, None), registry, var.attrs)
+                 for name, var in self.ds.data_vars.items()}
+
+        quantified_vars = {name: _quantify_variable(var, units[name])
+                           for name, var in self.ds.data_vars.items()}
 
         # TODO should also quantify coordinates (once explicit indexes ready)
         # TODO should we (temporarily) remove the attrs here so that they don't become inconsistent?
-        return Dataset(data_vars=new_vars, coords=self.coords,
+        return Dataset(data_vars=quantified_vars, coords=self.ds.coords,
                        attrs=self.ds.attrs)
 
     def dequantify(self):
         dequantified_vars = {name: da.pint.to_base_units()
                              for name, da in self.ds.items()}
-        return Dataset(dequantified_vars, attrs=self.ds.attrs,
-                       encoding=self.ds.encoding)
+        return Dataset(dequantified_vars, coords=self.ds.coords,
+                       attrs=self.ds.attrs)
 
     def to_base_units(self):
         base_vars = {name: da.pint.to_base_units()
                      for name, da in self.ds.items()}
-        return Dataset(base_vars, attrs=self.ds.attrs, encoding=self.ds.encoding)
+        return Dataset(base_vars, coords=self.ds.coords,
+                       attrs=self.ds.attrs)
 
     # TODO unsure if the upstream capability exists in pint for this yet.
     def to_system(self, system):
