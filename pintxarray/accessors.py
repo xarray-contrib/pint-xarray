@@ -1,6 +1,6 @@
 # TODO is it possible to import pint-xarray from within xarray if pint is present?
 from xarray import (register_dataarray_accessor, register_dataset_accessor,
-                    DataArray, Dataset)
+                    DataArray, Dataset, Variable)
 from xarray.core.npcompat import IS_NEP18_ACTIVE
 
 import numpy as np
@@ -69,6 +69,13 @@ def _array_attach_units(data, unit, convert_from=None):
     return quantity
 
 
+def _dequantify_variable(var):
+    new_var = Variable(dims=var.dims, data=var.data.magnitude,
+                  attrs=var.attrs)
+    new_var.attrs['units'] = str(var.data.units)
+    return new_var
+
+
 @register_dataarray_accessor("pint")
 class PintDataArrayAccessor:
     """
@@ -115,17 +122,18 @@ class PintDataArrayAccessor:
         * wavelength  (wavelength) np.array 1e-4, 2e-4, 4e-4, 6e-4, 1e-3, 2e-3
         """
 
+        # TODO should also quantify coordinates (once explicit indexes ready)
+
         if isinstance(self.da.data, Quantity):
-            raise ValueError
+            raise ValueError(f"Cannot attach unit {units} to quantity: data "
+                             f"already has units {self.da.data.units}")
 
         if unit_registry is None:
             if registry_kwargs is None:
                 registry_kwargs = {}
+            registry_kwargs.update(force_ndarray=True)
+            # TODO should this registry object then be stored somewhere global?
             unit_registry = pint.UnitRegistry(**registry_kwargs)
-        else:
-            if registry_kwargs is not None:
-                raise ValueError("Cannot supply registry kwargs without "
-                                 "supplying a registry")
 
         if units is None:
             # TODO option to read and decode units according to CF conventions (see MetPy)?
@@ -134,6 +142,7 @@ class PintDataArrayAccessor:
         elif isinstance(units, Unit):
             # TODO do we have to check what happens if someone passes a Unit instance
             # without creating a unit registry?
+            # TODO and what happens if they pass in a Unit from a different registry
             pass
         else:
             units = unit_registry.Unit(units)
@@ -142,13 +151,29 @@ class PintDataArrayAccessor:
 
         # TODO should we (temporarily) remove the attrs here so that they don't become inconsistent?
         return DataArray(dims=self.da.dims, data=quantity,
-                         coords=self.da.coords, attrs=self.da.attrs )
+                         coords=self.da.coords, attrs=self.da.attrs)
 
-    def dequantify(self, encode_cf=True):
-        da = DataArray(dim=self.da.dims, data=self.da.pint.magnitude,
-                       coords=self.da.coords, attrs=self.da.attrs,
-                       encoding=self.da.encoding)
-        da.attrs['units'] = self.da.pint.units
+    def dequantify(self):
+        """
+        Removes units from the DataArray and it's coordinates.
+
+        Will replace `.attrs['units']` on each variable with a string
+        representation of the `pint.Unit` instance.
+
+        Returns
+        -------
+        dequantified - DataArray whose array data is unitless, and of the type
+        that was previously wrapped by `pint.Quantity`.
+        """
+
+        if not isinstance(self.da.data, Quantity):
+            raise ValueError("Cannot remove units from data that does not have"
+                             " units")
+
+        # TODO also dequantify coords (once explicit indexes ready)
+        da = DataArray(dims=self.da.dims, data=self.da.pint.magnitude,
+                       coords=self.da.coords, attrs=self.da.attrs)
+        da.attrs['units'] = str(self.da.data.units)
         return da
 
     @property
@@ -172,6 +197,15 @@ class PintDataArrayAccessor:
     @property
     def dimensionality(self):
         return self.da.data.dimensionality
+
+    @property
+    def registry(self):
+        # TODO is this a bad idea? (see GH issue #1071 in pint)
+        return self.data._REGISTRY
+
+    @registry.setter
+    def registry(self, _):
+        raise AttributeError("Don't try to change the registry once created")
 
     def to(self, units):
         quantity = self.da.data.to(units)

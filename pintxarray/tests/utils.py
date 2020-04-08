@@ -1,7 +1,23 @@
+from contextlib import contextmanager
+import re
+
+import pytest
+
 import xarray as xr
 
 from pint.quantity import Quantity
 
+
+@contextmanager
+def raises_regex(error, pattern):
+    __tracebackhide__ = True
+    with pytest.raises(error) as excinfo:
+        yield
+    message = str(excinfo.value)
+    if not re.search(pattern, message):
+        raise AssertionError(
+            f"exception {excinfo.value!r} did not match pattern {pattern!r}"
+        )
 
 def array_extract_units(obj):
     if isinstance(obj, (xr.Variable, xr.DataArray, xr.Dataset)):
