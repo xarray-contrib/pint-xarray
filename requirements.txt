@@ -1,3 +1,3 @@
 numpy==1.17.1
 xarray==0.15.1
-pint==git+git://github.com/hgrecco/pint@master#egg=pint
+pint==git+git://github.com/hgrecco/pint.git@master#egg=pint
