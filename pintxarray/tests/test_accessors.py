@@ -7,6 +7,7 @@ import numpy as np
 from numpy.testing import assert_array_equal
 
 from pint import UnitRegistry
+
 # from pint.unit import Unit
 from pint.errors import UndefinedUnitError  # , DimensionalityError
 
