@@ -7,11 +7,11 @@ import numpy as np
 from numpy.testing import assert_array_equal
 
 from pint import UnitRegistry
-from pint.unit import Unit
-from pint.errors import UndefinedUnitError, DimensionalityError
+# from pint.unit import Unit
+from pint.errors import UndefinedUnitError  # , DimensionalityError
 
-from pintxarray.accessors import PintDataArrayAccessor, PintDatasetAccessor
-from .utils import extract_units, raises_regex
+# from pintxarray.accessors import PintDataArrayAccessor, PintDatasetAccessor
+from .utils import raises_regex  # extract_units
 
 
 # make sure scalars are converted to 0d arrays so quantities can
@@ -78,7 +78,7 @@ class TestQuantifyDataArray:
     def test_registry_kwargs(self, example_unitless_da):
         orig = example_unitless_da
         result = orig.pint.quantify(registry_kwargs={"auto_reduce_dimensions": True})
-        assert (result.data._REGISTRY.auto_reduce_dimensions) == True
+        assert result.data._REGISTRY.auto_reduce_dimensions is True
 
 
 class TestDequantifyDataArray:
