@@ -19,6 +19,7 @@ def raises_regex(error, pattern):
             f"exception {excinfo.value!r} did not match pattern {pattern!r}"
         )
 
+
 def array_extract_units(obj):
     if isinstance(obj, (xr.Variable, xr.DataArray, xr.Dataset)):
         obj = obj.data
@@ -27,6 +28,7 @@ def array_extract_units(obj):
         return obj.units
     except AttributeError:
         return None
+
 
 def extract_units(obj):
     if isinstance(obj, xr.Dataset):
@@ -58,9 +60,11 @@ def extract_units(obj):
 
     return units
 
+
 def assert_units_equal(a, b):
     __tracebackhide__ = True
     assert extract_units(a) == extract_units(b)
+
 
 def assert_equal_with_units(a, b):
     # works like xr.testing.assert_equal, but also explicitly checks units
