@@ -1,6 +1,11 @@
 # TODO is it possible to import pint-xarray from within xarray if pint is present?
-from xarray import (register_dataarray_accessor, register_dataset_accessor,
-                    DataArray, Dataset, Variable)
+from xarray import (
+    register_dataarray_accessor,
+    register_dataset_accessor,
+    DataArray,
+    Dataset,
+    Variable,
+)
 from xarray.core.npcompat import IS_NEP18_ACTIVE
 
 import numpy as np
@@ -11,8 +16,9 @@ from pint.unit import Unit
 
 
 if not hasattr(Quantity, "__array_function__"):
-    raise ImportError("Imported version of pint does not implement "
-                      "__array_function__")
+    raise ImportError(
+        "Imported version of pint does not implement " "__array_function__"
+    )
 
 if not IS_NEP18_ACTIVE:
     raise ImportError("NUMPY_EXPERIMENTAL_ARRAY_FUNCTION is not enabled")
@@ -34,8 +40,10 @@ def _array_attach_units(data, unit, convert_from=None):
 
     if isinstance(data, Quantity):
         if not convert_from:
-            raise ValueError(f"Cannot attach unit {unit} to quantity: data "
-                             f"already has units {data.units}")
+            raise ValueError(
+                f"Cannot attach unit {unit} to quantity: data "
+                f"already has units {data.units}"
+            )
         elif isinstance(convert_from, Unit):
             data = data.magnitude
         elif convert_from is True:  # intentionally accept exactly true
@@ -43,17 +51,16 @@ def _array_attach_units(data, unit, convert_from=None):
                 convert_from = data.units
                 data = data.magnitude
             else:
-                raise ValueError("Cannot convert quantity from {data.units} "
-                                 "to {unit}")
+                raise ValueError(
+                    "Cannot convert quantity from {data.units} " "to {unit}"
+                )
         else:
             raise ValueError("Cannot convert from invalid unit {convert_from}")
 
     # to make sure we also encounter the case of "equal if converted"
     if convert_from is not None:
         quantity = (data * convert_from).to(
-            unit
-            if isinstance(unit, Unit)
-            else unit.dimensionless
+            unit if isinstance(unit, Unit) else unit.dimensionless
         )
     else:
         try:
@@ -67,6 +74,7 @@ def _array_attach_units(data, unit, convert_from=None):
 
     return quantity
 
+
 def _get_registry(unit_registry, registry_kwargs):
     if unit_registry is None:
         if registry_kwargs is None:
@@ -76,10 +84,11 @@ def _get_registry(unit_registry, registry_kwargs):
         unit_registry = pint.UnitRegistry(**registry_kwargs)
     return unit_registry
 
+
 def _decide_units(units, registry, attrs):
     if units is None:
         # TODO option to read and decode units according to CF conventions (see MetPy)?
-        attr_units = attrs['units']
+        attr_units = attrs["units"]
         units = registry.parse_expression(attr_units)
     elif isinstance(units, Unit):
         # TODO do we have to check what happens if someone passes a Unit instance
@@ -90,16 +99,16 @@ def _decide_units(units, registry, attrs):
         units = registry.Unit(units)
     return units
 
+
 def _quantify_variable(var, units):
     new_data = _array_attach_units(var.data, units, convert_from=None)
-    new_var = Variable(dims=var.dims, data=new_data,
-                       attrs=var.attrs)
+    new_var = Variable(dims=var.dims, data=new_data, attrs=var.attrs)
     return new_var
 
+
 def _dequantify_variable(var):
-    new_var = Variable(dims=var.dims, data=var.data.magnitude,
-                       attrs=var.attrs)
-    new_var.attrs['units'] = str(var.data.units)
+    new_var = Variable(dims=var.dims, data=var.data.magnitude, attrs=var.attrs)
+    new_var.attrs["units"] = str(var.data.units)
     return new_var
 
 
@@ -152,8 +161,10 @@ class PintDataArrayAccessor:
         # TODO should also quantify coordinates (once explicit indexes ready)
 
         if isinstance(self.da.data, Quantity):
-            raise ValueError(f"Cannot attach unit {units} to quantity: data "
-                             f"already has units {self.da.data.units}")
+            raise ValueError(
+                f"Cannot attach unit {units} to quantity: data "
+                f"already has units {self.da.data.units}"
+            )
 
         registry = _get_registry(unit_registry, registry_kwargs)
 
@@ -162,8 +173,9 @@ class PintDataArrayAccessor:
         quantity = _array_attach_units(self.da.data, units, convert_from=None)
 
         # TODO should we (temporarily) remove the attrs here so that they don't become inconsistent?
-        return DataArray(dims=self.da.dims, data=quantity,
-                         coords=self.da.coords, attrs=self.da.attrs)
+        return DataArray(
+            dims=self.da.dims, data=quantity, coords=self.da.coords, attrs=self.da.attrs
+        )
 
     def dequantify(self):
         """
@@ -179,13 +191,18 @@ class PintDataArrayAccessor:
         """
 
         if not isinstance(self.da.data, Quantity):
-            raise ValueError("Cannot remove units from data that does not have"
-                             " units")
+            raise ValueError(
+                "Cannot remove units from data that does not have" " units"
+            )
 
         # TODO also dequantify coords (once explicit indexes ready)
-        da = DataArray(dims=self.da.dims, data=self.da.pint.magnitude,
-                       coords=self.da.coords, attrs=self.da.attrs)
-        da.attrs['units'] = str(self.da.data.units)
+        da = DataArray(
+            dims=self.da.dims,
+            data=self.da.pint.magnitude,
+            coords=self.da.coords,
+            attrs=self.da.attrs,
+        )
+        da.attrs["units"] = str(self.da.data.units)
         return da
 
     @property
@@ -199,8 +216,9 @@ class PintDataArrayAccessor:
     @units.setter
     def units(self, units):
         quantity = _array_attach_units(self.da.data, units)
-        self.da = DataArray(dim=self.da.dims, data=quantity,
-                            coords=self.da.coords, attrs=self.da.attrs)
+        self.da = DataArray(
+            dim=self.da.dims, data=quantity, coords=self.da.coords, attrs=self.da.attrs
+        )
 
     @property
     def dimensionality(self):
@@ -217,25 +235,38 @@ class PintDataArrayAccessor:
 
     def to(self, units):
         quantity = self.da.data.to(units)
-        return DataArray(dim=self.da.dims, data=quantity,
-                         coords=self.da.coords, attrs=self.da.attrs,
-                         encoding=self.da.encoding)
+        return DataArray(
+            dim=self.da.dims,
+            data=quantity,
+            coords=self.da.coords,
+            attrs=self.da.attrs,
+            encoding=self.da.encoding,
+        )
 
     def to_base_units(self):
         quantity = self.da.data.to_base_units()
-        return DataArray(dim=self.da.dims, data=quantity,
-                         coords=self.da.coords, attrs=self.da.attrs,
-                         encoding=self.da.encoding)
+        return DataArray(
+            dim=self.da.dims,
+            data=quantity,
+            coords=self.da.coords,
+            attrs=self.da.attrs,
+            encoding=self.da.encoding,
+        )
 
     # TODO integrate with the uncertainties package here...?
     def plus_minus(self, value, error, relative=False):
         quantity = self.da.data.plus_minus(value, error, relative)
-        return DataArray(dim=self.da.dims, data=quantity,
-                         coords=self.da.coords, attrs=self.da.attrs,
-                         encoding=self.da.encoding)
+        return DataArray(
+            dim=self.da.dims,
+            data=quantity,
+            coords=self.da.coords,
+            attrs=self.da.attrs,
+            encoding=self.da.encoding,
+        )
 
-    def sel(self, indexers=None, method=None, tolerance=None, drop=False,
-            **indexers_kwargs):
+    def sel(
+        self, indexers=None, method=None, tolerance=None, drop=False, **indexers_kwargs
+    ):
         ...
 
     @property
@@ -250,6 +281,7 @@ class PintDatasetAccessor:
 
     Methods and attributes can be accessed through the `.pint` attribute.
     """
+
     def __init__(self, ds):
         self.ds = ds
 
@@ -284,44 +316,50 @@ class PintDatasetAccessor:
 
         for var in self.ds.data_vars:
             if isinstance(self.ds[var].data, Quantity):
-                raise ValueError(f"Cannot attach unit to quantity: data "
-                                 f"variable {var} already has units "
-                                 f"{self.ds[var].data.units}")
+                raise ValueError(
+                    f"Cannot attach unit to quantity: data "
+                    f"variable {var} already has units "
+                    f"{self.ds[var].data.units}"
+                )
 
         registry = _get_registry(unit_registry, registry_kwargs)
 
         if units is None:
             units = {name: None for name in self.ds}
 
-        units = {name: _decide_units(units.get(name, None), registry, var.attrs)
-                 for name, var in self.ds.data_vars.items()}
+        units = {
+            name: _decide_units(units.get(name, None), registry, var.attrs)
+            for name, var in self.ds.data_vars.items()
+        }
 
-        quantified_vars = {name: _quantify_variable(var, units[name])
-                           for name, var in self.ds.data_vars.items()}
+        quantified_vars = {
+            name: _quantify_variable(var, units[name])
+            for name, var in self.ds.data_vars.items()
+        }
 
         # TODO should also quantify coordinates (once explicit indexes ready)
         # TODO should we (temporarily) remove the attrs here so that they don't become inconsistent?
-        return Dataset(data_vars=quantified_vars, coords=self.ds.coords,
-                       attrs=self.ds.attrs)
+        return Dataset(
+            data_vars=quantified_vars, coords=self.ds.coords, attrs=self.ds.attrs
+        )
 
     def dequantify(self):
-        dequantified_vars = {name: da.pint.to_base_units()
-                             for name, da in self.ds.items()}
-        return Dataset(dequantified_vars, coords=self.ds.coords,
-                       attrs=self.ds.attrs)
+        dequantified_vars = {
+            name: da.pint.to_base_units() for name, da in self.ds.items()
+        }
+        return Dataset(dequantified_vars, coords=self.ds.coords, attrs=self.ds.attrs)
 
     def to_base_units(self):
-        base_vars = {name: da.pint.to_base_units()
-                     for name, da in self.ds.items()}
-        return Dataset(base_vars, coords=self.ds.coords,
-                       attrs=self.ds.attrs)
+        base_vars = {name: da.pint.to_base_units() for name, da in self.ds.items()}
+        return Dataset(base_vars, coords=self.ds.coords, attrs=self.ds.attrs)
 
     # TODO unsure if the upstream capability exists in pint for this yet.
     def to_system(self, system):
         raise NotImplementedError
 
-    def sel(self, indexers=None, method=None, tolerance=None, drop=False,
-            **indexers_kwargs):
+    def sel(
+        self, indexers=None, method=None, tolerance=None, drop=False, **indexers_kwargs
+    ):
         ...
 
     @property
