@@ -1,0 +1,16 @@
+# https://pre-commit.com/
+repos:
+  # isort should run before black as black sometimes tweaks the isort output
+  - repo: https://github.com/timothycrosley/isort
+    rev: 4.3.21
+    hooks:
+      - id: isort
+  # https://github.com/python/black#version-control-integration
+  - repo: https://github.com/python/black
+    rev: stable
+    hooks:
+      - id: black
+  - repo: https://gitlab.com/pycqa/flake8
+    rev: 3.8.1
+    hooks:
+      - id: flake8
