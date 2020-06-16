@@ -1,10 +1,8 @@
-from contextlib import contextmanager
 import re
+from contextlib import contextmanager
 
 import pytest
-
 import xarray as xr
-
 from pint.quantity import Quantity
 
 
@@ -59,6 +57,38 @@ def extract_units(obj):
         units = {}
 
     return units
+
+
+def attach_units(obj, units):
+    if isinstance(obj, xr.DataArray):
+        ds = obj._to_temp_dataset()
+        new_name = list(ds.data_vars.keys())[0]
+        units[new_name] = units.get(obj.name)
+        new_ds = attach_units(ds, units)
+        new_obj = obj._from_temp_dataset(new_ds)
+    elif isinstance(obj, xr.Dataset):
+        data_vars = {
+            name: attach_units(array.variable, {None: units.get(name)})
+            for name, array in obj.data_vars.items()
+        }
+
+        coords = {
+            name: attach_units(array.variable, {None: units.get(name)})
+            for name, array in obj.coords.items()
+        }
+
+        new_obj = xr.Dataset(data_vars=data_vars, coords=coords, attrs=obj.attrs)
+    elif isinstance(obj, xr.Variable):
+        new_data = attach_units(obj.data, units)
+        new_obj = obj.copy(data=new_data)
+    elif isinstance(obj, Quantity):
+        raise ValueError(
+            f"cannot attach {units.get(None)} to {obj}: already a quantity"
+        )
+    else:
+        new_obj = Quantity(obj, units.get(None))
+
+    return new_obj
 
 
 def assert_units_equal(a, b):
