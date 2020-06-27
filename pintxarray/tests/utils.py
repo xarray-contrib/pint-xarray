@@ -1,6 +1,7 @@
 import re
 from contextlib import contextmanager
 
+import numpy as np
 import pytest
 import xarray as xr
 from pint.quantity import Quantity
@@ -89,6 +90,24 @@ def attach_units(obj, units):
         new_obj = Quantity(obj, units.get(None))
 
     return new_obj
+
+
+def assert_array_units_equal(a, b):
+    __tracebackhide__ = True
+
+    units_a = getattr(a, "units", None)
+    units_b = getattr(b, "units", None)
+
+    assert units_a == units_b
+
+
+def assert_array_equal(a, b):
+    __tracebackhide__ = True
+
+    a_ = getattr(a, "magnitude", a)
+    b_ = getattr(b, "magnitude", b)
+
+    np.testing.assert_array_equal(a_, b_)
 
 
 def assert_units_equal(a, b):
