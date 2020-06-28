@@ -96,6 +96,40 @@ def array_strip_units(data):
         return data
 
 
+def attach_units(obj, units, registry=None):
+    if isinstance(obj, DataArray):
+        old_name = obj.name
+        new_name = old_name if old_name is not None else "<this-array>"
+        ds = obj.rename(new_name).to_dataset()
+        units = units.copy()
+        units[new_name] = units.get(old_name)
+
+        new_ds = attach_units(ds, units, registry=registry)
+        new_obj = new_ds.get(new_name).rename(old_name)
+    elif isinstance(obj, Dataset):
+        data_vars = {
+            name: attach_units(
+                array.variable, {None: units.get(name)}, registry=registry
+            )
+            for name, array in obj.data_vars.items()
+        }
+        coords = {
+            name: attach_units(
+                array.variable, {None: units.get(name)}, registry=registry
+            )
+            for name, array in obj.coords.items()
+        }
+
+        new_obj = Dataset(data_vars=data_vars, coords=coords, attrs=obj.attrs)
+    elif isinstance(obj, Variable):
+        new_data = array_attach_units(obj.data, units.get(None), registry=registry)
+        new_obj = obj.copy(data=new_data)
+    else:
+        raise ValueError(f"cannot attach units to {obj!r}: unknown type")
+
+    return new_obj
+
+
 def convert_units(obj, units):
     if not isinstance(units, dict):
         units = {None: units}

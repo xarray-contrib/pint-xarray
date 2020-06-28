@@ -132,6 +132,51 @@ class TestArrayFunctions:
 
 class TestXarrayFunctions:
     @pytest.mark.parametrize(
+        "obj",
+        (
+            pytest.param(Variable("x", np.linspace(0, 1, 5)), id="Variable"),
+            pytest.param(
+                DataArray(
+                    data=np.linspace(0, 1, 5),
+                    dims="x",
+                    coords={"u": ("x", np.arange(5))},
+                ),
+                id="DataArray",
+            ),
+            pytest.param(
+                Dataset(
+                    {
+                        "a": ("x", np.linspace(-1, 1, 5)),
+                        "b": ("x", np.linspace(0, 1, 5)),
+                    },
+                    coords={"u": ("x", np.arange(5))},
+                ),
+                id="Dataset",
+            ),
+        ),
+    )
+    @pytest.mark.parametrize(
+        "units",
+        (
+            pytest.param({None: None, "u": None}, id="no units"),
+            pytest.param({None: unit_registry.m, "u": None}, id="data units"),
+            pytest.param({None: None, "u": unit_registry.s}, id="coord units"),
+        ),
+    )
+    def test_attach_units(self, obj, units):
+        if isinstance(obj, Variable) and "u" in units:
+            pytest.skip(msg="variables don't have coordinates")
+
+        if isinstance(obj, Dataset):
+            units = units.copy()
+            data_units = units.pop(None)
+            units.update({"a": data_units, "b": data_units})
+
+        actual = conversion.attach_units(obj, units)
+
+        assert conversion.extract_units(actual) == units
+
+    @pytest.mark.parametrize(
         "coords",
         (
             pytest.param({}, id="no coords"),
