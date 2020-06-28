@@ -1,4 +1,5 @@
 import pint
+from xarray import DataArray, Dataset, Variable
 
 
 def array_attach_units(data, unit, registry=None):
@@ -93,3 +94,31 @@ def array_strip_units(data):
         return data.magnitude
     except AttributeError:
         return data
+
+
+def extract_units(obj):
+    if isinstance(obj, Dataset):
+        vars_units = {
+            name: array_extract_units(value.data)
+            for name, value in obj.data_vars.items()
+        }
+        coords_units = {
+            name: array_extract_units(value.data) for name, value in obj.coords.items()
+        }
+
+        units = {**vars_units, **coords_units}
+    elif isinstance(obj, DataArray):
+        vars_units = {obj.name: array_extract_units(obj.data)}
+        coords_units = {
+            name: array_extract_units(value.data) for name, value in obj.coords.items()
+        }
+
+        units = {**vars_units, **coords_units}
+    elif isinstance(obj, Variable):
+        vars_units = {None: array_extract_units(obj.data)}
+
+        units = {**vars_units}
+    else:
+        raise ValueError(f"unknown type: {type(obj)}")
+
+    return units

@@ -1,6 +1,7 @@
 import numpy as np
 import pint
 import pytest
+from xarray import DataArray, Dataset, Variable
 
 from pintxarray import conversion
 
@@ -127,3 +128,50 @@ class TestArrayFunctions:
         actual = conversion.array_strip_units(data)
 
         assert_array_equal(expected, actual)
+
+
+class TestXarrayFunctions:
+    @pytest.mark.parametrize(
+        "units",
+        (
+            pytest.param({None: None, "u": None}, id="no units"),
+            pytest.param({None: unit_registry.m, "u": None}, id="data units"),
+            pytest.param({None: None, "u": unit_registry.s}, id="coord units"),
+            pytest.param(
+                {None: unit_registry.m, "u": unit_registry.s}, id="data and coord units"
+            ),
+        ),
+    )
+    @pytest.mark.parametrize("typename", ("Variable", "DataArray", "Dataset"))
+    def test_extract_units(self, typename, units):
+        if typename == "Variable":
+            data_units = units.get(None) or 1
+            data = np.linspace(0, 1, 2) * data_units
+
+            units = units.copy()
+            units.pop("u")
+
+            obj = Variable("x", data)
+        elif typename == "DataArray":
+            data_units = units.get(None) or 1
+            data = np.linspace(0, 1, 2) * data_units
+
+            coord_units = units.get("u") or 1
+            coords = {"u": ("x", np.arange(2) * coord_units)}
+
+            obj = DataArray(data, dims="x", coords=coords)
+        elif typename == "Dataset":
+            data_units = units.get(None)
+            data1 = np.linspace(-1, 1, 2) * (data_units or 1)
+            data2 = np.linspace(0, 1, 2) * (data_units or 1)
+
+            coord_units = units.get("u") or 1
+            coords = {"u": ("x", np.arange(2) * coord_units)}
+
+            units = units.copy()
+            units.pop(None)
+            units.update({"a": data_units, "b": data_units})
+
+            obj = Dataset({"a": ("x", data1), "b": ("x", data2)}, coords=coords)
+
+        assert conversion.extract_units(obj) == units
