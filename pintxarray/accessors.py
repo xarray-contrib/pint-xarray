@@ -1,19 +1,18 @@
 # TODO is it possible to import pint-xarray from within xarray if pint is present?
-from xarray import (
-    register_dataarray_accessor,
-    register_dataset_accessor,
-    DataArray,
-    Dataset,
-    Variable,
-)
-from xarray.core.npcompat import IS_NEP18_ACTIVE
-
 import numpy as np
-
 import pint
 from pint.quantity import Quantity
 from pint.unit import Unit
+from xarray import (
+    DataArray,
+    Dataset,
+    Variable,
+    register_dataarray_accessor,
+    register_dataset_accessor,
+)
+from xarray.core.npcompat import IS_NEP18_ACTIVE
 
+from . import conversion
 
 if not hasattr(Quantity, "__array_function__"):
     raise ImportError(
@@ -30,6 +29,28 @@ if not IS_NEP18_ACTIVE:
 
 # TODO docstrings
 # TODO type hints
+
+
+def is_dict_like(obj):
+    return hasattr(obj, "keys") and hasattr(obj, "__getitem__")
+
+
+def either_dict_or_kwargs(positional, keywords, method_name):
+    if positional is not None:
+        if not is_dict_like(positional):
+            raise ValueError(
+                f"the first argument to .{method_name} must be a dictionary"
+            )
+        if keywords:
+            raise ValueError(
+                "cannot specify both keyword and positional "
+                f"arguments to .{method_name}"
+            )
+        return positional
+    else:
+        # Need an explicit cast to appease mypy due to invariance; see
+        # https://github.com/python/mypy/issues/6228
+        return keywords
 
 
 def _array_attach_units(data, unit, convert_from=None):
@@ -233,15 +254,19 @@ class PintDataArrayAccessor:
     def registry(self, _):
         raise AttributeError("Don't try to change the registry once created")
 
-    def to(self, units):
-        quantity = self.da.data.to(units)
-        return DataArray(
-            dim=self.da.dims,
-            data=quantity,
-            coords=self.da.coords,
-            attrs=self.da.attrs,
-            encoding=self.da.encoding,
-        )
+    def to(self, units=None, *, registry=None, **unit_kwargs):
+        if isinstance(units, (str, pint.Unit)):
+            unit_kwargs[self.da.name] = units
+            units = None
+        elif not is_dict_like(units):
+            raise ValueError(
+                "units must be either a string, a pint.Unit object or a dict-like,"
+                f" but got {units!r}"
+            )
+
+        units = either_dict_or_kwargs(units, unit_kwargs, "to")
+
+        return conversion.convert_units(self.da, units)
 
     def to_base_units(self):
         quantity = self.da.data.to_base_units()
