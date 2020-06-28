@@ -193,3 +193,29 @@ def extract_units(obj):
         raise ValueError(f"unknown type: {type(obj)}")
 
     return units
+
+
+def strip_units(obj):
+    if isinstance(obj, Variable):
+        data = array_strip_units(obj.data)
+        new_obj = obj.copy(data=data)
+    elif isinstance(obj, DataArray):
+        original_name = obj.name
+        name = obj.name if obj.name is not None else "<this-array>"
+        ds = obj.rename(name).to_dataset()
+        stripped = strip_units(ds)
+
+        new_obj = stripped[name].rename(original_name)
+    elif isinstance(obj, Dataset):
+        data_vars = {
+            name: strip_units(array.variable) for name, array in obj.data_vars.items()
+        }
+        coords = {
+            name: strip_units(array.variable) for name, array in obj.coords.items()
+        }
+
+        new_obj = Dataset(data_vars=data_vars, coords=coords, attrs=obj.attrs)
+    else:
+        raise ValueError("cannot strip units from {obj!r}: unknown type")
+
+    return new_obj

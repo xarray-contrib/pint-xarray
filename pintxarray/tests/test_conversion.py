@@ -272,3 +272,39 @@ class TestXarrayFunctions:
             obj = Dataset({"a": ("x", data1), "b": ("x", data2)}, coords=coords)
 
         assert conversion.extract_units(obj) == units
+
+    @pytest.mark.parametrize(
+        "obj",
+        (
+            pytest.param(Variable("x", [0, 4, 3] * unit_registry.m), id="Variable"),
+            pytest.param(
+                DataArray(
+                    dims="x",
+                    data=[0, 4, 3] * unit_registry.m,
+                    coords={"u": ("x", [2, 3, 4] * unit_registry.s)},
+                ),
+                id="DataArray",
+            ),
+            pytest.param(
+                Dataset(
+                    data_vars={
+                        "a": ("x", [3, 2, 5] * unit_registry.Pa),
+                        "b": ("x", [0, 2, -1] * unit_registry.kg),
+                    },
+                    coords={"u": ("x", [2, 3, 4] * unit_registry.s)},
+                ),
+                id="Dataset",
+            ),
+        ),
+    )
+    def test_strip_units(self, obj):
+        if isinstance(obj, Variable):
+            expected_units = {None: None}
+        elif isinstance(obj, DataArray):
+            expected_units = {None: None}
+            expected_units.update({name: None for name in obj.coords.keys()})
+        elif isinstance(obj, Dataset):
+            expected_units = {name: None for name in obj.variables.keys()}
+
+        actual = conversion.strip_units(obj)
+        assert conversion.extract_units(actual) == expected_units
