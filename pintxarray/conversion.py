@@ -96,6 +96,43 @@ def array_strip_units(data):
         return data
 
 
+def convert_units(obj, units):
+    if not isinstance(units, dict):
+        units = {None: units}
+
+    if isinstance(obj, Variable):
+        new_data = array_convert_units(obj.data, units.get(None))
+        new_obj = obj.copy(data=new_data)
+    elif isinstance(obj, DataArray):
+        original_name = obj.name
+        name = obj.name if obj.name is not None else "<this-array>"
+
+        units_ = units.copy()
+        units_[name] = units_[obj.name]
+
+        ds = obj.rename(name).to_dataset()
+        converted = convert_units(ds, units_)
+
+        new_obj = converted[name].rename(original_name)
+    elif isinstance(obj, Dataset):
+        coords = {
+            name: convert_units(data.variable, units.get(name))
+            if name not in obj.dims
+            else data
+            for name, data in obj.coords.items()
+        }
+        data_vars = {
+            name: convert_units(data.variable, units.get(name))
+            for name, data in obj.items()
+        }
+
+        new_obj = Dataset(coords=coords, data_vars=data_vars, attrs=obj.attrs)
+    else:
+        raise ValueError("cannot convert non-xarray objects")
+
+    return new_obj
+
+
 def extract_units(obj):
     if isinstance(obj, Dataset):
         vars_units = {

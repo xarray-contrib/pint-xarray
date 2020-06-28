@@ -5,7 +5,7 @@ from xarray import DataArray, Dataset, Variable
 
 from pintxarray import conversion
 
-from .utils import assert_array_equal, assert_array_units_equal
+from .utils import assert_array_equal, assert_array_units_equal, assert_equal
 
 unit_registry = pint.UnitRegistry()
 
@@ -131,6 +131,58 @@ class TestArrayFunctions:
 
 
 class TestXarrayFunctions:
+    @pytest.mark.parametrize(
+        "coords",
+        (
+            pytest.param({}, id="no coords"),
+            pytest.param(
+                {"u": ("x", [10, 3, 4] * unit_registry.m)}, id="non-dimension coord"
+            ),
+            pytest.param(
+                {"x": [0, 1, 2]},
+                id="dimension coordinate",
+                marks=pytest.mark.xfail(
+                    reason="converting indexes not implemented yet"
+                ),
+            ),
+        ),
+    )
+    @pytest.mark.parametrize("typename", ("Variable", "DataArray", "Dataset"))
+    def test_convert_units(self, typename, coords):
+        if typename == "Variable":
+            if coords:
+                pytest.skip("Variable doesn't store coordinates")
+
+            data = np.linspace(0, 1, 3) * unit_registry.m
+            obj = Variable(dims="x", data=data)
+            units = {None: unit_registry.mm}
+        elif typename == "DataArray":
+            obj = DataArray(
+                dims="x", data=np.linspace(0, 1, 3) * unit_registry.Pa, coords=coords
+            )
+            units = {None: unit_registry.hPa}
+            if "u" in coords:
+                units["u"] = unit_registry.mm
+        elif typename == "Dataset":
+            obj = Dataset(
+                data_vars={
+                    "a": ("x", np.linspace(-1, 1, 3) * unit_registry.s),
+                    "b": ("x", np.linspace(1, 2, 3) * unit_registry.kg),
+                },
+                coords=coords,
+            )
+            units = {
+                "a": unit_registry.ms,
+                "b": unit_registry.gram,
+            }
+            if "u" in coords:
+                units["u"] = unit_registry.mm
+
+        actual = conversion.convert_units(obj, units)
+
+        assert conversion.extract_units(actual) == units
+        assert_equal(obj, actual)
+
     @pytest.mark.parametrize(
         "units",
         (
