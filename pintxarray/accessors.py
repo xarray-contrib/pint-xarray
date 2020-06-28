@@ -374,6 +374,11 @@ class PintDatasetAccessor:
         }
         return Dataset(dequantified_vars, coords=self.ds.coords, attrs=self.ds.attrs)
 
+    def to(self, units, **unit_kwargs):
+        units = either_dict_or_kwargs(units, unit_kwargs, "to")
+
+        return conversion.convert_units(self.ds, units)
+
     def to_base_units(self):
         base_vars = {name: da.pint.to_base_units() for name, da in self.ds.items()}
         return Dataset(base_vars, coords=self.ds.coords, attrs=self.ds.attrs)
