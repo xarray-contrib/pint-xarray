@@ -48,8 +48,6 @@ def either_dict_or_kwargs(positional, keywords, method_name):
             )
         return positional
     else:
-        # Need an explicit cast to appease mypy due to invariance; see
-        # https://github.com/python/mypy/issues/6228
         return keywords
 
 
