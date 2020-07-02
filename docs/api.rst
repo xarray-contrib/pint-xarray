@@ -13,7 +13,6 @@ Dataset
 
    Dataset.pint.quantify
    Dataset.pint.dequantify
-   Dataset.pint.to
    Dataset.pint.to_base_units
    Dataset.pint.to_system
 
