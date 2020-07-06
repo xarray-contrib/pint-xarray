@@ -1,19 +1,15 @@
-import pytest
-
-import xarray as xr
-from xarray.testing import assert_equal
-
 import numpy as np
+import pytest
+import xarray as xr
 from numpy.testing import assert_array_equal
-
 from pint import UnitRegistry
 
 # from pint.unit import Unit
 from pint.errors import UndefinedUnitError  # , DimensionalityError
+from xarray.testing import assert_equal
 
 # from pintxarray.accessors import PintDataArrayAccessor, PintDatasetAccessor
 from .utils import raises_regex  # extract_units
-
 
 # make sure scalars are converted to 0d arrays so quantities can
 # always be treated like ndarrays
