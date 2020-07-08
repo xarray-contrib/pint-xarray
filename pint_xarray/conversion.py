@@ -142,7 +142,8 @@ def convert_units(obj, units):
         name = obj.name if obj.name is not None else "<this-array>"
 
         units_ = units.copy()
-        units_[name] = units_[obj.name]
+        if obj.name in units_:
+            units_[name] = units_[obj.name]
 
         ds = obj.rename(name).to_dataset()
         converted = convert_units(ds, units_)
