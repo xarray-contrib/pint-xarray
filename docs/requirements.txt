@@ -1,0 +1,6 @@
+pint>=0.13
+xarray>=0.15.1
+sphinx>=3.0
+sphinx_rtd_theme
+nbsphinx
+git+https://github.com/keewis/sphinx-autosummary-accessors
