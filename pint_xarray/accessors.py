@@ -252,7 +252,47 @@ class PintDataArrayAccessor:
     def registry(self, _):
         raise AttributeError("Don't try to change the registry once created")
 
-    def to(self, units=None, *, registry=None, **unit_kwargs):
+    def to(self, units=None, **unit_kwargs):
+        """ convert the quantities in a DataArray
+
+        Parameters
+        ----------
+        units : str or pint.Unit or mapping of str to str or pint.Unit
+            The units to convert to. If a unit name or pint.Unit,
+            convert the DataArray's data. If a dict-like, it has to
+            map a variable name to a unit name or pint.Unit object.
+        **unit_kwargs
+            The kwargs form of ``units``. Can only be used for
+            variable names that are strings and valid python identifiers.
+
+        Returns
+        -------
+        object : DataArray
+            A new object with converted units.
+
+        Examples
+        --------
+        >>> da = xr.DataArray(
+        >>>     data=np.linspace(0, 1, 5) * ureg.m,
+        >>>     coords={"u": ("x", np.arange(5) * ureg.s)},
+        >>>     dims="x",
+        >>>     name="arr",
+        >>> )
+        >>> ureg = pint.UnitRegistry(force_ndarray_like=True)
+
+        Convert the data
+        >>> da.pint.to("mm")
+        >>> da.pint.to(ureg.mm)
+
+        Convert coordinates
+        >>> da.pint.to({"u": ureg.ms})
+        >>> da.pint.to(u="ms")
+
+        Convert both simultaneously
+        >>> da.pint.to("mm", u="ms")
+        >>> da.pint.to({"arr": ureg.mm, "u": ureg.ms})
+        >>> da.pint.to(arr="mm", u="ms")
+        """
         if isinstance(units, (str, pint.Unit)):
             unit_kwargs[self.da.name] = units
             units = None
@@ -373,6 +413,46 @@ class PintDatasetAccessor:
         return Dataset(dequantified_vars, coords=self.ds.coords, attrs=self.ds.attrs)
 
     def to(self, units=None, **unit_kwargs):
+        """ convert the quantities in a DataArray
+
+        Parameters
+        ----------
+        units : str or pint.Unit or mapping of str to str or pint.Unit
+            The units to convert to. If a unit name or pint.Unit,
+            convert the DataArray's data. If a dict-like, it has to
+            map a variable name to a unit name or pint.Unit object.
+        **unit_kwargs
+            The kwargs form of ``units``. Can only be used for
+            variable names that are strings and valid python identifiers.
+
+        Returns
+        -------
+        object : DataArray
+            A new object with converted units.
+
+        Examples
+        --------
+        >>> ds = xr.Dataset(
+        ...     data_vars={
+        ...         "a": ("x", np.linspace(0, 1, 5) * ureg.m),
+        ...         "b": ("x", np.linspace(-1, 0, 5) * ureg.kg),
+        ...     },
+        ...     coords={"u": ("x", np.arange(5) * ureg.s)},
+        ... )
+        >>> ureg = pint.UnitRegistry(force_ndarray_like=True)
+
+        Convert the data
+        >>> ds.pint.to({"a": "mm", "b": ureg.g})
+        >>> ds.pint.to(a=ureg.mm, b="g")
+
+        Convert coordinates
+        >>> ds.pint.to({"u": ureg.ms})
+        >>> ds.pint.to(u="ms")
+
+        Convert both simultaneously
+        >>> ds.pint.to(a=ureg.mm, b=ureg.g, u="ms")
+        >>> ds.pint.to({"a": "mm", "b": "g", "u": ureg.ms})
+        """
         units = either_dict_or_kwargs(units, unit_kwargs, "to")
 
         return conversion.convert_units(self.ds, units)
