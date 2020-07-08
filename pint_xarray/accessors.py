@@ -299,6 +299,12 @@ class PintDataArrayAccessor:
         Coordinates:
             u        (x) int64 <Quantity([0 1 2 3 4], 'second')>
         Dimensions without coordinates: x
+        >>> da.pint.to({da.name: "mm"})
+        <xarray.DataArray 'arr' (x: 5)>
+        <Quantity([   0.  250.  500.  750. 1000.], 'millimeter')>
+        Coordinates:
+            u        (x) int64 <Quantity([0 1 2 3 4], 'second')>
+        Dimensions without coordinates: x
 
         Convert coordinates
 
