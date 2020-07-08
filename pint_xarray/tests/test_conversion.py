@@ -176,7 +176,6 @@ class TestXarrayFunctions:
 
         assert conversion.extract_units(actual) == units
 
-    @pytest.mark.parametrize("variant", ("data", "coords", "both"))
     @pytest.mark.parametrize(
         "coords",
         (
@@ -194,32 +193,22 @@ class TestXarrayFunctions:
         ),
     )
     @pytest.mark.parametrize("typename", ("Variable", "DataArray", "Dataset"))
-    def test_convert_units(self, typename, coords, variant):
-        if variant in ("coords", "both") and not coords:
-            pytest.skip("no coords set")
-        if variant == "data" and coords:
-            pytest.skip("no need to test conversion of data")
-
+    def test_convert_units(self, typename, coords):
         if typename == "Variable":
-            if coords or variant != "data":
+            if coords:
                 pytest.skip("Variable doesn't store coordinates")
 
             data = np.linspace(0, 1, 3) * unit_registry.m
             obj = Variable(dims="x", data=data)
             units = {None: unit_registry.mm}
-            expected_units = units
         elif typename == "DataArray":
             obj = DataArray(
                 dims="x", data=np.linspace(0, 1, 3) * unit_registry.Pa, coords=coords
             )
 
-            variants = {
-                "data": {None: unit_registry.hPa},
-                "coords": {"u": unit_registry.mm},
-                "both": {None: unit_registry.hPa, "u": unit_registry.mm},
-            }
-            units = variants.get(variant)
-            expected_units = {**conversion.extract_units(obj), **units}
+            units = {None: unit_registry.hPa}
+            if coords:
+                units["u"] = unit_registry.mm
         elif typename == "Dataset":
             obj = Dataset(
                 data_vars={
@@ -229,21 +218,16 @@ class TestXarrayFunctions:
                 coords=coords,
             )
 
-            data_units = {
+            units = {
                 "a": unit_registry.ms,
                 "b": unit_registry.gram,
             }
-            variants = {
-                "data": data_units,
-                "coords": {"u": unit_registry.mm},
-                "both": dict(u=unit_registry.mm, **data_units),
-            }
-            units = variants.get(variant)
-            expected_units = {**conversion.extract_units(obj), **units}
+            if coords:
+                units["u"] = unit_registry.mm
 
         actual = conversion.convert_units(obj, units)
 
-        assert conversion.extract_units(actual) == expected_units
+        assert conversion.extract_units(actual) == units
         assert_equal(obj, actual)
 
     @pytest.mark.parametrize(
