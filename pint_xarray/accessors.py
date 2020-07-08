@@ -257,7 +257,7 @@ class PintDataArrayAccessor:
 
         Parameters
         ----------
-        units : str or pint.Unit or mapping of str to str or pint.Unit
+        units : str or pint.Unit or mapping of hashable to str or pint.Unit
             The units to convert to. If a unit name or pint.Unit,
             convert the DataArray's data. If a dict-like, it has to
             map a variable name to a unit name or pint.Unit object.
@@ -417,7 +417,7 @@ class PintDatasetAccessor:
 
         Parameters
         ----------
-        units : str or pint.Unit or mapping of str to str or pint.Unit
+        units : str or pint.Unit or mapping of hashable to str or pint.Unit
             The units to convert to. If a unit name or pint.Unit,
             convert the DataArray's data. If a dict-like, it has to
             map a variable name to a unit name or pint.Unit object.
