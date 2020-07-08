@@ -336,7 +336,7 @@ class PintDataArrayAccessor:
         if isinstance(units, (str, pint.Unit)):
             unit_kwargs[self.da.name] = units
             units = None
-        elif not is_dict_like(units):
+        elif units is not None and not is_dict_like(units):
             raise ValueError(
                 "units must be either a string, a pint.Unit object or a dict-like,"
                 f" but got {units!r}"
