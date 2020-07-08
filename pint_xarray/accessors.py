@@ -1,19 +1,16 @@
 # TODO is it possible to import pint-xarray from within xarray if pint is present?
-from xarray import (
-    register_dataarray_accessor,
-    register_dataset_accessor,
-    DataArray,
-    Dataset,
-    Variable,
-)
-from xarray.core.npcompat import IS_NEP18_ACTIVE
-
 import numpy as np
-
 import pint
 from pint.quantity import Quantity
 from pint.unit import Unit
-
+from xarray import (
+    DataArray,
+    Dataset,
+    Variable,
+    register_dataarray_accessor,
+    register_dataset_accessor,
+)
+from xarray.core.npcompat import IS_NEP18_ACTIVE
 
 if not hasattr(Quantity, "__array_function__"):
     raise ImportError(

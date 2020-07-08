@@ -1,10 +1,8 @@
-from contextlib import contextmanager
 import re
+from contextlib import contextmanager
 
 import pytest
-
 import xarray as xr
-
 from pint.quantity import Quantity
 
 
