@@ -286,6 +286,7 @@ class PintDataArrayAccessor:
         Dimensions without coordinates: x
 
         Convert the data
+
         >>> da.pint.to("mm")
         <xarray.DataArray 'arr' (x: 5)>
         <Quantity([   0.  250.  500.  750. 1000.], 'millimeter')>
@@ -300,6 +301,7 @@ class PintDataArrayAccessor:
         Dimensions without coordinates: x
 
         Convert coordinates
+
         >>> da.pint.to({"u": ureg.ms})
         <xarray.DataArray 'arr' (x: 5)>
         <Quantity([0.   0.25 0.5  0.75 1.  ], 'meter')>
@@ -314,6 +316,7 @@ class PintDataArrayAccessor:
         Dimensions without coordinates: x
 
         Convert both simultaneously
+
         >>> da.pint.to("mm", u="ms")
         <xarray.DataArray 'arr' (x: 5)>
         <Quantity([   0.  250.  500.  750. 1000.], 'millimeter')>
@@ -490,6 +493,7 @@ class PintDatasetAccessor:
             b        (x) float64 <Quantity([-1.   -0.75 -0.5  -0.25  0.  ], 'kilogram')>
 
         Convert the data
+
         >>> ds.pint.to({"a": "mm", "b": ureg.g})
         <xarray.Dataset>
         Dimensions:  (x: 5)
@@ -510,6 +514,7 @@ class PintDatasetAccessor:
             b        (x) float64 <Quantity([-1000.  -750.  -500.  -250.     0.], 'gra...
 
         Convert coordinates
+
         >>> ds.pint.to({"u": ureg.ms})
         <xarray.Dataset>
         Dimensions:  (x: 5)
@@ -530,6 +535,7 @@ class PintDatasetAccessor:
             b        (x) float64 <Quantity([-1.   -0.75 -0.5  -0.25  0.  ], 'kilogram')>
 
         Convert both simultaneously
+
         >>> ds.pint.to(a=ureg.mm, b=ureg.g, u="ms")
         <xarray.Dataset>
         Dimensions:  (x: 5)
