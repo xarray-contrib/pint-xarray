@@ -273,25 +273,65 @@ class PintDataArrayAccessor:
         Examples
         --------
         >>> da = xr.DataArray(
-        >>>     data=np.linspace(0, 1, 5) * ureg.m,
-        >>>     coords={"u": ("x", np.arange(5) * ureg.s)},
-        >>>     dims="x",
-        >>>     name="arr",
-        >>> )
-        >>> ureg = pint.UnitRegistry(force_ndarray_like=True)
+        ...     data=np.linspace(0, 1, 5) * ureg.m,
+        ...     coords={"u": ("x", np.arange(5) * ureg.s)},
+        ...     dims="x",
+        ...     name="arr",
+        ... )
+        >>> da
+        <xarray.DataArray 'arr' (x: 5)>
+        <Quantity([0.   0.25 0.5  0.75 1.  ], 'meter')>
+        Coordinates:
+            u        (x) int64 <Quantity([0 1 2 3 4], 'second')>
+        Dimensions without coordinates: x
 
         Convert the data
         >>> da.pint.to("mm")
+        <xarray.DataArray 'arr' (x: 5)>
+        <Quantity([   0.  250.  500.  750. 1000.], 'millimeter')>
+        Coordinates:
+            u        (x) int64 <Quantity([0 1 2 3 4], 'second')>
+        Dimensions without coordinates: x
         >>> da.pint.to(ureg.mm)
+        <xarray.DataArray 'arr' (x: 5)>
+        <Quantity([   0.  250.  500.  750. 1000.], 'millimeter')>
+        Coordinates:
+            u        (x) int64 <Quantity([0 1 2 3 4], 'second')>
+        Dimensions without coordinates: x
 
         Convert coordinates
         >>> da.pint.to({"u": ureg.ms})
+        <xarray.DataArray 'arr' (x: 5)>
+        <Quantity([0.   0.25 0.5  0.75 1.  ], 'meter')>
+        Coordinates:
+            u        (x) float64 <Quantity([   0. 1000. 2000. 3000. 4000.], 'millisec...
+        Dimensions without coordinates: x
         >>> da.pint.to(u="ms")
+        <xarray.DataArray 'arr' (x: 5)>
+        <Quantity([0.   0.25 0.5  0.75 1.  ], 'meter')>
+        Coordinates:
+            u        (x) float64 <Quantity([   0. 1000. 2000. 3000. 4000.], 'millisec...
+        Dimensions without coordinates: x
 
         Convert both simultaneously
         >>> da.pint.to("mm", u="ms")
+        <xarray.DataArray 'arr' (x: 5)>
+        <Quantity([   0.  250.  500.  750. 1000.], 'millimeter')>
+        Coordinates:
+            u        (x) float64 <Quantity([   0. 1000. 2000. 3000. 4000.], 'millisec...
+        Dimensions without coordinates: x
         >>> da.pint.to({"arr": ureg.mm, "u": ureg.ms})
+        <xarray.DataArray 'arr' (x: 5)>
+        <Quantity([   0.  250.  500.  750. 1000.], 'millimeter')>
+        Coordinates:
+            u        (x) float64 <Quantity([   0. 1000. 2000. 3000. 4000.], 'millisec...
+        Dimensions without coordinates: x
         >>> da.pint.to(arr="mm", u="ms")
+        <xarray.DataArray 'arr' (x: 5)>
+        <Quantity([   0.  250.  500.  750. 1000.], 'millimeter')>
+        Coordinates:
+            u        (x) float64 <Quantity([   0. 1000. 2000. 3000. 4000.], 'millisec...
+        Dimensions without coordinates: x
         """
         if isinstance(units, (str, pint.Unit)):
             unit_kwargs[self.da.name] = units
@@ -439,19 +479,75 @@ class PintDatasetAccessor:
         ...     },
         ...     coords={"u": ("x", np.arange(5) * ureg.s)},
         ... )
-        >>> ureg = pint.UnitRegistry(force_ndarray_like=True)
+        >>> ds
+        <xarray.Dataset>
+        Dimensions:  (x: 5)
+        Coordinates:
+            u        (x) int64 <Quantity([0 1 2 3 4], 'second')>
+        Dimensions without coordinates: x
+        Data variables:
+            a        (x) float64 <Quantity([0.   0.25 0.5  0.75 1.  ], 'meter')>
+            b        (x) float64 <Quantity([-1.   -0.75 -0.5  -0.25  0.  ], 'kilogram')>
 
         Convert the data
         >>> ds.pint.to({"a": "mm", "b": ureg.g})
+        <xarray.Dataset>
+        Dimensions:  (x: 5)
+        Coordinates:
+            u        (x) int64 <Quantity([0 1 2 3 4], 'second')>
+        Dimensions without coordinates: x
+        Data variables:
+            a        (x) float64 <Quantity([   0.  250.  500.  750. 1000.], 'millimet...
+            b        (x) float64 <Quantity([-1000.  -750.  -500.  -250.     0.], 'gra...
         >>> ds.pint.to(a=ureg.mm, b="g")
+        <xarray.Dataset>
+        Dimensions:  (x: 5)
+        Coordinates:
+            u        (x) int64 <Quantity([0 1 2 3 4], 'second')>
+        Dimensions without coordinates: x
+        Data variables:
+            a        (x) float64 <Quantity([   0.  250.  500.  750. 1000.], 'millimet...
+            b        (x) float64 <Quantity([-1000.  -750.  -500.  -250.     0.], 'gra...
 
         Convert coordinates
         >>> ds.pint.to({"u": ureg.ms})
+        <xarray.Dataset>
+        Dimensions:  (x: 5)
+        Coordinates:
+            u        (x) float64 <Quantity([   0. 1000. 2000. 3000. 4000.], 'millisec...
+        Dimensions without coordinates: x
+        Data variables:
+            a        (x) float64 <Quantity([0.   0.25 0.5  0.75 1.  ], 'meter')>
+            b        (x) float64 <Quantity([-1.   -0.75 -0.5  -0.25  0.  ], 'kilogram')>
         >>> ds.pint.to(u="ms")
+        <xarray.Dataset>
+        Dimensions:  (x: 5)
+        Coordinates:
+            u        (x) float64 <Quantity([   0. 1000. 2000. 3000. 4000.], 'millisec...
+        Dimensions without coordinates: x
+        Data variables:
+            a        (x) float64 <Quantity([0.   0.25 0.5  0.75 1.  ], 'meter')>
+            b        (x) float64 <Quantity([-1.   -0.75 -0.5  -0.25  0.  ], 'kilogram')>
 
         Convert both simultaneously
         >>> ds.pint.to(a=ureg.mm, b=ureg.g, u="ms")
+        <xarray.Dataset>
+        Dimensions:  (x: 5)
+        Coordinates:
+            u        (x) float64 <Quantity([   0. 1000. 2000. 3000. 4000.], 'millisec...
+        Dimensions without coordinates: x
+        Data variables:
+            a        (x) float64 <Quantity([   0.  250.  500.  750. 1000.], 'millimet...
+            b        (x) float64 <Quantity([-1000.  -750.  -500.  -250.     0.], 'gra...
         >>> ds.pint.to({"a": "mm", "b": "g", "u": ureg.ms})
+        <xarray.Dataset>
+        Dimensions:  (x: 5)
+        Coordinates:
+            u        (x) float64 <Quantity([   0. 1000. 2000. 3000. 4000.], 'millisec...
+        Dimensions without coordinates: x
+        Data variables:
+            a        (x) float64 <Quantity([   0.  250.  500.  750. 1000.], 'millimet...
+            b        (x) float64 <Quantity([-1000.  -750.  -500.  -250.     0.], 'gra...
         """
         units = either_dict_or_kwargs(units, unit_kwargs, "to")
 
