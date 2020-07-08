@@ -3,7 +3,7 @@ import pint
 import pytest
 from xarray import DataArray, Dataset, Variable
 
-from pintxarray import conversion
+from pint_xarray import conversion
 
 from .utils import assert_array_equal, assert_array_units_equal, assert_equal
 

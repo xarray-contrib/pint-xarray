@@ -21,7 +21,7 @@ import datetime as dt
 import sphinx_autosummary_accessors
 
 # need to import so accessors get registered
-import pintxarray  # noqa: F401
+import pint_xarray  # noqa: F401
 
 # -- Project information -----------------------------------------------------
 
