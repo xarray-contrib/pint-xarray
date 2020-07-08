@@ -260,7 +260,7 @@ class PintDataArrayAccessor:
         units : str or pint.Unit or mapping of hashable to str or pint.Unit
             The units to convert to. If a unit name or pint.Unit,
             convert the DataArray's data. If a dict-like, it has to
-            map a variable name to a unit name or pint.Unit object.
+            map a variable name to a unit name or `pint.Unit` object.
         **unit_kwargs
             The kwargs form of ``units``. Can only be used for
             variable names that are strings and valid python identifiers.
