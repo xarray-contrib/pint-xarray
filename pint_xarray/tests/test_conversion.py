@@ -177,57 +177,91 @@ class TestXarrayFunctions:
         assert conversion.extract_units(actual) == units
 
     @pytest.mark.parametrize(
-        "coords",
+        "variant",
         (
-            pytest.param({}, id="no coords"),
+            "data",
             pytest.param(
-                {"u": ("x", [10, 3, 4] * unit_registry.m)}, id="non-dimension coord"
+                "dims", marks=pytest.mark.xfail(reason="indexes don't support units")
             ),
-            pytest.param(
-                {"x": [0, 1, 2]},
-                id="dimension coordinate",
-                marks=pytest.mark.xfail(
-                    reason="converting indexes not implemented yet"
-                ),
-            ),
+            "coords",
         ),
     )
     @pytest.mark.parametrize("typename", ("Variable", "DataArray", "Dataset"))
-    def test_convert_units(self, typename, coords):
+    def test_convert_units(self, typename, variant):
         if typename == "Variable":
-            if coords:
+            if variant != "data":
                 pytest.skip("Variable doesn't store coordinates")
 
             data = np.linspace(0, 1, 3) * unit_registry.m
             obj = Variable(dims="x", data=data)
             units = {None: unit_registry.mm}
+            expected_units = units
         elif typename == "DataArray":
-            obj = DataArray(
-                dims="x", data=np.linspace(0, 1, 3) * unit_registry.Pa, coords=coords
-            )
+            unit_variants = {
+                "data": (unit_registry.Pa, 1, 1),
+                "dims": (1, unit_registry.s, 1),
+                "coords": (1, 1, unit_registry.m),
+            }
+            data_unit, dim_unit, coord_unit = unit_variants.get(variant)
 
-            units = {None: unit_registry.hPa}
-            if coords:
-                units["u"] = unit_registry.mm
+            coords = {
+                "data": {},
+                "dims": {"x": [0, 1, 2] * dim_unit},
+                "coords": {"u": ("x", [10, 3, 4] * coord_unit)},
+            }
+
+            obj = DataArray(
+                dims="x",
+                data=np.linspace(0, 1, 3) * data_unit,
+                coords=coords.get(variant),
+            )
+            template = {
+                **{obj.name: None},
+                **{name: None for name in obj.coords},
+            }
+            units = {
+                "data": {None: unit_registry.hPa},
+                "dims": {"x": unit_registry.ms},
+                "coords": {"u": unit_registry.mm},
+            }.get(variant)
+
+            expected_units = {**template, **units}
         elif typename == "Dataset":
+            unit_variants = {
+                "data": ((unit_registry.s, unit_registry.kg), 1, 1),
+                "dims": ((1, 1), unit_registry.s, 1),
+                "coords": ((1, 1), 1, unit_registry.m),
+            }
+            (data_unit1, data_unit2), dim_unit, coord_unit = unit_variants.get(variant)
+
+            coords = {
+                "data": {},
+                "dims": {"x": [0, 1, 2] * dim_unit},
+                "coords": {"u": ("x", [10, 3, 4] * coord_unit)},
+            }
+
             obj = Dataset(
                 data_vars={
-                    "a": ("x", np.linspace(-1, 1, 3) * unit_registry.s),
-                    "b": ("x", np.linspace(1, 2, 3) * unit_registry.kg),
+                    "a": ("x", np.linspace(-1, 1, 3) * data_unit1),
+                    "b": ("x", np.linspace(1, 2, 3) * data_unit2),
                 },
-                coords=coords,
+                coords=coords.get(variant),
             )
 
-            units = {
-                "a": unit_registry.ms,
-                "b": unit_registry.gram,
+            template = {
+                **{name: None for name in obj.data_vars.keys()},
+                **{name: None for name in obj.coords.keys()},
             }
-            if coords:
-                units["u"] = unit_registry.mm
+            units = {
+                "data": {"a": unit_registry.ms, "b": unit_registry.g},
+                "dims": {"x": unit_registry.ms},
+                "coords": {"u": unit_registry.mm},
+            }.get(variant)
+            expected_units = {**template, **units}
 
         actual = conversion.convert_units(obj, units)
 
-        assert conversion.extract_units(actual) == units
+        assert conversion.extract_units(actual) == expected_units
         assert_equal(obj, actual)
 
     @pytest.mark.parametrize(
