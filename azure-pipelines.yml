@@ -31,8 +31,8 @@ jobs:
     displayName: 'Install dependencies'
 
   - script: |
-      pip install pytest pytest-azurepipelines
-      pytest --verbose
+      pip install pytest pytest-azurepipelines pytest-cov
+      pytest --verbose --cov=./ --cov-report=xml
     displayName: 'pytest'
 
   - script: |
