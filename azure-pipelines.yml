@@ -36,8 +36,8 @@ jobs:
     displayName: 'pytest'
 
   - bash: |
-    curl https://codecov.io/bash > codecov.sh
-    bash codecov.sh -t aba016f6-96be-4bc3-bdbe-caa6b6aff815
+      curl https://codecov.io/bash > codecov.sh
+      bash codecov.sh -t aba016f6-96be-4bc3-bdbe-caa6b6aff815
     displayName: 'Upload coverage to codecov.io'
 
 - job: LintFlake8
