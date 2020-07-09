@@ -35,6 +35,7 @@ def is_dict_like(obj):
     return hasattr(obj, "keys") and hasattr(obj, "__getitem__")
 
 
+# based on xarray.core.utils.either_dict_or_kwargs
 def either_dict_or_kwargs(positional, keywords, method_name):
     if positional is not None:
         if not is_dict_like(positional):
