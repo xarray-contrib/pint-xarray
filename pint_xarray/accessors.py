@@ -36,6 +36,7 @@ def is_dict_like(obj):
 
 
 # based on xarray.core.utils.either_dict_or_kwargs
+# https://github.com/pydata/xarray/blob/v0.15.1/xarray/core/utils.py#L249-L268
 def either_dict_or_kwargs(positional, keywords, method_name):
     if positional is not None:
         if not is_dict_like(positional):
