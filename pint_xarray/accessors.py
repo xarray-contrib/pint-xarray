@@ -12,6 +12,8 @@ from xarray import (
 )
 from xarray.core.npcompat import IS_NEP18_ACTIVE
 
+from . import conversion
+
 if not hasattr(Quantity, "__array_function__"):
     raise ImportError(
         "Imported version of pint does not implement " "__array_function__"
@@ -27,6 +29,28 @@ if not IS_NEP18_ACTIVE:
 
 # TODO docstrings
 # TODO type hints
+
+
+def is_dict_like(obj):
+    return hasattr(obj, "keys") and hasattr(obj, "__getitem__")
+
+
+# based on xarray.core.utils.either_dict_or_kwargs
+# https://github.com/pydata/xarray/blob/v0.15.1/xarray/core/utils.py#L249-L268
+def either_dict_or_kwargs(positional, keywords, method_name):
+    if positional is not None:
+        if not is_dict_like(positional):
+            raise ValueError(
+                f"the first argument to .{method_name} must be a dictionary"
+            )
+        if keywords:
+            raise ValueError(
+                "cannot specify both keyword and positional "
+                f"arguments to .{method_name}"
+            )
+        return positional
+    else:
+        return keywords
 
 
 def _array_attach_units(data, unit, convert_from=None):
@@ -230,15 +254,109 @@ class PintDataArrayAccessor:
     def registry(self, _):
         raise AttributeError("Don't try to change the registry once created")
 
-    def to(self, units):
-        quantity = self.da.data.to(units)
-        return DataArray(
-            dim=self.da.dims,
-            data=quantity,
-            coords=self.da.coords,
-            attrs=self.da.attrs,
-            encoding=self.da.encoding,
-        )
+    def to(self, units=None, **unit_kwargs):
+        """ convert the quantities in a DataArray
+
+        Parameters
+        ----------
+        units : str or pint.Unit or mapping of hashable to str or pint.Unit, optional
+            The units to convert to. If a unit name or
+            :py:class`pint.Unit` object, convert the DataArray's
+            data. If a dict-like, it has to map a variable name to a
+            unit name or :py:class:`pint.Unit` object.
+        **unit_kwargs
+            The kwargs form of ``units``. Can only be used for
+            variable names that are strings and valid python identifiers.
+
+        Returns
+        -------
+        object : DataArray
+            A new object with converted units.
+
+        Examples
+        --------
+        >>> da = xr.DataArray(
+        ...     data=np.linspace(0, 1, 5) * ureg.m,
+        ...     coords={"u": ("x", np.arange(5) * ureg.s)},
+        ...     dims="x",
+        ...     name="arr",
+        ... )
+        >>> da
+        <xarray.DataArray 'arr' (x: 5)>
+        <Quantity([0.   0.25 0.5  0.75 1.  ], 'meter')>
+        Coordinates:
+            u        (x) int64 <Quantity([0 1 2 3 4], 'second')>
+        Dimensions without coordinates: x
+
+        Convert the data
+
+        >>> da.pint.to("mm")
+        <xarray.DataArray 'arr' (x: 5)>
+        <Quantity([   0.  250.  500.  750. 1000.], 'millimeter')>
+        Coordinates:
+            u        (x) int64 <Quantity([0 1 2 3 4], 'second')>
+        Dimensions without coordinates: x
+        >>> da.pint.to(ureg.mm)
+        <xarray.DataArray 'arr' (x: 5)>
+        <Quantity([   0.  250.  500.  750. 1000.], 'millimeter')>
+        Coordinates:
+            u        (x) int64 <Quantity([0 1 2 3 4], 'second')>
+        Dimensions without coordinates: x
+        >>> da.pint.to({da.name: "mm"})
+        <xarray.DataArray 'arr' (x: 5)>
+        <Quantity([   0.  250.  500.  750. 1000.], 'millimeter')>
+        Coordinates:
+            u        (x) int64 <Quantity([0 1 2 3 4], 'second')>
+        Dimensions without coordinates: x
+
+        Convert coordinates
+
+        >>> da.pint.to({"u": ureg.ms})
+        <xarray.DataArray 'arr' (x: 5)>
+        <Quantity([0.   0.25 0.5  0.75 1.  ], 'meter')>
+        Coordinates:
+            u        (x) float64 <Quantity([   0. 1000. 2000. 3000. 4000.], 'millisec...
+        Dimensions without coordinates: x
+        >>> da.pint.to(u="ms")
+        <xarray.DataArray 'arr' (x: 5)>
+        <Quantity([0.   0.25 0.5  0.75 1.  ], 'meter')>
+        Coordinates:
+            u        (x) float64 <Quantity([   0. 1000. 2000. 3000. 4000.], 'millisec...
+        Dimensions without coordinates: x
+
+        Convert both simultaneously
+
+        >>> da.pint.to("mm", u="ms")
+        <xarray.DataArray 'arr' (x: 5)>
+        <Quantity([   0.  250.  500.  750. 1000.], 'millimeter')>
+        Coordinates:
+            u        (x) float64 <Quantity([   0. 1000. 2000. 3000. 4000.], 'millisec...
+        Dimensions without coordinates: x
+        >>> da.pint.to({"arr": ureg.mm, "u": ureg.ms})
+        <xarray.DataArray 'arr' (x: 5)>
+        <Quantity([   0.  250.  500.  750. 1000.], 'millimeter')>
+        Coordinates:
+            u        (x) float64 <Quantity([   0. 1000. 2000. 3000. 4000.], 'millisec...
+        Dimensions without coordinates: x
+        >>> da.pint.to(arr="mm", u="ms")
+        <xarray.DataArray 'arr' (x: 5)>
+        <Quantity([   0.  250.  500.  750. 1000.], 'millimeter')>
+        Coordinates:
+            u        (x) float64 <Quantity([   0. 1000. 2000. 3000. 4000.], 'millisec...
+        Dimensions without coordinates: x
+        """
+        if isinstance(units, (str, pint.Unit)):
+            unit_kwargs[self.da.name] = units
+            units = None
+        elif units is not None and not is_dict_like(units):
+            raise ValueError(
+                "units must be either a string, a pint.Unit object or a dict-like,"
+                f" but got {units!r}"
+            )
+
+        units = either_dict_or_kwargs(units, unit_kwargs, "to")
+
+        return conversion.convert_units(self.da, units)
 
     def to_base_units(self):
         quantity = self.da.data.to_base_units()
@@ -345,6 +463,108 @@ class PintDatasetAccessor:
             name: da.pint.to_base_units() for name, da in self.ds.items()
         }
         return Dataset(dequantified_vars, coords=self.ds.coords, attrs=self.ds.attrs)
+
+    def to(self, units=None, **unit_kwargs):
+        """ convert the quantities in a DataArray
+
+        Parameters
+        ----------
+        units : mapping of hashable to str or pint.Unit, optional
+            Maps variable names to the unit to convert to.
+        **unit_kwargs
+            The kwargs form of ``units``. Can only be used for
+            variable names that are strings and valid python identifiers.
+
+        Returns
+        -------
+        object : DataArray
+            A new object with converted units.
+
+        Examples
+        --------
+        >>> ds = xr.Dataset(
+        ...     data_vars={
+        ...         "a": ("x", np.linspace(0, 1, 5) * ureg.m),
+        ...         "b": ("x", np.linspace(-1, 0, 5) * ureg.kg),
+        ...     },
+        ...     coords={"u": ("x", np.arange(5) * ureg.s)},
+        ... )
+        >>> ds
+        <xarray.Dataset>
+        Dimensions:  (x: 5)
+        Coordinates:
+            u        (x) int64 <Quantity([0 1 2 3 4], 'second')>
+        Dimensions without coordinates: x
+        Data variables:
+            a        (x) float64 <Quantity([0.   0.25 0.5  0.75 1.  ], 'meter')>
+            b        (x) float64 <Quantity([-1.   -0.75 -0.5  -0.25  0.  ], 'kilogram')>
+
+        Convert the data
+
+        >>> ds.pint.to({"a": "mm", "b": ureg.g})
+        <xarray.Dataset>
+        Dimensions:  (x: 5)
+        Coordinates:
+            u        (x) int64 <Quantity([0 1 2 3 4], 'second')>
+        Dimensions without coordinates: x
+        Data variables:
+            a        (x) float64 <Quantity([   0.  250.  500.  750. 1000.], 'millimet...
+            b        (x) float64 <Quantity([-1000.  -750.  -500.  -250.     0.], 'gra...
+        >>> ds.pint.to(a=ureg.mm, b="g")
+        <xarray.Dataset>
+        Dimensions:  (x: 5)
+        Coordinates:
+            u        (x) int64 <Quantity([0 1 2 3 4], 'second')>
+        Dimensions without coordinates: x
+        Data variables:
+            a        (x) float64 <Quantity([   0.  250.  500.  750. 1000.], 'millimet...
+            b        (x) float64 <Quantity([-1000.  -750.  -500.  -250.     0.], 'gra...
+
+        Convert coordinates
+
+        >>> ds.pint.to({"u": ureg.ms})
+        <xarray.Dataset>
+        Dimensions:  (x: 5)
+        Coordinates:
+            u        (x) float64 <Quantity([   0. 1000. 2000. 3000. 4000.], 'millisec...
+        Dimensions without coordinates: x
+        Data variables:
+            a        (x) float64 <Quantity([0.   0.25 0.5  0.75 1.  ], 'meter')>
+            b        (x) float64 <Quantity([-1.   -0.75 -0.5  -0.25  0.  ], 'kilogram')>
+        >>> ds.pint.to(u="ms")
+        <xarray.Dataset>
+        Dimensions:  (x: 5)
+        Coordinates:
+            u        (x) float64 <Quantity([   0. 1000. 2000. 3000. 4000.], 'millisec...
+        Dimensions without coordinates: x
+        Data variables:
+            a        (x) float64 <Quantity([0.   0.25 0.5  0.75 1.  ], 'meter')>
+            b        (x) float64 <Quantity([-1.   -0.75 -0.5  -0.25  0.  ], 'kilogram')>
+
+        Convert both simultaneously
+
+        >>> ds.pint.to(a=ureg.mm, b=ureg.g, u="ms")
+        <xarray.Dataset>
+        Dimensions:  (x: 5)
+        Coordinates:
+            u        (x) float64 <Quantity([   0. 1000. 2000. 3000. 4000.], 'millisec...
+        Dimensions without coordinates: x
+        Data variables:
+            a        (x) float64 <Quantity([   0.  250.  500.  750. 1000.], 'millimet...
+            b        (x) float64 <Quantity([-1000.  -750.  -500.  -250.     0.], 'gra...
+        >>> ds.pint.to({"a": "mm", "b": "g", "u": ureg.ms})
+        <xarray.Dataset>
+        Dimensions:  (x: 5)
+        Coordinates:
+            u        (x) float64 <Quantity([   0. 1000. 2000. 3000. 4000.], 'millisec...
+        Dimensions without coordinates: x
+        Data variables:
+            a        (x) float64 <Quantity([   0.  250.  500.  750. 1000.], 'millimet...
+            b        (x) float64 <Quantity([-1000.  -750.  -500.  -250.     0.], 'gra...
+        """
+        units = either_dict_or_kwargs(units, unit_kwargs, "to")
+
+        return conversion.convert_units(self.ds, units)
 
     def to_base_units(self):
         base_vars = {name: da.pint.to_base_units() for name, da in self.ds.items()}
