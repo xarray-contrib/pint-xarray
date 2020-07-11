@@ -1,4 +1,6 @@
 # TODO is it possible to import pint-xarray from within xarray if pint is present?
+import itertools
+
 import numpy as np
 import pint
 from pint.quantity import Quantity
@@ -33,6 +35,33 @@ if not IS_NEP18_ACTIVE:
 
 def is_dict_like(obj):
     return hasattr(obj, "keys") and hasattr(obj, "__getitem__")
+
+
+def zip_mappings(*mappings, fill_value=None):
+    """ zip mappings by combining values for common keys into a tuple
+
+    Works like itertools.zip_longest, so if a key is missing from a
+    mapping, it is replaced by ``fill_value``.
+
+    Parameters
+    ----------
+    *mappings : dict-like
+        The mappings to zip
+    fill_value
+        The value to use if a key is missing from a mapping.
+
+    Returns
+    -------
+    zipped : dict-like
+        The zipped mapping
+    """
+    keys = set(itertools.chain.from_iterable(mapping.keys() for mapping in mappings))
+
+    # TODO: could this be made more efficient using itertools.groupby?
+    zipped = {
+        key: tuple(mapping.get(key, fill_value) for mapping in mappings) for key in keys
+    }
+    return zipped
 
 
 # based on xarray.core.utils.either_dict_or_kwargs
