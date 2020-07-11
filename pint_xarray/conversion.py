@@ -1,3 +1,5 @@
+import itertools
+
 import pint
 from xarray import DataArray, Dataset, Variable
 
@@ -192,6 +194,24 @@ def extract_units(obj):
         units = {**vars_units}
     else:
         raise ValueError(f"unknown type: {type(obj)}")
+
+    return units
+
+
+def extract_unit_attributes(obj, delete=False):
+    method = dict.pop if delete else dict.get
+    if isinstance(obj, DataArray):
+        variables = itertools.chain([(obj.name, obj)], obj.coords.items(),)
+        units = {name: method(var.attrs, "units", None) for name, var in variables}
+    elif isinstance(obj, Dataset):
+        units = {
+            name: method(var.attrs, "units", None)
+            for name, var in obj.variables.items()
+        }
+    else:
+        raise ValueError(
+            f"cannot retrieve unit attributes from unknown type: {type(obj)}"
+        )
 
     return units
 
