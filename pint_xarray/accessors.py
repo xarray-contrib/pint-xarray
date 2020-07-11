@@ -135,11 +135,13 @@ def _get_registry(unit_registry, registry_kwargs):
     return unit_registry
 
 
-def _decide_units(units, registry, attrs):
-    if units is None:
+def _decide_units(units, registry, unit_attribute):
+    if not units and not unit_attribute:
+        # or warn and return None?
+        raise ValueError("no units given")
+    elif not units:
         # TODO option to read and decode units according to CF conventions (see MetPy)?
-        attr_units = attrs["units"]
-        units = registry.parse_expression(attr_units)
+        units = registry.parse_expression(unit_attribute).units
     elif isinstance(units, Unit):
         # TODO do we have to check what happens if someone passes a Unit instance
         # without creating a unit registry?
@@ -173,7 +175,9 @@ class PintDataArrayAccessor:
     def __init__(self, da):
         self.da = da
 
-    def quantify(self, units=None, unit_registry=None, registry_kwargs=None):
+    def quantify(
+        self, units=None, unit_registry=None, registry_kwargs=None, **unit_kwargs
+    ):
         """
         Attaches units to the DataArray.
 
@@ -185,10 +189,10 @@ class PintDataArrayAccessor:
 
         Parameters
         ----------
-        units : pint.Unit or str, optional
+        units : pint.Unit or str or mapping of hashable to , optional
             Physical units to use for this DataArray. If not provided, will try
-            to read them from `DataArray.attrs['units']` using pint's parser.
-        unit_registry : `pint.UnitRegistry`, optional
+            to read them from ``DataArray.attrs['units']`` using pint's parser.
+        unit_registry : pint.UnitRegistry, optional
             Unit registry to be used for the units attached to this DataArray.
             If not given then a default registry will be created.
         registry_kwargs : dict, optional
@@ -196,8 +200,9 @@ class PintDataArrayAccessor:
 
         Returns
         -------
-        quantified - DataArray whose wrapped array data will now be a Quantity
-        array with the specified units.
+        quantified : DataArray
+            DataArray whose wrapped array data will now be a Quantity
+            array with the specified units.
 
         Examples
         --------
@@ -208,24 +213,35 @@ class PintDataArrayAccessor:
         * wavelength  (wavelength) np.array 1e-4, 2e-4, 4e-4, 6e-4, 1e-3, 2e-3
         """
 
-        # TODO should also quantify coordinates (once explicit indexes ready)
-
         if isinstance(self.da.data, Quantity):
             raise ValueError(
                 f"Cannot attach unit {units} to quantity: data "
                 f"already has units {self.da.data.units}"
             )
 
+        if isinstance(units, (str, pint.Unit)):
+            if self.da.name in unit_kwargs:
+                raise ValueError(
+                    f"ambiguous values given for {repr(self.da.name)}:"
+                    f" {repr(units)} and {repr(unit_kwargs[self.da.name])}"
+                )
+            unit_kwargs[self.da.name] = units
+            units = None
+
+        units = either_dict_or_kwargs(units, unit_kwargs, ".quantify")
+
         registry = _get_registry(unit_registry, registry_kwargs)
 
-        units = _decide_units(units, registry, self.da.attrs)
-
-        quantity = _array_attach_units(self.da.data, units, convert_from=None)
-
         # TODO should we (temporarily) remove the attrs here so that they don't become inconsistent?
-        return DataArray(
-            dims=self.da.dims, data=quantity, coords=self.da.coords, attrs=self.da.attrs
-        )
+        unit_attrs = conversion.extract_unit_attributes(self.da, delete=False)
+
+        units = {
+            name: _decide_units(unit, registry, unit_attribute)
+            for name, (unit, unit_attribute) in zip_mappings(units, unit_attrs).items()
+            if unit is not None or unit_attribute is not None
+        }
+
+        return conversion.attach_units(self.da, units)
 
     def dequantify(self):
         """
