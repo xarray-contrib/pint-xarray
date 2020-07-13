@@ -438,7 +438,9 @@ class PintDatasetAccessor:
     def __init__(self, ds):
         self.ds = ds
 
-    def quantify(self, units=None, unit_registry=None, registry_kwargs=None):
+    def quantify(
+        self, units=None, unit_registry=None, registry_kwargs=None, **unit_kwargs
+    ):
         """
         Attaches units to each variable in the Dataset.
 
@@ -466,41 +468,23 @@ class PintDatasetAccessor:
         quantified - Dataset whose variables will now contain Quantity
         arrays with units.
         """
-
-        for var in self.ds.data_vars:
-            if isinstance(self.ds[var].data, Quantity):
-                raise ValueError(
-                    f"Cannot attach unit to quantity: data "
-                    f"variable {var} already has units "
-                    f"{self.ds[var].data.units}"
-                )
-
+        units = either_dict_or_kwargs(units, unit_kwargs, ".quantify")
         registry = _get_registry(unit_registry, registry_kwargs)
 
-        if units is None:
-            units = {name: None for name in self.ds}
-
-        units = {
-            name: _decide_units(units.get(name, None), registry, var.attrs)
-            for name, var in self.ds.data_vars.items()
-        }
-
-        quantified_vars = {
-            name: _quantify_variable(var, units[name])
-            for name, var in self.ds.data_vars.items()
-        }
-
-        # TODO should also quantify coordinates (once explicit indexes ready)
         # TODO should we (temporarily) remove the attrs here so that they don't become inconsistent?
-        return Dataset(
-            data_vars=quantified_vars, coords=self.ds.coords, attrs=self.ds.attrs
-        )
+        unit_attrs = conversion.extract_unit_attributes(self.ds, delete=False)
+        units = {
+            name: _decide_units(unit, registry, attr)
+            for name, (unit, attr) in zip_mappings(units, unit_attrs).items()
+            if unit is not None or attr is not None
+        }
+
+        return conversion.attach_units(self.ds, units)
 
     def dequantify(self):
-        dequantified_vars = {
-            name: da.pint.to_base_units() for name, da in self.ds.items()
-        }
-        return Dataset(dequantified_vars, coords=self.ds.coords, attrs=self.ds.attrs)
+        units = conversion.extract_units(self.ds)
+        new_obj = conversion.attach_units(conversion.strip_units(self.ds), units)
+        return new_obj
 
     def to(self, units=None, **unit_kwargs):
         """ convert the quantities in a DataArray
