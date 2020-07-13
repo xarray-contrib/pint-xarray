@@ -136,10 +136,10 @@ def _get_registry(unit_registry, registry_kwargs):
 
 
 def _decide_units(units, registry, unit_attribute):
-    if not units and not unit_attribute:
+    if units is None and unit_attribute is None:
         # or warn and return None?
         raise ValueError("no units given")
-    elif not units:
+    elif units is None:
         # TODO option to read and decode units according to CF conventions (see MetPy)?
         units = registry.parse_expression(unit_attribute).units
     elif isinstance(units, Unit):
