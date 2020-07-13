@@ -256,20 +256,12 @@ class PintDataArrayAccessor:
         that was previously wrapped by `pint.Quantity`.
         """
 
-        if not isinstance(self.da.data, Quantity):
-            raise ValueError(
-                "Cannot remove units from data that does not have" " units"
-            )
-
-        # TODO also dequantify coords (once explicit indexes ready)
-        da = DataArray(
-            dims=self.da.dims,
-            data=self.da.pint.magnitude,
-            coords=self.da.coords,
-            attrs=self.da.attrs,
+        units = conversion.extract_units(self.da)
+        new_obj = conversion.attach_unit_attributes(
+            conversion.strip_units(self.da), units,
         )
-        da.attrs["units"] = str(self.da.data.units)
-        return da
+
+        return new_obj
 
     @property
     def magnitude(self):
