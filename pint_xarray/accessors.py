@@ -252,8 +252,9 @@ class PintDataArrayAccessor:
 
         Returns
         -------
-        dequantified - DataArray whose array data is unitless, and of the type
-        that was previously wrapped by `pint.Quantity`.
+        dequantified : DataArray
+            DataArray whose array data is unitless, and of the type
+            that was previously wrapped by `pint.Quantity`.
         """
 
         units = conversion.extract_units(self.da)
