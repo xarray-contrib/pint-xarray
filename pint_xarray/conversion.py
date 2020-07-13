@@ -232,6 +232,8 @@ def extract_unit_attributes(obj, delete=False):
             name: method(var.attrs, "units", None)
             for name, var in obj.variables.items()
         }
+    elif isinstance(obj, Variable):
+        units = {None: method(obj.attrs, "units", None)}
     else:
         raise ValueError(
             f"cannot retrieve unit attributes from unknown type: {type(obj)}"

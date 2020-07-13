@@ -369,6 +369,9 @@ class TestXarrayFunctions:
                 {"a": "degK", "b": "hPa", "x": "m", "u": "s"},
                 id="Dataset",
             ),
+            pytest.param(
+                Variable("x", [], {"units": "hPa"}), {None: "hPa"}, id="Variable",
+            ),
         ),
     )
     def test_extract_unit_attributes(self, obj, expected, delete):
