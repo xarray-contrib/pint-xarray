@@ -177,6 +177,34 @@ class TestXarrayFunctions:
         assert conversion.extract_units(actual) == units
 
     @pytest.mark.parametrize(
+        ["obj", "units"],
+        (
+            pytest.param(
+                DataArray(dims="x", coords={"x": [], "u": ("x", [])}),
+                {None: "hPa", "x": "m"},
+                id="DataArray",
+            ),
+            pytest.param(
+                Dataset(
+                    data_vars={"a": ("x", []), "b": ("x", [])},
+                    coords={"x": [], "u": ("x", [])},
+                ),
+                {"a": "degK", "b": "hPa", "u": "m"},
+                id="Dataset",
+            ),
+            pytest.param(Variable("x", []), {None: "hPa"}, id="Variable",),
+        ),
+    )
+    def test_attach_unit_attributes(self, obj, units):
+        actual = conversion.attach_unit_attributes(obj, units)
+        actual_units = {
+            key: value
+            for key, value in conversion.extract_unit_attributes(actual).items()
+            if value is not None
+        }
+        assert units == actual_units
+
+    @pytest.mark.parametrize(
         "variant",
         (
             "data",

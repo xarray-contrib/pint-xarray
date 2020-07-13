@@ -132,6 +132,30 @@ def attach_units(obj, units, registry=None):
     return new_obj
 
 
+def attach_unit_attributes(obj, units, attr="units"):
+    new_obj = obj.copy()
+    if isinstance(obj, DataArray):
+        for name, var in itertools.chain([(obj.name, new_obj)], new_obj.coords.items()):
+            unit = units.get(name)
+            if unit is None:
+                continue
+
+            var.attrs[attr] = unit
+    elif isinstance(obj, Dataset):
+        for name, var in new_obj.variables.items():
+            unit = units.get(name)
+            if unit is None:
+                continue
+
+            var.attrs[attr] = unit
+    elif isinstance(obj, Variable):
+        new_obj.attrs[attr] = units.get(None)
+    else:
+        raise ValueError(f"cannot attach unit attributes to {obj!r}: unknown type")
+
+    return new_obj
+
+
 def convert_units(obj, units):
     if not isinstance(units, dict):
         units = {None: units}
@@ -201,7 +225,7 @@ def extract_units(obj):
 def extract_unit_attributes(obj, delete=False):
     method = dict.pop if delete else dict.get
     if isinstance(obj, DataArray):
-        variables = itertools.chain([(obj.name, obj)], obj.coords.items(),)
+        variables = itertools.chain([(obj.name, obj)], obj.coords.items())
         units = {name: method(var.attrs, "units", None) for name, var in variables}
     elif isinstance(obj, Dataset):
         units = {
