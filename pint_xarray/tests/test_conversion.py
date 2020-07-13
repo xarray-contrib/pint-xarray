@@ -310,6 +310,9 @@ class TestXarrayFunctions:
         assert conversion.extract_units(obj) == units
 
     @pytest.mark.parametrize(
+        "delete", (pytest.param(False, id="keep"), pytest.param(True, id="delete"))
+    )
+    @pytest.mark.parametrize(
         ["obj", "expected"],
         (
             pytest.param(
@@ -340,9 +343,17 @@ class TestXarrayFunctions:
             ),
         ),
     )
-    def test_extract_unit_attributes(self, obj, expected):
-        actual = conversion.extract_unit_attributes(obj, delete=False)
+    def test_extract_unit_attributes(self, obj, expected, delete):
+        actual = conversion.extract_unit_attributes(obj, delete=delete)
         assert expected == actual
+
+        if delete:
+            remaining_attributes = conversion.extract_unit_attributes(obj, delete=False)
+            assert {
+                key: value
+                for key, value in remaining_attributes.items()
+                if value is not None
+            } == {}
 
     @pytest.mark.parametrize(
         "obj",
