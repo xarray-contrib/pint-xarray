@@ -379,12 +379,14 @@ class TestXarrayFunctions:
         assert expected == actual
 
         if delete:
-            remaining_attributes = conversion.extract_unit_attributes(obj, delete=False)
-            assert {
+            remaining_attributes = {
                 key: value
-                for key, value in remaining_attributes.items()
+                for key, value in conversion.extract_unit_attributes(
+                    obj, delete=False
+                ).items()
                 if value is not None
-            } == {}
+            }
+            assert remaining_attributes == {}
 
     @pytest.mark.parametrize(
         "obj",
