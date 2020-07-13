@@ -222,18 +222,17 @@ def extract_units(obj):
     return units
 
 
-def extract_unit_attributes(obj, delete=False):
+def extract_unit_attributes(obj, delete=False, attr="units"):
     method = dict.pop if delete else dict.get
     if isinstance(obj, DataArray):
         variables = itertools.chain([(obj.name, obj)], obj.coords.items())
-        units = {name: method(var.attrs, "units", None) for name, var in variables}
+        units = {name: method(var.attrs, attr, None) for name, var in variables}
     elif isinstance(obj, Dataset):
         units = {
-            name: method(var.attrs, "units", None)
-            for name, var in obj.variables.items()
+            name: method(var.attrs, attr, None) for name, var in obj.variables.items()
         }
     elif isinstance(obj, Variable):
-        units = {None: method(obj.attrs, "units", None)}
+        units = {None: method(obj.attrs, attr, None)}
     else:
         raise ValueError(
             f"cannot retrieve unit attributes from unknown type: {type(obj)}"
