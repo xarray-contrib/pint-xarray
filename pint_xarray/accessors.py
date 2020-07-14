@@ -467,7 +467,7 @@ class PintDatasetAccessor:
 
         Parameters
         ----------
-        units : mapping from variable names to pint.Unit or str, optional
+        units : mapping of hashable to pint.Unit or str, optional
             Physical units to use for particular DataArrays in this
             Dataset. If not provided, will try to read them from
             ``Dataset[var].attrs['units']`` using pint's parser.
