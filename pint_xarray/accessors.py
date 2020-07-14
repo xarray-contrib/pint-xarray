@@ -150,7 +150,7 @@ class PintDataArrayAccessor:
             Unit registry to be used for the units attached to this DataArray.
             If not given then a default registry will be created.
         registry_kwargs : dict, optional
-            Keyword arguments to be passed to :py:class:`pint.UnitRegistry`.
+            Keyword arguments to be passed to the unit registry.
         **unit_kwargs
             Keyword argument form of units.
 
@@ -208,7 +208,7 @@ class PintDataArrayAccessor:
         Removes units from the DataArray and its coordinates.
 
         Will replace ``.attrs['units']`` on each variable with a string
-        representation of the :py:class:`pint.Unit` instance.
+        representation of the ``pint.Unit`` instance.
 
         Returns
         -------
@@ -259,9 +259,9 @@ class PintDataArrayAccessor:
         ----------
         units : str or pint.Unit or mapping of hashable to str or pint.Unit, optional
             The units to convert to. If a unit name or
-            :py:class:`pint.Unit` object, convert the DataArray's
+            ``pint.Unit`` object, convert the DataArray's
             data. If a dict-like, it has to map a variable name to a
-            unit name or :py:class:`pint.Unit` object.
+            unit name or ``pint.Unit`` object.
         **unit_kwargs
             The kwargs form of ``units``. Can only be used for
             variable names that are strings and valid python identifiers.
@@ -404,7 +404,7 @@ class PintDatasetAccessor:
         """
         Attaches units to each variable in the Dataset.
 
-        Units can be specified as a :py:class:`pint.Unit` or as a
+        Units can be specified as a ``pint.Unit`` or as a
         string, which will be parsed by the given unit registry. If no
         units are specified then the units will be parsed from the
         ``"units"`` entry of the Dataset variable's ``.attrs``. Will
@@ -477,13 +477,13 @@ class PintDatasetAccessor:
         Removes units from the Dataset and its coordinates.
 
         Will replace ``.attrs['units']`` on each variable with a string
-        representation of the :py:class:`pint.Unit` instance.
+        representation of the ``pint.Unit`` instance.
 
         Returns
         -------
         dequantified : Dataset
             Dataset whose data variables are unitless, and of the type
-            that was previously wrapped by :py:class:`pint.Quantity`.
+            that was previously wrapped by ``pint.Quantity``.
         """
         units = units_to_str_or_none(conversion.extract_units(self.ds))
         new_obj = conversion.attach_unit_attributes(
