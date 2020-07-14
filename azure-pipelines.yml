@@ -42,9 +42,7 @@ jobs:
         --no-deps \
         --pre \
         --upgrade \
-        numpy \
-        scipy \
-        pandas
+        numpy
       python -m pip install --upgrade \
         git+https://github.com/hgrecco/pint \
         git+https://github.com/pydata/xarray
