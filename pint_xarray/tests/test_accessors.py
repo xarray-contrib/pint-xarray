@@ -6,6 +6,7 @@ from pint import UnitRegistry
 from pint.errors import UndefinedUnitError
 from xarray.testing import assert_equal
 
+from .. import conversion
 from .utils import raises_regex
 
 pytestmark = [
@@ -16,6 +17,18 @@ pytestmark = [
 # always be treated like ndarrays
 unit_registry = UnitRegistry(force_ndarray=True)
 Quantity = unit_registry.Quantity
+
+
+def assert_all_str_or_none(mapping):
+    __tracebackhide__ = True
+
+    compared = {
+        key: isinstance(value, str) or value is None for key, value in mapping.items()
+    }
+    not_passing = {key: value for key, value in mapping.items() if not compared[key]}
+    check = all(compared.values())
+
+    assert check, f"Not all values are str or None: {not_passing}"
 
 
 @pytest.fixture
@@ -93,7 +106,12 @@ class TestDequantifyDataArray:
     def test_attrs_reinstated(self, example_quantity_da):
         da = example_quantity_da
         result = da.pint.dequantify()
-        assert result.attrs["units"] == "meter"
+
+        units = conversion.extract_units(da)
+        attrs = conversion.extract_unit_attributes(result)
+
+        assert units == attrs
+        assert_all_str_or_none(attrs)
 
     def test_roundtrip_data(self, example_unitless_da):
         orig = example_unitless_da
