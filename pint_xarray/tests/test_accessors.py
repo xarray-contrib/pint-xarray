@@ -92,10 +92,6 @@ class TestDequantifyDataArray:
         assert isinstance(result.data, np.ndarray)
         assert isinstance(result.coords["x"].data, np.ndarray)
 
-    def test_error_if_no_units(self, example_unitless_da):
-        with raises_regex(ValueError, "does not have units"):
-            example_unitless_da.pint.dequantify()
-
     def test_attrs_reinstated(self, example_quantity_da):
         da = example_quantity_da
         result = da.pint.dequantify()
