@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 import xarray as xr
 from numpy.testing import assert_array_equal
-from pint import UnitRegistry
+from pint import Unit, UnitRegistry
 from pint.errors import UndefinedUnitError
 from xarray.testing import assert_equal
 
@@ -203,9 +203,39 @@ class TestQuantifyDataSet:
             ds.pint.quantify(units={"users": "aecjhbav"})
 
 
-@pytest.mark.skip(reason="Not yet implemented")
 class TestDequantifyDataSet:
-    ...
+    def test_strip_units(self, example_quantity_ds):
+        result = example_quantity_ds.pint.dequantify()
+
+        assert all(
+            isinstance(var.data, np.ndarray) for var in result.variables.values()
+        )
+
+    def test_attrs_reinstated(self, example_quantity_ds):
+        ds = example_quantity_ds
+        result = ds.pint.dequantify()
+
+        units = conversion.extract_units(ds)
+        # workaround for Unit("dimensionless") != str(Unit("dimensionless"))
+        units = {
+            key: str(value) if isinstance(value, Unit) else value
+            for key, value in units.items()
+        }
+
+        attrs = conversion.extract_unit_attributes(result)
+
+        assert units == attrs
+        assert_all_str_or_none(attrs)
+
+    def test_roundtrip_data(self, example_unitless_ds):
+        orig = example_unitless_ds
+        quantified = orig.pint.quantify()
+
+        result = quantified.pint.dequantify()
+        assert_equal(result, orig)
+
+        result = quantified.pint.dequantify().pint.quantify()
+        assert_equal(quantified, result)
 
 
 @pytest.mark.skip(reason="Not yet implemented")
