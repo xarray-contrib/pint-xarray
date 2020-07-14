@@ -196,14 +196,16 @@ class PintDataArrayAccessor:
 
         Parameters
         ----------
-        units : pint.Unit or str or mapping of hashable to , optional
-            Physical units to use for this DataArray. If not provided, will try
+        units : pint.Unit or str or mapping of hashable to pint.Unit or str, optional
+            Physical units to use for this DataArray: . If not provided, will try
             to read them from ``DataArray.attrs['units']`` using pint's parser.
         unit_registry : pint.UnitRegistry, optional
             Unit registry to be used for the units attached to this DataArray.
             If not given then a default registry will be created.
         registry_kwargs : dict, optional
             Keyword arguments to be passed to `pint.UnitRegistry`.
+        **unit_kwargs
+            Keyword argument form of units.
 
         Returns
         -------
@@ -213,6 +215,11 @@ class PintDataArrayAccessor:
 
         Examples
         --------
+        >>> da = xr.DataArray(
+        ...     data=[0.4, 0.9, 1.7, 4.8, 3.2, 9.1],
+        ...     dims="frequency",
+        ...     coords={"wavelength": [1e-4, 2e-4, 4e-4, 6e-4, 1e-3, 2e-3]},
+        ... )
         >>> da.pint.quantify(units='Hz')
         <xarray.DataArray (frequency: 6)>
         Quantity([ 0.4,  0.9,  1.7,  4.8,  3.2,  9.1], 'Hz')
@@ -451,29 +458,59 @@ class PintDatasetAccessor:
         """
         Attaches units to each variable in the Dataset.
 
-        Units can be specified as a pint.Unit or as a string, which will
-        be parsed by the given unit registry. If no units are specified then
-        the units will be parsed from the `'units'` entry of the DataArray's
-        `.attrs`. Will raise a ValueError if any of the DataArrays already
-        contain a unit-aware array.
+        Units can be specified as a :py:class:`pint.Unit` or as a
+        string, which will be parsed by the given unit registry. If no
+        units are specified then the units will be parsed from the
+        ``"units"`` entry of the Dataset variable's ``.attrs``. Will
+        raise a ValueError if any of the variables already contain a
+        unit-aware array.
 
         Parameters
         ----------
         units : mapping from variable names to pint.Unit or str, optional
-            Physical units to use for particular DataArrays in this Dataset. If
-            not provided, will try to read them from
-            `Dataset[var].attrs['units']` using pint's parser.
+            Physical units to use for particular DataArrays in this
+            Dataset. If not provided, will try to read them from
+            ``Dataset[var].attrs['units']`` using pint's parser.
         unit_registry : `pint.UnitRegistry`, optional
             Unit registry to be used for the units attached to each DataArray
             in this Dataset. If not given then a default registry will be
             created.
         registry_kwargs : dict, optional
             Keyword arguments to be passed to `pint.UnitRegistry`.
+        **unit_kwargs
+            Keyword argument form of ``units``.
 
         Returns
         -------
-        quantified - Dataset whose variables will now contain Quantity
-        arrays with units.
+        quantified : Dataset
+            Dataset whose variables will now contain Quantity arrays
+            with units.
+
+        Examples
+        --------
+        >>> ds = xr.Dataset(
+        ...     {"a": ("x", [0, 3, 2], {"units": "m"}), "b": ("x", 5, -2, 1)},
+        ...     coords={"x": [0, 1, 2], "u": ("x", [-1, 0, 1], {"units": "s"})},
+        ... )
+
+        >>> ds.pint.quantify()
+        <xarray.Dataset>
+        Dimensions:  (x: 3)
+        Coordinates:
+          * x        (x) int64 0 1 2
+            u        (x) int64 <Quantity([-1  0  1], 'second')>
+        Data variables:
+            a        (x) int64 <Quantity([0 3 2], 'meter')>
+            b        (x) int64 5 -2 1
+        >>> ds.pint.quantify({"b": "dm"})
+        <xarray.Dataset>
+        Dimensions:  (x: 3)
+        Coordinates:
+          * x        (x) int64 0 1 2
+            u        (x) int64 <Quantity([-1  0  1], 'second')>
+        Data variables:
+            a        (x) int64 <Quantity([0 3 2], 'meter')>
+            b        (x) int64 <Quantity([ 5 -2  1], 'decimeter')>
         """
         units = either_dict_or_kwargs(units, unit_kwargs, ".quantify")
         registry = _get_registry(unit_registry, registry_kwargs)
