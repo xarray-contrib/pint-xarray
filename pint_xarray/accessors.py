@@ -64,6 +64,13 @@ def zip_mappings(*mappings, fill_value=None):
     return zipped
 
 
+def units_to_str_or_none(mapping):
+    return {
+        key: str(value) if isinstance(value, Unit) else value
+        for key, value in mapping.items()
+    }
+
+
 # based on xarray.core.utils.either_dict_or_kwargs
 # https://github.com/pydata/xarray/blob/v0.15.1/xarray/core/utils.py#L249-L268
 def either_dict_or_kwargs(positional, keywords, method_name):
@@ -257,10 +264,7 @@ class PintDataArrayAccessor:
             that was previously wrapped by `pint.Quantity`.
         """
 
-        units = {
-            key: str(value) if isinstance(value, pint.Unit) else value
-            for key, value in conversion.extract_units(self.da).items()
-        }
+        units = units_to_str_or_none(conversion.extract_units(self.da))
         new_obj = conversion.attach_unit_attributes(
             conversion.strip_units(self.da), units,
         )
@@ -485,8 +489,10 @@ class PintDatasetAccessor:
         return conversion.attach_units(self.ds, units)
 
     def dequantify(self):
-        units = conversion.extract_units(self.ds)
-        new_obj = conversion.attach_units(conversion.strip_units(self.ds), units)
+        units = units_to_str_or_none(conversion.extract_units(self.ds))
+        new_obj = conversion.attach_unit_attributes(
+            conversion.strip_units(self.ds), units
+        )
         return new_obj
 
     def to(self, units=None, **unit_kwargs):
