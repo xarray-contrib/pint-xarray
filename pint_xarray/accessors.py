@@ -140,8 +140,12 @@ class PintDataArrayAccessor:
         Parameters
         ----------
         units : pint.Unit or str or mapping of hashable to pint.Unit or str, optional
-            Physical units to use for this DataArray: . If not provided, will try
-            to read them from ``DataArray.attrs['units']`` using pint's parser.
+            Physical units to use for this DataArray. If a str or
+            pint.Unit, will be used as the DataArray's units. If a
+            dict-like, it should map a variable name to the desired
+            unit (use the DataArray's name to refer to its data). If
+            not provided, will try to read them from
+            ``DataArray.attrs['units']`` using pint's parser.
         unit_registry : pint.UnitRegistry, optional
             Unit registry to be used for the units attached to this DataArray.
             If not given then a default registry will be created.
@@ -411,12 +415,13 @@ class PintDatasetAccessor:
         ----------
         units : mapping of hashable to pint.Unit or str, optional
             Physical units to use for particular DataArrays in this
-            Dataset. If not provided, will try to read them from
+            Dataset. It should map variable names to units. If not
+            provided, will try to read them from
             ``Dataset[var].attrs['units']`` using pint's parser.
         unit_registry : `pint.UnitRegistry`, optional
-            Unit registry to be used for the units attached to each DataArray
-            in this Dataset. If not given then a default registry will be
-            created.
+            Unit registry to be used for the units attached to each
+            DataArray in this Dataset. If not given then a default
+            registry will be created.
         registry_kwargs : dict, optional
             Keyword arguments to be passed to `pint.UnitRegistry`.
         **unit_kwargs
