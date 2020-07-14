@@ -8,27 +8,38 @@ from xarray.testing import assert_equal
 
 from .utils import raises_regex
 
+pytestmark = [
+    pytest.mark.filterwarnings("error::pint.UnitStrippedWarning"),
+]
+
 # make sure scalars are converted to 0d arrays so quantities can
 # always be treated like ndarrays
 unit_registry = UnitRegistry(force_ndarray=True)
 Quantity = unit_registry.Quantity
 
 
-@pytest.fixture()
+@pytest.fixture
 def example_unitless_da():
     array = np.linspace(0, 10, 20)
     x = np.arange(20)
-    da = xr.DataArray(data=array, dims="x", coords={"x": x})
-    da.attrs["units"] = "m"
-    da.coords["x"].attrs["units"] = "s"
+    u = np.linspace(0, 1, 20)
+    da = xr.DataArray(
+        data=array,
+        dims="x",
+        coords={"x": ("x", x, {"units": "s"}), "u": ("x", u, {"units": "hour"})},
+        attrs={"units": "m"},
+    )
     return da
 
 
 @pytest.fixture()
 def example_quantity_da():
     array = np.linspace(0, 10, 20) * unit_registry.m
-    x = np.arange(20) * unit_registry.s
-    return xr.DataArray(data=array, dims="x", coords={"x": x})
+    x = np.arange(20)
+    u = np.linspace(0, 1, 20) * unit_registry.hour
+    return xr.DataArray(
+        data=array, dims="x", coords={"x": ("x", x, {"units": "s"}), "u": ("x", u)},
+    )
 
 
 class TestQuantifyDataArray:
