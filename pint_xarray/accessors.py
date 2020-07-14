@@ -137,6 +137,11 @@ class PintDataArrayAccessor:
         `.attrs`. Will raise a ValueError if the DataArray already contains a
         unit-aware array.
 
+        .. note::
+            Be aware that unless you're using ``dask`` this will load
+            the data into memory. To avoid that, consider converting
+            to ``dask`` first (e.g. using ``chunk``).
+
         Parameters
         ----------
         units : pint.Unit or str or mapping of hashable to pint.Unit or str, optional
@@ -410,6 +415,11 @@ class PintDatasetAccessor:
         ``"units"`` entry of the Dataset variable's ``.attrs``. Will
         raise a ValueError if any of the variables already contain a
         unit-aware array.
+
+        .. note::
+            Be aware that unless you're using ``dask`` this will load
+            the data into memory. To avoid that, consider converting
+            to ``dask`` first (e.g. using ``chunk``).
 
         Parameters
         ----------
