@@ -150,7 +150,7 @@ class PintDataArrayAccessor:
             Unit registry to be used for the units attached to this DataArray.
             If not given then a default registry will be created.
         registry_kwargs : dict, optional
-            Keyword arguments to be passed to `pint.UnitRegistry`.
+            Keyword arguments to be passed to :py:class:`pint.UnitRegistry`.
         **unit_kwargs
             Keyword argument form of units.
 
@@ -208,7 +208,7 @@ class PintDataArrayAccessor:
         Removes units from the DataArray and its coordinates.
 
         Will replace ``.attrs['units']`` on each variable with a string
-        representation of the `pint.Unit` instance.
+        representation of the :py:class:`pint.Unit` instance.
 
         Returns
         -------
@@ -259,7 +259,7 @@ class PintDataArrayAccessor:
         ----------
         units : str or pint.Unit or mapping of hashable to str or pint.Unit, optional
             The units to convert to. If a unit name or
-            :py:class`pint.Unit` object, convert the DataArray's
+            :py:class:`pint.Unit` object, convert the DataArray's
             data. If a dict-like, it has to map a variable name to a
             unit name or :py:class:`pint.Unit` object.
         **unit_kwargs
@@ -415,10 +415,11 @@ class PintDatasetAccessor:
         ----------
         units : mapping of hashable to pint.Unit or str, optional
             Physical units to use for particular DataArrays in this
-            Dataset. It should map variable names to units. If not
-            provided, will try to read them from
-            ``Dataset[var].attrs['units']`` using pint's parser.
-        unit_registry : `pint.UnitRegistry`, optional
+            Dataset. It should map variable names to units (unit names
+            or ``pint.Unit`` objects). If not provided, will try to
+            read them from ``Dataset[var].attrs['units']`` using
+            pint's parser.
+        unit_registry : pint.UnitRegistry, optional
             Unit registry to be used for the units attached to each
             DataArray in this Dataset. If not given then a default
             registry will be created.
