@@ -1,14 +1,12 @@
 # TODO is it possible to import pint-xarray from within xarray if pint is present?
 import itertools
 
-import numpy as np
 import pint
 from pint.quantity import Quantity
 from pint.unit import Unit
 from xarray import (
     DataArray,
     Dataset,
-    Variable,
     register_dataarray_accessor,
     register_dataset_accessor,
 )
@@ -89,49 +87,6 @@ def either_dict_or_kwargs(positional, keywords, method_name):
         return keywords
 
 
-def _array_attach_units(data, unit, convert_from=None):
-    """
-    Internal utility function for attaching units to a numpy-like array,
-    converting them, or throwing the correct error.
-    """
-
-    if isinstance(data, Quantity):
-        if not convert_from:
-            raise ValueError(
-                f"Cannot attach unit {unit} to quantity: data "
-                f"already has units {data.units}"
-            )
-        elif isinstance(convert_from, Unit):
-            data = data.magnitude
-        elif convert_from is True:  # intentionally accept exactly true
-            if data.check(unit):
-                convert_from = data.units
-                data = data.magnitude
-            else:
-                raise ValueError(
-                    "Cannot convert quantity from {data.units} " "to {unit}"
-                )
-        else:
-            raise ValueError("Cannot convert from invalid unit {convert_from}")
-
-    # to make sure we also encounter the case of "equal if converted"
-    if convert_from is not None:
-        quantity = (data * convert_from).to(
-            unit if isinstance(unit, Unit) else unit.dimensionless
-        )
-    else:
-        try:
-            quantity = data * unit
-        except np.core._exceptions.UFuncTypeError:
-            # from @keewis in xarray.tests.test_units - unsure what this checks?
-            if unit != 1:
-                raise
-
-            quantity = data
-
-    return quantity
-
-
 def _get_registry(unit_registry, registry_kwargs):
     if unit_registry is None:
         if registry_kwargs is None:
@@ -157,18 +112,6 @@ def _decide_units(units, registry, unit_attribute):
     else:
         units = registry.Unit(units)
     return units
-
-
-def _quantify_variable(var, units):
-    new_data = _array_attach_units(var.data, units, convert_from=None)
-    new_var = Variable(dims=var.dims, data=new_data, attrs=var.attrs)
-    return new_var
-
-
-def _dequantify_variable(var):
-    new_var = Variable(dims=var.dims, data=var.data.magnitude, attrs=var.attrs)
-    new_var.attrs["units"] = str(var.data.units)
-    return new_var
 
 
 @register_dataarray_accessor("pint")
@@ -288,7 +231,7 @@ class PintDataArrayAccessor:
 
     @units.setter
     def units(self, units):
-        quantity = _array_attach_units(self.da.data, units)
+        quantity = conversion.array_attach_units(self.da.data, units)
         self.da = DataArray(
             dim=self.da.dims, data=quantity, coords=self.da.coords, attrs=self.da.attrs
         )
