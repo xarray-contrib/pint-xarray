@@ -31,9 +31,14 @@ jobs:
     displayName: 'Install dependencies'
 
   - script: |
-      pip install pytest pytest-azurepipelines
-      pytest --verbose
+      pip install pytest pytest-azurepipelines pytest-cov
+      pytest --verbose --cov=./ --cov-report=xml
     displayName: 'pytest'
+
+  - script: |
+      curl https://codecov.io/bash > codecov.sh
+      bash codecov.sh -t aba016f6-96be-4bc3-bdbe-caa6b6aff815
+    displayName: 'Upload coverage to codecov.io'
 
 - job: LintFlake8
   pool:
