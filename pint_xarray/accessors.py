@@ -257,7 +257,10 @@ class PintDataArrayAccessor:
             that was previously wrapped by `pint.Quantity`.
         """
 
-        units = conversion.extract_units(self.da)
+        units = {
+            key: str(value) if isinstance(value, pint.Unit) else value
+            for key, value in conversion.extract_units(self.da).items()
+        }
         new_obj = conversion.attach_unit_attributes(
             conversion.strip_units(self.da), units,
         )
