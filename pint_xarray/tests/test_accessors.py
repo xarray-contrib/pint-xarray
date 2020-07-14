@@ -26,7 +26,7 @@ def example_unitless_da():
     da = xr.DataArray(
         data=array,
         dims="x",
-        coords={"x": ("x", x, {"units": "s"}), "u": ("x", u, {"units": "hour"})},
+        coords={"x": ("x", x), "u": ("x", u, {"units": "hour"})},
         attrs={"units": "m"},
     )
     return da
@@ -37,9 +37,7 @@ def example_quantity_da():
     array = np.linspace(0, 10, 20) * unit_registry.m
     x = np.arange(20)
     u = np.linspace(0, 1, 20) * unit_registry.hour
-    return xr.DataArray(
-        data=array, dims="x", coords={"x": ("x", x, {"units": "s"}), "u": ("x", u)},
-    )
+    return xr.DataArray(data=array, dims="x", coords={"x": ("x", x), "u": ("x", u)})
 
 
 class TestQuantifyDataArray:
