@@ -179,7 +179,7 @@ class TestQuantifyDataSet:
 
     def test_error_when_already_units(self, example_quantity_ds):
         with raises_regex(ValueError, "already has units"):
-            example_quantity_ds.pint.quantify()
+            example_quantity_ds.pint.quantify({"funds": "pounds"})
 
     def test_error_on_nonsense_units(self, example_unitless_ds):
         ds = example_unitless_ds
