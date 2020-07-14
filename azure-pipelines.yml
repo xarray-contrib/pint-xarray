@@ -28,17 +28,16 @@ jobs:
       versionSpec: '$(python.version)'
     displayName: 'Use Python $(python.version)'
 
-  - displayName: 'Upgrade pip'
-    script: |
+  - script: |
         python -m pip install --upgrade pip setuptools
+    displayName: 'Upgrade pip'
 
   - script: |
       python -m pip install --upgrade pip
       pip install -r requirements.txt
     displayName: 'Install dependencies'
 
-  - displayName: 'Install upstream-dev dependencies'
-    script: |
+  - script: |
       python -m pip install \
         -i https://pypi.anaconda.org/scipy-wheels-nightly/simple \
         --no-deps \
@@ -50,7 +49,7 @@ jobs:
       python -m pip install --upgrade \
         git+https://github.com/hgrecco/pint \
         git+https://github.com/pydata/xarray
-
+    displayName: 'Install upstream-dev dependencies'
     condition: eq(variables['UPSTREAM_DEV'], 'true')
 
   - script: |
