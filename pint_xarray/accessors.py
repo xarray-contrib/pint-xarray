@@ -189,8 +189,7 @@ class PintDataArrayAccessor:
 
         registry = _get_registry(unit_registry, registry_kwargs)
 
-        # TODO should we (temporarily) remove the attrs here so that they don't become inconsistent?
-        unit_attrs = conversion.extract_unit_attributes(self.da, delete=False)
+        unit_attrs = conversion.extract_unit_attributes(self.da, delete=True)
 
         units = {
             name: _decide_units(unit, registry, unit_attribute)
@@ -458,8 +457,7 @@ class PintDatasetAccessor:
         units = either_dict_or_kwargs(units, unit_kwargs, ".quantify")
         registry = _get_registry(unit_registry, registry_kwargs)
 
-        # TODO should we (temporarily) remove the attrs here so that they don't become inconsistent?
-        unit_attrs = conversion.extract_unit_attributes(self.ds, delete=False)
+        unit_attrs = conversion.extract_unit_attributes(self.ds, delete=True)
         units = {
             name: _decide_units(unit, registry, attr)
             for name, (unit, attr) in zip_mappings(units, unit_attrs).items()
