@@ -252,9 +252,9 @@ class PintDataArrayAccessor:
 
     def dequantify(self):
         """
-        Removes units from the DataArray and it's coordinates.
+        Removes units from the DataArray and its coordinates.
 
-        Will replace `.attrs['units']` on each variable with a string
+        Will replace ``.attrs['units']`` on each variable with a string
         representation of the `pint.Unit` instance.
 
         Returns
@@ -489,6 +489,18 @@ class PintDatasetAccessor:
         return conversion.attach_units(self.ds, units)
 
     def dequantify(self):
+        """
+        Removes units from the Dataset and its coordinates.
+
+        Will replace ``.attrs['units']`` on each variable with a string
+        representation of the :py:class:`pint.Unit` instance.
+
+        Returns
+        -------
+        dequantified : Dataset
+            Dataset whose data variables are unitless, and of the type
+            that was previously wrapped by :py:class:`pint.Quantity`.
+        """
         units = units_to_str_or_none(conversion.extract_units(self.ds))
         new_obj = conversion.attach_unit_attributes(
             conversion.strip_units(self.ds), units
