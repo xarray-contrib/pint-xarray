@@ -4,7 +4,7 @@ import xarray as xr
 from numpy.testing import assert_array_equal
 from pint import Unit, UnitRegistry
 from pint.errors import UndefinedUnitError
-from xarray.testing import assert_equal
+from xarray.testing import assert_equal, assert_identical
 
 from .. import conversion
 from .utils import raises_regex
@@ -55,11 +55,14 @@ def example_quantity_da():
 
 class TestQuantifyDataArray:
     def test_attach_units_from_str(self, example_unitless_da):
-        orig = example_unitless_da
-        result = orig.pint.quantify("m")
+        obj = example_unitless_da
+        orig = obj.copy()
+
+        result = obj.pint.quantify("m")
         assert_array_equal(result.data.magnitude, orig.data)
         # TODO better comparisons for when you can't access the unit_registry?
         assert str(result.data.units) == "meter"
+        assert_identical(orig, obj)
 
     def test_attach_units_given_registry(self, example_unitless_da):
         orig = example_unitless_da
@@ -167,10 +170,12 @@ class TestUncertainties:
 
 class TestQuantifyDataSet:
     def test_attach_units_from_str(self, example_unitless_ds):
-        orig = example_unitless_ds
-        result = orig.pint.quantify()
+        obj = example_unitless_ds
+        orig = obj.copy()
+        result = obj.pint.quantify()
         assert_array_equal(result["users"].data.magnitude, orig["users"].data)
         assert str(result["users"].data.units) == "dimensionless"
+        assert_identical(orig, obj)
 
     def test_attach_units_given_registry(self, example_unitless_ds):
         orig = example_unitless_ds

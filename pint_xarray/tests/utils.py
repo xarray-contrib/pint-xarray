@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 import xarray as xr
 from pint.quantity import Quantity
-from xarray.testing import assert_equal  # noqa: F401
+from xarray.testing import assert_equal, assert_identical  # noqa: F401
 
 
 @contextmanager

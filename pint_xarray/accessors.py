@@ -194,11 +194,14 @@ class PintDataArrayAccessor:
             unit_kwargs[self.da.name] = units
             units = None
 
+        # don't modify the original object
+        new_obj = self.da.copy()
+
         units = either_dict_or_kwargs(units, unit_kwargs, ".quantify")
 
         registry = _get_registry(unit_registry, registry_kwargs)
 
-        unit_attrs = conversion.extract_unit_attributes(self.da, delete=True)
+        unit_attrs = conversion.extract_unit_attributes(new_obj, delete=True)
 
         units = {
             name: _decide_units(unit, registry, unit_attribute)
@@ -206,7 +209,13 @@ class PintDataArrayAccessor:
             if unit is not None or unit_attribute is not None
         }
 
-        return conversion.attach_units(self.da, units)
+        # TODO: remove once indexes support units
+        dim_units = {name: unit for name, unit in units.items() if name in self.da.dims}
+        for name in dim_units.keys():
+            units.pop(name)
+        new_obj = conversion.attach_unit_attributes(new_obj, dim_units)
+
+        return conversion.attach_units(new_obj, units)
 
     def dequantify(self):
         """
@@ -470,17 +479,26 @@ class PintDatasetAccessor:
             a        (x) int64 <Quantity([0 3 2], 'meter')>
             b        (x) int64 <Quantity([ 5 -2  1], 'decimeter')>
         """
+        # don't modify the original object
+        new_obj = self.ds.copy()
+
         units = either_dict_or_kwargs(units, unit_kwargs, ".quantify")
         registry = _get_registry(unit_registry, registry_kwargs)
 
-        unit_attrs = conversion.extract_unit_attributes(self.ds, delete=True)
+        unit_attrs = conversion.extract_unit_attributes(new_obj, delete=True)
         units = {
             name: _decide_units(unit, registry, attr)
             for name, (unit, attr) in zip_mappings(units, unit_attrs).items()
             if unit is not None or attr is not None
         }
 
-        return conversion.attach_units(self.ds, units)
+        # TODO: remove once indexes support units
+        dim_units = {name: unit for name, unit in units.items() if name in new_obj.dims}
+        for name in dim_units.keys():
+            units.pop(name)
+        new_obj = conversion.attach_unit_attributes(new_obj, dim_units)
+
+        return conversion.attach_units(new_obj, units)
 
     def dequantify(self):
         """
