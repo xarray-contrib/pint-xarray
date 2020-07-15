@@ -142,6 +142,10 @@ class PintDataArrayAccessor:
             the data into memory. To avoid that, consider converting
             to ``dask`` first (e.g. using ``chunk``).
 
+            As units in dimension coordinates are not supported until
+            ``xarray`` changes the way it implements indexes, these
+            units will be set as attributes.
+
         Parameters
         ----------
         units : pint.Unit or str or mapping of hashable to pint.Unit or str, optional
@@ -163,7 +167,8 @@ class PintDataArrayAccessor:
         -------
         quantified : DataArray
             DataArray whose wrapped array data will now be a Quantity
-            array with the specified units.
+            array with the specified units. Any ``"units"`` attributes
+            will be removed except for dimension coordinates.
 
         Examples
         --------
@@ -172,7 +177,7 @@ class PintDataArrayAccessor:
         ...     dims="frequency",
         ...     coords={"wavelength": [1e-4, 2e-4, 4e-4, 6e-4, 1e-3, 2e-3]},
         ... )
-        >>> da.pint.quantify(units='Hz')
+        >>> da.pint.quantify(units="Hz")
         <xarray.DataArray (frequency: 6)>
         Quantity([ 0.4,  0.9,  1.7,  4.8,  3.2,  9.1], 'Hz')
         Coordinates:
@@ -428,6 +433,10 @@ class PintDatasetAccessor:
             the data into memory. To avoid that, consider converting
             to ``dask`` first (e.g. using ``chunk``).
 
+            As units in dimension coordinates are not supported until
+            ``xarray`` changes the way it implements indexes, these
+            units will be set as attributes.
+
         Parameters
         ----------
         units : mapping of hashable to pint.Unit or str, optional
@@ -449,7 +458,8 @@ class PintDatasetAccessor:
         -------
         quantified : Dataset
             Dataset whose variables will now contain Quantity arrays
-            with units.
+            with units. Any ``"units"`` attributes will be removed
+            except from dimension coordinates.
 
         Examples
         --------
