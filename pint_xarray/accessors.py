@@ -194,14 +194,12 @@ class PintDataArrayAccessor:
             unit_kwargs[self.da.name] = units
             units = None
 
-        # don't modify the original object
-        new_obj = self.da.copy()
-
         units = either_dict_or_kwargs(units, unit_kwargs, ".quantify")
 
         registry = _get_registry(unit_registry, registry_kwargs)
 
-        unit_attrs = conversion.extract_unit_attributes(new_obj, delete=True)
+        unit_attrs = conversion.extract_unit_attributes(self.da)
+        new_obj = conversion.strip_unit_attributes(self.da)
 
         units = {
             name: _decide_units(unit, registry, unit_attribute)
@@ -479,13 +477,12 @@ class PintDatasetAccessor:
             a        (x) int64 <Quantity([0 3 2], 'meter')>
             b        (x) int64 <Quantity([ 5 -2  1], 'decimeter')>
         """
-        # don't modify the original object
-        new_obj = self.ds.copy()
-
         units = either_dict_or_kwargs(units, unit_kwargs, ".quantify")
         registry = _get_registry(unit_registry, registry_kwargs)
 
-        unit_attrs = conversion.extract_unit_attributes(new_obj, delete=True)
+        unit_attrs = conversion.extract_unit_attributes(self.ds)
+        new_obj = conversion.strip_unit_attributes(self.ds)
+
         units = {
             name: _decide_units(unit, registry, attr)
             for name, (unit, attr) in zip_mappings(units, unit_attrs).items()

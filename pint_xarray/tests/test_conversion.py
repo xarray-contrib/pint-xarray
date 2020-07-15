@@ -12,6 +12,10 @@ unit_registry = pint.UnitRegistry()
 pytestmark = pytest.mark.filterwarnings("error::pint.UnitStrippedWarning")
 
 
+def filter_none_values(mapping):
+    return {k: v for k, v in mapping.items() if v is not None}
+
+
 class TestArrayFunctions:
     @pytest.mark.parametrize(
         "registry",
@@ -197,12 +201,7 @@ class TestXarrayFunctions:
     )
     def test_attach_unit_attributes(self, obj, units):
         actual = conversion.attach_unit_attributes(obj, units)
-        actual_units = {
-            key: value
-            for key, value in conversion.extract_unit_attributes(actual).items()
-            if value is not None
-        }
-        assert units == actual_units
+        assert units == filter_none_values(conversion.extract_unit_attributes(actual))
 
     @pytest.mark.parametrize(
         "variant",
@@ -338,9 +337,6 @@ class TestXarrayFunctions:
         assert conversion.extract_units(obj) == units
 
     @pytest.mark.parametrize(
-        "delete", (pytest.param(False, id="keep"), pytest.param(True, id="delete"))
-    )
-    @pytest.mark.parametrize(
         ["obj", "expected"],
         (
             pytest.param(
@@ -374,19 +370,9 @@ class TestXarrayFunctions:
             ),
         ),
     )
-    def test_extract_unit_attributes(self, obj, expected, delete):
-        actual = conversion.extract_unit_attributes(obj, delete=delete)
+    def test_extract_unit_attributes(self, obj, expected):
+        actual = conversion.extract_unit_attributes(obj)
         assert expected == actual
-
-        if delete:
-            remaining_attributes = {
-                key: value
-                for key, value in conversion.extract_unit_attributes(
-                    obj, delete=False
-                ).items()
-                if value is not None
-            }
-            assert remaining_attributes == {}
 
     @pytest.mark.parametrize(
         "obj",
@@ -423,3 +409,45 @@ class TestXarrayFunctions:
 
         actual = conversion.strip_units(obj)
         assert conversion.extract_units(actual) == expected_units
+
+    @pytest.mark.parametrize(
+        ["obj", "expected"],
+        (
+            pytest.param(
+                DataArray(
+                    coords={
+                        "x": ("x", [], {"units": "m"}),
+                        "u": ("x", [], {"units": "s"}),
+                    },
+                    attrs={"units": "hPa"},
+                    dims="x",
+                ),
+                {"x": "m", "u": "s", None: "hPa"},
+                id="DataArray",
+            ),
+            pytest.param(
+                Dataset(
+                    data_vars={
+                        "a": ("x", [], {"units": "degK"}),
+                        "b": ("x", [], {"units": "hPa"}),
+                    },
+                    coords={
+                        "x": ("x", [], {"units": "m"}),
+                        "u": ("x", [], {"units": "s"}),
+                    },
+                ),
+                {"a": "degK", "b": "hPa", "x": "m", "u": "s"},
+                id="Dataset",
+            ),
+            pytest.param(
+                Variable("x", [], {"units": "hPa"}), {None: "hPa"}, id="Variable",
+            ),
+        ),
+    )
+    def test_strip_unit_attributes(self, obj, expected):
+        actual = conversion.strip_unit_attributes(obj)
+        expected = {}
+
+        assert (
+            filter_none_values(conversion.extract_unit_attributes(actual)) == expected
+        )

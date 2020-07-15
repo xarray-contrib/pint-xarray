@@ -222,17 +222,14 @@ def extract_units(obj):
     return units
 
 
-def extract_unit_attributes(obj, delete=False, attr="units"):
-    method = dict.pop if delete else dict.get
+def extract_unit_attributes(obj, attr="units"):
     if isinstance(obj, DataArray):
         variables = itertools.chain([(obj.name, obj)], obj.coords.items())
-        units = {name: method(var.attrs, attr, None) for name, var in variables}
+        units = {name: var.attrs.get(attr, None) for name, var in variables}
     elif isinstance(obj, Dataset):
-        units = {
-            name: method(var.attrs, attr, None) for name, var in obj.variables.items()
-        }
+        units = {name: var.attrs.get(attr, None) for name, var in obj.variables.items()}
     elif isinstance(obj, Variable):
-        units = {None: method(obj.attrs, attr, None)}
+        units = {None: obj.attrs.get(attr, None)}
     else:
         raise ValueError(
             f"cannot retrieve unit attributes from unknown type: {type(obj)}"
@@ -263,5 +260,24 @@ def strip_units(obj):
         new_obj = Dataset(data_vars=data_vars, coords=coords, attrs=obj.attrs)
     else:
         raise ValueError("cannot strip units from {obj!r}: unknown type")
+
+    return new_obj
+
+
+def strip_unit_attributes(obj, attr="units"):
+    new_obj = obj.copy()
+    if isinstance(obj, DataArray):
+        variables = itertools.chain([(new_obj.name, new_obj)], new_obj.coords.items())
+        for _, var in variables:
+            var.attrs.pop(attr, None)
+    elif isinstance(obj, Dataset):
+        for var in new_obj.variables.values():
+            var.attrs.pop(attr, None)
+    elif isinstance(obj, Variable):
+        new_obj.attrs.pop(attr, None)
+    else:
+        raise ValueError(
+            f"cannot retrieve unit attributes from unknown type: {type(obj)}"
+        )
 
     return new_obj
