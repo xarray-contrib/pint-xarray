@@ -154,7 +154,9 @@ class PintDataArrayAccessor:
             dict-like, it should map a variable name to the desired
             unit (use the DataArray's name to refer to its data). If
             not provided, will try to read them from
-            ``DataArray.attrs['units']`` using pint's parser.
+            ``DataArray.attrs['units']`` using pint's parser. The
+            ``"units"`` attribute will be removed from all variables
+            except from dimension coordinates.
         unit_registry : pint.UnitRegistry, optional
             Unit registry to be used for the units attached to this DataArray.
             If not given then a default registry will be created.
@@ -167,8 +169,7 @@ class PintDataArrayAccessor:
         -------
         quantified : DataArray
             DataArray whose wrapped array data will now be a Quantity
-            array with the specified units. Any ``"units"`` attributes
-            will be removed except for dimension coordinates.
+            array with the specified units.
 
         Examples
         --------
@@ -275,10 +276,10 @@ class PintDataArrayAccessor:
         Parameters
         ----------
         units : str or pint.Unit or mapping of hashable to str or pint.Unit, optional
-            The units to convert to. If a unit name or
-            ``pint.Unit`` object, convert the DataArray's
-            data. If a dict-like, it has to map a variable name to a
-            unit name or ``pint.Unit`` object.
+            The units to convert to. If a unit name or ``pint.Unit``
+            object, convert the DataArray's data. If a dict-like, it
+            has to map a variable name to a unit name or ``pint.Unit``
+            object.
         **unit_kwargs
             The kwargs form of ``units``. Can only be used for
             variable names that are strings and valid python identifiers.
@@ -444,7 +445,8 @@ class PintDatasetAccessor:
             Dataset. It should map variable names to units (unit names
             or ``pint.Unit`` objects). If not provided, will try to
             read them from ``Dataset[var].attrs['units']`` using
-            pint's parser.
+            pint's parser. The ``"units"`` attribute will be removed
+            from all variables except from dimension coordinates.
         unit_registry : pint.UnitRegistry, optional
             Unit registry to be used for the units attached to each
             DataArray in this Dataset. If not given then a default
@@ -458,8 +460,7 @@ class PintDatasetAccessor:
         -------
         quantified : Dataset
             Dataset whose variables will now contain Quantity arrays
-            with units. Any ``"units"`` attributes will be removed
-            except from dimension coordinates.
+            with units.
 
         Examples
         --------
