@@ -193,7 +193,7 @@ class TestXarrayFunctions:
                     data_vars={"a": ("x", []), "b": ("x", [])},
                     coords={"x": [], "u": ("x", [])},
                 ),
-                {"a": "degK", "b": "hPa", "u": "m"},
+                {"a": "K", "b": "hPa", "u": "m"},
                 id="Dataset",
             ),
             pytest.param(Variable("x", []), {None: "hPa"}, id="Variable",),
@@ -354,7 +354,7 @@ class TestXarrayFunctions:
             pytest.param(
                 Dataset(
                     data_vars={
-                        "a": ("x", [], {"units": "degK"}),
+                        "a": ("x", [], {"units": "K"}),
                         "b": ("x", [], {"units": "hPa"}),
                     },
                     coords={
@@ -362,7 +362,7 @@ class TestXarrayFunctions:
                         "u": ("x", [], {"units": "s"}),
                     },
                 ),
-                {"a": "degK", "b": "hPa", "x": "m", "u": "s"},
+                {"a": "K", "b": "hPa", "x": "m", "u": "s"},
                 id="Dataset",
             ),
             pytest.param(
@@ -428,7 +428,7 @@ class TestXarrayFunctions:
             pytest.param(
                 Dataset(
                     data_vars={
-                        "a": ("x", [], {"units": "degK"}),
+                        "a": ("x", [], {"units": "K"}),
                         "b": ("x", [], {"units": "hPa"}),
                     },
                     coords={
@@ -436,7 +436,7 @@ class TestXarrayFunctions:
                         "u": ("x", [], {"units": "s"}),
                     },
                 ),
-                {"a": "degK", "b": "hPa", "x": "m", "u": "s"},
+                {"a": "K", "b": "hPa", "x": "m", "u": "s"},
                 id="Dataset",
             ),
             pytest.param(
