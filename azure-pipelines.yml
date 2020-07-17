@@ -18,6 +18,9 @@ jobs:
         python.version: '3.7'
       Python38:
         python.version: '3.8'
+      Python38-upstream-dev:
+        python.version: '3.8'
+        upstream_dev: true
 
   steps:
   - task: UsePythonVersion@0
@@ -26,9 +29,25 @@ jobs:
     displayName: 'Use Python $(python.version)'
 
   - script: |
-      python -m pip install --upgrade pip
+        python -m pip install --upgrade pip setuptools wheel
+    displayName: 'Upgrade pip and build tools'
+
+  - script: |
       pip install -r requirements.txt
     displayName: 'Install dependencies'
+
+  - script: |
+      python -m pip install \
+        -i https://pypi.anaconda.org/scipy-wheels-nightly/simple \
+        --no-deps \
+        --pre \
+        --upgrade \
+        numpy
+      python -m pip install --upgrade \
+        git+https://github.com/hgrecco/pint \
+        git+https://github.com/pydata/xarray
+    displayName: 'Install upstream-dev dependencies'
+    condition: eq(variables['UPSTREAM_DEV'], 'true')
 
   - script: |
       pip install pytest pytest-azurepipelines pytest-cov
