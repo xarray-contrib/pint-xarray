@@ -21,7 +21,7 @@ DataArray
 ---------
 .. autosummary::
    :toctree: generated/
-   :template: autosummary/accessor_property.rst
+   :template: autosummary/accessor_attribute.rst
 
    DataArray.pint.magnitude
    DataArray.pint.units

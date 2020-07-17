@@ -12,6 +12,10 @@ unit_registry = pint.UnitRegistry()
 pytestmark = pytest.mark.filterwarnings("error::pint.UnitStrippedWarning")
 
 
+def filter_none_values(mapping):
+    return {k: v for k, v in mapping.items() if v is not None}
+
+
 class TestArrayFunctions:
     @pytest.mark.parametrize(
         "registry",
@@ -177,6 +181,29 @@ class TestXarrayFunctions:
         assert conversion.extract_units(actual) == units
 
     @pytest.mark.parametrize(
+        ["obj", "units"],
+        (
+            pytest.param(
+                DataArray(dims="x", coords={"x": [], "u": ("x", [])}),
+                {None: "hPa", "x": "m"},
+                id="DataArray",
+            ),
+            pytest.param(
+                Dataset(
+                    data_vars={"a": ("x", []), "b": ("x", [])},
+                    coords={"x": [], "u": ("x", [])},
+                ),
+                {"a": "K", "b": "hPa", "u": "m"},
+                id="Dataset",
+            ),
+            pytest.param(Variable("x", []), {None: "hPa"}, id="Variable",),
+        ),
+    )
+    def test_attach_unit_attributes(self, obj, units):
+        actual = conversion.attach_unit_attributes(obj, units)
+        assert units == filter_none_values(conversion.extract_unit_attributes(actual))
+
+    @pytest.mark.parametrize(
         "variant",
         (
             "data",
@@ -310,6 +337,44 @@ class TestXarrayFunctions:
         assert conversion.extract_units(obj) == units
 
     @pytest.mark.parametrize(
+        ["obj", "expected"],
+        (
+            pytest.param(
+                DataArray(
+                    coords={
+                        "x": ("x", [], {"units": "m"}),
+                        "u": ("x", [], {"units": "s"}),
+                    },
+                    attrs={"units": "hPa"},
+                    dims="x",
+                ),
+                {"x": "m", "u": "s", None: "hPa"},
+                id="DataArray",
+            ),
+            pytest.param(
+                Dataset(
+                    data_vars={
+                        "a": ("x", [], {"units": "K"}),
+                        "b": ("x", [], {"units": "hPa"}),
+                    },
+                    coords={
+                        "x": ("x", [], {"units": "m"}),
+                        "u": ("x", [], {"units": "s"}),
+                    },
+                ),
+                {"a": "K", "b": "hPa", "x": "m", "u": "s"},
+                id="Dataset",
+            ),
+            pytest.param(
+                Variable("x", [], {"units": "hPa"}), {None: "hPa"}, id="Variable",
+            ),
+        ),
+    )
+    def test_extract_unit_attributes(self, obj, expected):
+        actual = conversion.extract_unit_attributes(obj)
+        assert expected == actual
+
+    @pytest.mark.parametrize(
         "obj",
         (
             pytest.param(Variable("x", [0, 4, 3] * unit_registry.m), id="Variable"),
@@ -344,3 +409,45 @@ class TestXarrayFunctions:
 
         actual = conversion.strip_units(obj)
         assert conversion.extract_units(actual) == expected_units
+
+    @pytest.mark.parametrize(
+        ["obj", "expected"],
+        (
+            pytest.param(
+                DataArray(
+                    coords={
+                        "x": ("x", [], {"units": "m"}),
+                        "u": ("x", [], {"units": "s"}),
+                    },
+                    attrs={"units": "hPa"},
+                    dims="x",
+                ),
+                {"x": "m", "u": "s", None: "hPa"},
+                id="DataArray",
+            ),
+            pytest.param(
+                Dataset(
+                    data_vars={
+                        "a": ("x", [], {"units": "K"}),
+                        "b": ("x", [], {"units": "hPa"}),
+                    },
+                    coords={
+                        "x": ("x", [], {"units": "m"}),
+                        "u": ("x", [], {"units": "s"}),
+                    },
+                ),
+                {"a": "K", "b": "hPa", "x": "m", "u": "s"},
+                id="Dataset",
+            ),
+            pytest.param(
+                Variable("x", [], {"units": "hPa"}), {None: "hPa"}, id="Variable",
+            ),
+        ),
+    )
+    def test_strip_unit_attributes(self, obj, expected):
+        actual = conversion.strip_unit_attributes(obj)
+        expected = {}
+
+        assert (
+            filter_none_values(conversion.extract_unit_attributes(actual)) == expected
+        )
