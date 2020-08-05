@@ -9,10 +9,11 @@ Documentation
 -------------
 
 - :doc:`installation`
-- :doc:`contributing`
 - :doc:`examples`
 - :doc:`changelog`
+- :doc:`terminology`
 - :doc:`api`
+- :doc:`contributing`
 
 .. toctree::
    :maxdepth: 1
@@ -22,5 +23,6 @@ Documentation
    installation
    changelog
    examples
+   terminology
    api
    contributing
