@@ -148,7 +148,7 @@ class PintDataArrayAccessor:
 
         Parameters
         ----------
-        units : pint.Unit or str or mapping of hashable to pint.Unit or str, optional
+        units : unit-like or mapping of hashable to unit-like, optional
             Physical units to use for this DataArray. If a str or
             pint.Unit, will be used as the DataArray's units. If a
             dict-like, it should map a variable name to the desired
@@ -275,7 +275,7 @@ class PintDataArrayAccessor:
 
         Parameters
         ----------
-        units : str or pint.Unit or mapping of hashable to str or pint.Unit, optional
+        units : unit-like or mapping of hashable to unit-like, optional
             The units to convert to. If a unit name or ``pint.Unit``
             object, convert the DataArray's data. If a dict-like, it
             has to map a variable name to a unit name or ``pint.Unit``
@@ -440,7 +440,7 @@ class PintDatasetAccessor:
 
         Parameters
         ----------
-        units : mapping of hashable to pint.Unit or str, optional
+        units : mapping of hashable to unit-like, optional
             Physical units to use for particular DataArrays in this
             Dataset. It should map variable names to units (unit names
             or ``pint.Unit`` objects). If not provided, will try to
@@ -532,7 +532,7 @@ class PintDatasetAccessor:
 
         Parameters
         ----------
-        units : mapping of hashable to str or pint.Unit, optional
+        units : mapping of hashable to unit-like, optional
             Maps variable names to the unit to convert to.
         **unit_kwargs
             The kwargs form of ``units``. Can only be used for
