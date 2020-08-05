@@ -1,13 +1,26 @@
-.. accessors documentation master file, created by
-   sphinx-quickstart on Thu Jul  2 01:49:50 2020.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+pint-xarray
+===========
+A convenience wrapper for using `pint`_ in `xarray`_ objects.
 
-Welcome to accessors's documentation!
-=====================================
+.. _pint: https://pint.readthedocs.io/en/stable
+.. _xarray: https://xarray.pydata.org/en/stable
+
+Documentation
+-------------
+
+- :doc:`installation`
+- :doc:`contributing`
+- :doc:`examples`
+- :doc:`changelog`
+- :doc:`api`
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Contents:
+   :hidden:
 
+   installation
+   changelog
+   examples
    api
+   contributing
