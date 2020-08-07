@@ -3,4 +3,4 @@ xarray>=0.15.1
 sphinx>=3.0
 sphinx_rtd_theme
 nbsphinx
-git+https://github.com/xarray-contrib/sphinx-autosummary-accessors
+sphinx-autosummary-accessors
