@@ -8,10 +8,37 @@ A convenience wrapper for using `pint`_ in `xarray`_ objects.
 Documentation
 -------------
 
+**Getting Started**:
+
 - :doc:`installation`
 - :doc:`examples`
-- :doc:`changelog`
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Getting Started
+   :hidden:
+
+   installation
+   examples
+
+**User Guide**:
+
 - :doc:`terminology`
+- :doc:`creation`
+- :doc:`conversion`
+
+.. toctree::
+   :maxdepth: 1
+   :caption: User Guide
+   :hidden:
+
+   creation
+   conversion
+
+
+**Help & Reference**:
+
+- :doc:`changelog`
 - :doc:`api`
 - :doc:`contributing`
 
@@ -20,9 +47,6 @@ Documentation
    :caption: Contents:
    :hidden:
 
-   installation
    changelog
-   examples
-   terminology
    api
    contributing
