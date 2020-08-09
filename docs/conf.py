@@ -71,7 +71,7 @@ html_theme = "sphinx_rtd_theme"
 autosummary_generate = True
 autodoc_typehints = "none"
 
-napoleon_use_param = True
+napoleon_use_param = False
 napoleon_use_rtype = True
 
 napoleon_type_aliases = {
