@@ -74,6 +74,17 @@ autodoc_typehints = "none"
 napoleon_use_param = True
 napoleon_use_rtype = True
 
+napoleon_type_aliases = {
+    "dict-like": ":term:`dict-like <mapping>`",
+    "mapping": ":term:`mapping`",
+    "hashable": ":term:`hashable`",
+    # xarray
+    "Dataset": "~xarray.Dataset",
+    "DataArray": "~xarray.DataArray",
+    # pint / pint-xarray
+    "unit-like": ":term:`unit-like`",
+}
+
 # -- Options for intersphinx extension ---------------------------------------
 
 # Example configuration for intersphinx: refer to the Python standard library.
