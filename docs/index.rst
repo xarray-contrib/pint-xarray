@@ -32,6 +32,7 @@ Documentation
    :caption: User Guide
    :hidden:
 
+   terminology
    creation
    conversion
 
