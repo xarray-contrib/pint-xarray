@@ -42,6 +42,8 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
     "sphinx_autosummary_accessors",
+    "IPython.sphinxext.ipython_directive",
+    "IPython.sphinxext.ipython_console_highlighting",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
