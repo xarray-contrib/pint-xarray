@@ -29,6 +29,7 @@ year = dt.datetime.now().year
 project = "pint-xarray"
 author = f"{project} developers"
 copyright = f"{year}, {author}"
+github_url = "https://github.com/xarray-contrib/pint-xarray"
 
 
 # -- General configuration ---------------------------------------------------
@@ -38,6 +39,7 @@ copyright = f"{year}, {author}"
 # ones.
 extensions = [
     "sphinx.ext.intersphinx",
+    "sphinx.ext.extlinks",
     "sphinx.ext.autosummary",
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
@@ -69,6 +71,12 @@ html_theme = "sphinx_rtd_theme"
 
 
 # -- Extension configuration -------------------------------------------------
+
+# extlinks
+extlinks = {
+    "issue": (f"{github_url}/issues/%s", "GH"),
+    "pull": (f"{github_url}/pull/%s", "PR"),
+}
 
 # autosummary
 autosummary_generate = True
