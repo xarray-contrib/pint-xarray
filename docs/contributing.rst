@@ -1,6 +1,6 @@
 Contributing
 ============
-All development happens on `github <https://github.com/xarray-contrib/pint-xarray>`_.
+``pint-xarray`` is developed on `github <https://github.com/xarray-contrib/pint-xarray>`_.
 
 Linters / Autoformatters
 ------------------------
