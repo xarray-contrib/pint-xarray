@@ -70,9 +70,13 @@ html_theme = "sphinx_rtd_theme"
 
 # -- Extension configuration -------------------------------------------------
 
+# autosummary
 autosummary_generate = True
+
+# autodoc
 autodoc_typehints = "none"
 
+# napoleon
 napoleon_use_param = False
 napoleon_use_rtype = True
 
@@ -90,7 +94,6 @@ napoleon_type_aliases = {
 
 # -- Options for intersphinx extension ---------------------------------------
 
-# Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3/", None),
     "xarray": ("https://xarray.pydata.org/en/stable", None),
