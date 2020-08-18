@@ -76,6 +76,7 @@ autodoc_typehints = "none"
 napoleon_use_param = False
 napoleon_use_rtype = True
 
+napoleon_preprocess_types = True
 napoleon_type_aliases = {
     "dict-like": ":term:`dict-like <mapping>`",
     "mapping": ":term:`mapping`",
