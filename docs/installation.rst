@@ -1,7 +1,18 @@
 Installation
 ------------
-As there's no release, yet, ``pint-xarray`` can only be installed from
-source, either directly from github:
+Install from ``conda-forge``:
+
+.. code:: sh
+
+   conda install -c conda-forge pint-xarray
+
+or from ``PyPI``:
+
+.. code:: sh
+
+   python -m pip install pint-xarray
+
+or from source, either directly from github:
 
 .. code:: sh
 
