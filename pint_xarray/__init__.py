@@ -3,6 +3,7 @@ try:
 except ImportError:
     from importlib_metadata import version
 
+from . import testing  # noqa
 from .accessors import PintDataArrayAccessor, PintDatasetAccessor  # noqa
 
 try:
