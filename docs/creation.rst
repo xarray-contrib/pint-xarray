@@ -15,32 +15,35 @@ Usually, when loading data from disk we get a :py:class:`Dataset` or
 
 .. ipython::
 
-    In [1]: ds = xr.tutorial.open_dataset("air_temperature")
+    In [1]: ds = xr.Dataset(
+       ...:     {
+       ...:         "a": (("lon", "lat"), [[11.84, 3.12, 9.7], [7.8, 9.3, 14.72]]),
+       ...:         "b": (("lon", "lat"), [[13, 2, 7], [5, 4, 9]], {"units": "m"}),
+       ...:     },
+       ...:     coords={"lat": [10, 20, 30], "lon": [74, 76]},
+       ...: )
        ...: ds
 
-    In [2]: da = ds.air
+    In [2]: da = ds.b
        ...: da
 
 In order to get :py:class:`pint.Quantity` instances, we can use the
 :py:meth:`Dataset.pint.quantify` or :py:meth:`DataArray.pint.quantify` methods:
 
 .. ipython::
-    :okexcept:
 
     In [3]: ds.pint.quantify()
 
-As we can see, the dataset uses units like ``degree_north`` or ``degree_east``,
-which `pint`_ doesn't know about. To fix that, we can override the units of
-specific variables:
+We can also override the units of a variable:
 
 .. ipython::
 
-    In [4]: ds.pint.quantify(lat="degree", lon="degree")
+    In [4]: ds.pint.quantify(b="km")
 
-    In [5]: da.pint.quantify({"lat": "degree", "lon": "degree"})
+    In [5]: da.pint.quantify({"b": "degree"})
 
 Overriding works, even if there is no ``units`` attribute, so we could use this
-to attach units to a ordinary :py:class:`Dataset`:
+to attach units to a normal :py:class:`Dataset`:
 
 .. ipython::
 
@@ -48,9 +51,10 @@ to attach units to a ordinary :py:class:`Dataset`:
        ...: temporary_ds.pint.quantify({"a": "m"})
 
 Of course, we could use :py:class:`pint.Unit` instances instead of strings to
-specify units, too. If we wanted to change the units of the data of a
-:py:class:`DataArray`, we could do so using the :py:attr:`DataArray.name`
-attribute:
+specify units, too.
+
+If we wanted to change the units of the data of a :py:class:`DataArray`, we
+could do so using the :py:attr:`DataArray.name` attribute:
 
 .. ipython::
 
