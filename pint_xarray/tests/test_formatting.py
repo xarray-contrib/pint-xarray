@@ -14,6 +14,7 @@ unit_registry = pint.UnitRegistry(force_ndarray_like=True)
         (20, "[N] 7.1 5.4 ... 15.3"),
         (10, "[N] 7.1..."),
         (7, "[N] ..."),
+        (3, "[N] ..."),
     ),
 )
 def test_inline_repr(length, expected):
