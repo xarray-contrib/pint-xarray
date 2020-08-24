@@ -5,8 +5,9 @@ except ImportError:
 
 import pint
 
+from . import testing  # noqa: F401
 from . import formatting
-from .accessors import PintDataArrayAccessor, PintDatasetAccessor  # noqa
+from .accessors import PintDataArrayAccessor, PintDatasetAccessor  # noqa: F401
 
 try:
     __version__ = version("pint-xarray")
