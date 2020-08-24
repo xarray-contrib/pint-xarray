@@ -5,8 +5,8 @@ def assert_units_equal(a, b):
     """ assert that the units of two xarray objects are equal
 
     Raises an :py:exc:`AssertionError` if the units of both objects are not
-    equal. ``units`` attributes and attached unit objects are treated
-    differently.
+    equal. ``units`` attributes and attached unit objects are compared
+    separately.
 
     Parameters
     ----------
