@@ -2,14 +2,13 @@
 # Create and test a Python package on multiple Python versions.
 # Add steps that analyze code, save the dist with the build record, publish to a PyPI-compatible index, and more:
 # https://docs.microsoft.com/azure/devops/pipelines/languages/python
-
 trigger:
 - master
 
 jobs:
 - job: Linux
   pool:
-    vmImage: 'ubuntu-16.04'
+    vmImage: 'ubuntu-20.04'
   strategy:
     matrix:
       Python36:
@@ -23,58 +22,67 @@ jobs:
         upstream_dev: true
 
   steps:
+  - template: ci/install.yml
+  - template: ci/unit-tests.yml
+
+- job: LintFlake8
+  variables:
+    python.version: '3.8'
+  pool:
+    vmImage: 'ubuntu-20.04'
+  steps:
   - task: UsePythonVersion@0
     inputs:
       versionSpec: '$(python.version)'
     displayName: 'Use Python $(python.version)'
-
-  - script: |
-        python -m pip install --upgrade pip setuptools wheel
-    displayName: 'Upgrade pip and build tools'
-
-  - script: |
-      pip install -r requirements.txt
-    displayName: 'Install dependencies'
-
-  - script: |
-      python -m pip install \
-        -i https://pypi.anaconda.org/scipy-wheels-nightly/simple \
-        --no-deps \
-        --pre \
-        --upgrade \
-        numpy
-      python -m pip install --upgrade \
-        git+https://github.com/hgrecco/pint \
-        git+https://github.com/pydata/xarray
-    displayName: 'Install upstream-dev dependencies'
-    condition: eq(variables['UPSTREAM_DEV'], 'true')
-
-  - script: |
-      pip install pytest pytest-azurepipelines pytest-cov
-      pytest --verbose --cov=./ --cov-report=xml
-    displayName: 'pytest'
-
-  - script: |
-      curl https://codecov.io/bash > codecov.sh
-      bash codecov.sh -t aba016f6-96be-4bc3-bdbe-caa6b6aff815
-    displayName: 'Upload coverage to codecov.io'
-
-- job: LintFlake8
-  pool:
-    vmImage: 'ubuntu-16.04'
-  steps:
-  - task: UsePythonVersion@0
   - bash: python -m pip install flake8
     displayName: Install flake8
-  - bash: flake8
+  - bash: python -m pip list
+    displayName: Version Info
+  - bash: python -m flake8
     displayName: flake8 lint checks
 
-- job: FormattingBlack
+- job: FormattingIsort
+  variables:
+    python.version: '3.8'
   pool:
-    vmImage: 'ubuntu-16.04'
+    vmImage: 'ubuntu-20.04'
+  steps:
+  - template: ci/install.yml
+  - script: |
+      python -m isort --check .
+    displayName: isort formatting check
+
+- job: FormattingBlack
+  variables:
+    python.version: '3.8'
+  pool:
+    vmImage: 'ubuntu-20.04'
   steps:
   - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
+    displayName: 'Use Python $(python.version)'
   - bash: python -m pip install black
     displayName: Install black
-  - bash: black --check .
+  - bash: python -m pip list
+    displayName: Version Info
+  - bash: python -m black --check .
     displayName: black formatting check
+
+# - job: FormattingBlackdoc
+#   variables:
+#     python.version: '3.8'
+#   pool:
+#     vmImage: 'ubuntu-20.04'
+#   steps:
+#   - task: UsePythonVersion@0
+#     inputs:
+#       versionSpec: '$(python.version)'
+#     displayName: 'Use Python $(python.version)'
+#   - bash: python -m pip install blackdoc
+#     displayName: Install blackdoc
+#   - bash: python -m pip list
+#     displayName: Version Info
+#   - bash: python -m blackdoc --check .
+#     displayName: blackdoc formatting check

@@ -1,0 +1,25 @@
+steps:
+- bash: |
+    python -c 'import pint_xarray'
+  displayName: Import pint-xarray
+
+- bash: |
+    pytest \
+      --verbose \
+      --cov=pint_xarray \
+      --cov-report=xml \
+      --junitxml=junit/test-results.xml
+
+  displayName: Run tests
+
+- bash: |
+    curl https://codecov.io/bash > codecov.sh
+    bash codecov.sh -t aba016f6-96be-4bc3-bdbe-caa6b6aff815
+  displayName: Upload coverage to codecov.io
+
+- task: PublishTestResults@2
+  condition: succeededOrFailed()
+  inputs:
+    testResultsFiles: '**/test-*.xml'
+    failTaskOnFailedTests: false
+    testRunTitle: '$(Agent.JobName)'

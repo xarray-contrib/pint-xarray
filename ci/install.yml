@@ -1,0 +1,34 @@
+steps:
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '$(python.version)'
+  displayName: 'Use Python $(python.version)'
+
+- script: |
+    python -m pip install --upgrade pip setuptools wheel
+  displayName: Upgrade pip and build tools
+
+- script: |
+    pip install -r ci/requirements.txt
+  displayName: Install dependencies
+
+- script: |
+    python -m pip install \
+      -i https://pypi.anaconda.org/scipy-wheels-nightly/simple \
+      --no-deps \
+      --pre \
+      --upgrade \
+      numpy
+    python -m pip install --upgrade \
+      git+https://github.com/hgrecco/pint \
+      git+https://github.com/pydata/xarray
+  displayName: Install upstream-dev dependencies
+  condition: eq(variables['UPSTREAM_DEV'], 'true')
+
+- bash: |
+    python -m pip install --no-deps -e .
+  displayName: Install pint-xarray
+
+- bash: |
+    python -m pip list
+  displayName: Version Info
