@@ -26,10 +26,14 @@ jobs:
   - template: ci/unit-tests.yml
 
 - job: LintFlake8
+  variables:
+    python.version: '3.8'
   pool:
     vmImage: 'ubuntu-20.04'
   steps:
   - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
     displayName: 'Use Python $(python.version)'
   - bash: python -m pip install flake8
     displayName: Install flake8
@@ -51,10 +55,14 @@ jobs:
     displayName: isort formatting check
 
 - job: FormattingBlack
+  variables:
+    python.version: '3.8'
   pool:
     vmImage: 'ubuntu-20.04'
   steps:
   - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
     displayName: 'Use Python $(python.version)'
   - bash: python -m pip install black
     displayName: Install black
@@ -64,10 +72,14 @@ jobs:
     displayName: black formatting check
 
 - job: FormattingBlackdoc
+  variables:
+    python.version: '3.8'
   pool:
     vmImage: 'ubuntu-20.04'
   steps:
   - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
     displayName: 'Use Python $(python.version)'
   - bash: python -m pip install blackdoc
     displayName: Install blackdoc
