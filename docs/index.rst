@@ -39,7 +39,7 @@ Documentation
 
 **Help & Reference**:
 
-- :doc:`changelog`
+- :doc:`whats-new`
 - :doc:`api`
 - :doc:`contributing`
 
@@ -48,6 +48,6 @@ Documentation
    :caption: Help & Reference
    :hidden:
 
-   changelog
+   whats-new
    api
    contributing
