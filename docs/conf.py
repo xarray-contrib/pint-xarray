@@ -29,6 +29,7 @@ year = dt.datetime.now().year
 project = "pint-xarray"
 author = f"{project} developers"
 copyright = f"{year}, {author}"
+github_url = "https://github.com/xarray-contrib/pint-xarray"
 
 
 # -- General configuration ---------------------------------------------------
@@ -38,10 +39,13 @@ copyright = f"{year}, {author}"
 # ones.
 extensions = [
     "sphinx.ext.intersphinx",
+    "sphinx.ext.extlinks",
     "sphinx.ext.autosummary",
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
     "sphinx_autosummary_accessors",
+    "IPython.sphinxext.ipython_directive",
+    "IPython.sphinxext.ipython_console_highlighting",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -68,13 +72,38 @@ html_theme = "sphinx_rtd_theme"
 
 # -- Extension configuration -------------------------------------------------
 
+# extlinks
+extlinks = {
+    "issue": (f"{github_url}/issues/%s", "GH"),
+    "pull": (f"{github_url}/pull/%s", "PR"),
+}
+
+# autosummary
 autosummary_generate = True
+
+# autodoc
 autodoc_typehints = "none"
 
-napoleon_use_param = True
+# napoleon
+napoleon_use_param = False
 napoleon_use_rtype = True
+
+napoleon_preprocess_types = True
+napoleon_type_aliases = {
+    "dict-like": ":term:`dict-like <mapping>`",
+    "mapping": ":term:`mapping`",
+    "hashable": ":term:`hashable`",
+    # xarray
+    "Dataset": "~xarray.Dataset",
+    "DataArray": "~xarray.DataArray",
+    # pint / pint-xarray
+    "unit-like": ":term:`unit-like`",
+}
 
 # -- Options for intersphinx extension ---------------------------------------
 
-# Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {"https://docs.python.org/3/": None}
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3/", None),
+    "xarray": ("https://xarray.pydata.org/en/stable", None),
+    "pint": ("https://pint.readthedocs.io/en/stable", None),
+}

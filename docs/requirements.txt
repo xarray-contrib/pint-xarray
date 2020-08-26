@@ -1,6 +1,8 @@
-pint>=0.13
-xarray>=0.15.1
-sphinx>=3.0
+pint>=0.14
+xarray>=0.16.0
+netCDF4
+sphinx>=3.2
 sphinx_rtd_theme
+ipython
 nbsphinx
 sphinx-autosummary-accessors
