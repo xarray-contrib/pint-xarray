@@ -5,7 +5,7 @@ from xarray import DataArray, Dataset, Variable
 
 
 def array_attach_units(data, unit, registry=None):
-    """ attach a unit to the data
+    """attach a unit to the data
 
     Parameters
     ----------
@@ -46,7 +46,7 @@ def array_attach_units(data, unit, registry=None):
 
 
 def array_convert_units(data, unit):
-    """ convert the units of an array
+    """convert the units of an array
 
     This is roughly the same as ``data.to(unit)``.
 
@@ -80,7 +80,7 @@ def array_convert_units(data, unit):
 
 
 def array_extract_units(data):
-    """ extract the units of an array
+    """extract the units of an array
 
     If ``data`` is not a quantity, the units are ``None``
     """
