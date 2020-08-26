@@ -2,9 +2,6 @@
 # Create and test a Python package on multiple Python versions.
 # Add steps that analyze code, save the dist with the build record, publish to a PyPI-compatible index, and more:
 # https://docs.microsoft.com/azure/devops/pipelines/languages/python
-variables:
-  python.version: '3.8'
-
 trigger:
 - master
 
@@ -15,13 +12,13 @@ jobs:
   strategy:
     matrix:
       Python36:
-        python.version: '3.6'
+        conda_env: py36
       Python37:
-        python.version: '3.7'
+        conda_env: py37
       Python38:
-        python.version: '3.8'
+        conda_env: py38
       Python38-upstream-dev:
-        python.version: '3.8'
+        conda_env: py38
         upstream_dev: true
 
   steps:
@@ -42,11 +39,15 @@ jobs:
     displayName: flake8 lint checks
 
 - job: FormattingIsort
+  variables:
+    conda_env: py38
   pool:
     vmImage: 'ubuntu-20.04'
   steps:
   - template: ci/install.yml
-  - bash: python -m isort --check .
+  - script: |
+      source activate pint-xarray-tests
+      python -m isort --check .
     displayName: isort formatting check
 
 - job: FormattingBlack

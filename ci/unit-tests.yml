@@ -1,5 +1,11 @@
 steps:
-- script: |
+- bash: |
+    source activate pint-xarray-tests
+    python -c 'import pint_xarray'
+  displayName: Import pint-xarray
+
+- bash: |
+    source activate pint-xarray-tests
     pytest \
       --verbose \
       --cov=pint_xarray \
@@ -8,7 +14,7 @@ steps:
 
   displayName: Run tests
 
-- script: |
+- bash: |
     curl https://codecov.io/bash > codecov.sh
     bash codecov.sh -t aba016f6-96be-4bc3-bdbe-caa6b6aff815
   displayName: Upload coverage to codecov.io
