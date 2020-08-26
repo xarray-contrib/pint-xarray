@@ -36,7 +36,7 @@ def is_dict_like(obj):
 
 
 def zip_mappings(*mappings, fill_value=None):
-    """ zip mappings by combining values for common keys into a tuple
+    """zip mappings by combining values for common keys into a tuple
 
     Works like itertools.zip_longest, so if a key is missing from a
     mapping, it is replaced by ``fill_value``.
@@ -237,7 +237,8 @@ class PintDataArrayAccessor:
 
         units = units_to_str_or_none(conversion.extract_units(self.da))
         new_obj = conversion.attach_unit_attributes(
-            conversion.strip_units(self.da), units,
+            conversion.strip_units(self.da),
+            units,
         )
 
         return new_obj
@@ -271,7 +272,7 @@ class PintDataArrayAccessor:
         raise AttributeError("Don't try to change the registry once created")
 
     def to(self, units=None, **unit_kwargs):
-        """ convert the quantities in a DataArray
+        """convert the quantities in a DataArray
 
         Parameters
         ----------
@@ -528,7 +529,7 @@ class PintDatasetAccessor:
         return new_obj
 
     def to(self, units=None, **unit_kwargs):
-        """ convert the quantities in a DataArray
+        """convert the quantities in a DataArray
 
         Parameters
         ----------
