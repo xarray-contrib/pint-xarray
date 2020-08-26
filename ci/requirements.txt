@@ -1,0 +1,9 @@
+pint
+numpy
+xarray
+isort
+black
+flake8
+pytest
+pytest-cov
+pytest-azurepipelines

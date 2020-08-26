@@ -23,41 +23,8 @@ jobs:
         upstream_dev: true
 
   steps:
-  - task: UsePythonVersion@0
-    inputs:
-      versionSpec: '$(python.version)'
-    displayName: 'Use Python $(python.version)'
-
-  - script: |
-        python -m pip install --upgrade pip setuptools wheel
-    displayName: 'Upgrade pip and build tools'
-
-  - script: |
-      pip install -r requirements.txt
-    displayName: 'Install dependencies'
-
-  - script: |
-      python -m pip install \
-        -i https://pypi.anaconda.org/scipy-wheels-nightly/simple \
-        --no-deps \
-        --pre \
-        --upgrade \
-        numpy
-      python -m pip install --upgrade \
-        git+https://github.com/hgrecco/pint \
-        git+https://github.com/pydata/xarray
-    displayName: 'Install upstream-dev dependencies'
-    condition: eq(variables['UPSTREAM_DEV'], 'true')
-
-  - script: |
-      pip install pytest pytest-azurepipelines pytest-cov
-      pytest --verbose --cov=./ --cov-report=xml
-    displayName: 'pytest'
-
-  - script: |
-      curl https://codecov.io/bash > codecov.sh
-      bash codecov.sh -t aba016f6-96be-4bc3-bdbe-caa6b6aff815
-    displayName: 'Upload coverage to codecov.io'
+  - template: ci/install.yml
+  - template: ci/unit-tests.yml
 
 - job: LintFlake8
   pool:
