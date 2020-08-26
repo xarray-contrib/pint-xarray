@@ -9,7 +9,7 @@ trigger:
 jobs:
 - job: Linux
   pool:
-    vmImage: 'ubuntu-16.04'
+    vmImage: 'ubuntu-20.04'
   strategy:
     matrix:
       Python36:
@@ -28,7 +28,7 @@ jobs:
 
 - job: LintFlake8
   pool:
-    vmImage: 'ubuntu-16.04'
+    vmImage: 'ubuntu-20.04'
   steps:
   - task: UsePythonVersion@0
     displayName: 'Use Python $(python.version)'
@@ -41,7 +41,7 @@ jobs:
 
 - job: FormattingIsort
   pool:
-    vmImage: 'ubuntu-16.04'
+    vmImage: 'ubuntu-20.04'
   steps:
   - template: ci/install.yml
   - bash: python -m isort --check .
@@ -49,7 +49,7 @@ jobs:
 
 - job: FormattingBlack
   pool:
-    vmImage: 'ubuntu-16.04'
+    vmImage: 'ubuntu-20.04'
   steps:
   - task: UsePythonVersion@0
     displayName: 'Use Python $(python.version)'
