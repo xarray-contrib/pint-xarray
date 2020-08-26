@@ -1,13 +1,16 @@
-parameters:
-  env_file: ci/requirements/$CONDA_ENV.yml
-
 steps:
-- template: add-conda-to-path.yml
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '$(python.version)'
+  displayName: 'Use Python $(python.version)'
 
-- bash: |
-    conda update -y conda
-    conda env create -n pint-xarray-tests --file ${{ parameters.env_file }}
-  displayName: Install conda dependencies
+- script: |
+    python -m pip install --upgrade pip setuptools wheel
+  displayName: Upgrade pip and build tools
+
+- script: |
+    pip install -r ci/requirements.txt
+  displayName: Install dependencies
 
 - script: |
     python -m pip install \
@@ -23,12 +26,9 @@ steps:
   condition: eq(variables['UPSTREAM_DEV'], 'true')
 
 - bash: |
-    source activate pint-xarray-tests
     python -m pip install --no-deps -e .
   displayName: Install pint-xarray
 
 - bash: |
-    source activate pint-xarray-tests
-    conda info -a
-    conda list
+    python -m pip list
   displayName: Version Info

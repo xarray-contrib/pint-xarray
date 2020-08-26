@@ -12,13 +12,13 @@ jobs:
   strategy:
     matrix:
       Python36:
-        conda_env: py36
+        python.version: '3.6'
       Python37:
-        conda_env: py37
+        python.version: '3.7'
       Python38:
-        conda_env: py38
+        python.version: '3.7'
       Python38-upstream-dev:
-        conda_env: py38
+        python.version: '3.8'
         upstream_dev: true
 
   steps:
@@ -44,13 +44,12 @@ jobs:
 
 - job: FormattingIsort
   variables:
-    conda_env: py38
+    python.version: '3.8'
   pool:
     vmImage: 'ubuntu-20.04'
   steps:
   - template: ci/install.yml
   - script: |
-      source activate pint-xarray-tests
       python -m isort --check .
     displayName: isort formatting check
 

@@ -1,11 +1,9 @@
 steps:
 - bash: |
-    source activate pint-xarray-tests
     python -c 'import pint_xarray'
   displayName: Import pint-xarray
 
 - bash: |
-    source activate pint-xarray-tests
     pytest \
       --verbose \
       --cov=pint_xarray \
