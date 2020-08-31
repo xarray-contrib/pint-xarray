@@ -123,6 +123,17 @@ class TestDequantifyDataArray:
         assert_equal(result, orig)
 
 
+class TestPropertiesDataArray:
+    def test_units_getattr(self, example_quantity_da):
+        da = example_quantity_da
+        assert isinstance(da.pint.units, Unit)
+        assert da.pint.units == unit_registry.m
+
+    def test_unit_getattr_unitless(self, example_unitless_da):
+        da = example_unitless_da
+        assert da.pint.units is None
+
+
 @pytest.fixture()
 def example_unitless_ds():
     users = np.linspace(0, 10, 20)

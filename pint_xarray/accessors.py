@@ -244,7 +244,7 @@ class PintDataArrayAccessor:
 
     @property
     def units(self):
-        return self.da.data.units
+        return getattr(self.da.data, "units", None)
 
     @units.setter
     def units(self, units):
