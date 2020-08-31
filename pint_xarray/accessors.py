@@ -4,7 +4,7 @@ import itertools
 import pint
 from pint.quantity import Quantity
 from pint.unit import Unit
-from xarray import DataArray, register_dataarray_accessor, register_dataset_accessor
+from xarray import register_dataarray_accessor, register_dataset_accessor
 from xarray.core.npcompat import IS_NEP18_ACTIVE
 
 from . import conversion
@@ -249,9 +249,7 @@ class PintDataArrayAccessor:
     @units.setter
     def units(self, units):
         quantity = conversion.array_attach_units(self.da.data, units)
-        self.da = DataArray(
-            dim=self.da.dims, data=quantity, coords=self.da.coords, attrs=self.da.attrs
-        )
+        self.da.data = quantity
 
     @property
     def dimensionality(self):

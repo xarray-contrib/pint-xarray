@@ -129,9 +129,19 @@ class TestPropertiesDataArray:
         assert isinstance(da.pint.units, Unit)
         assert da.pint.units == unit_registry.m
 
+    def test_units_setattr(self, example_quantity_da):
+        da = example_quantity_da
+        with pytest.raises(ValueError):
+            da.pint.units = "s"
+
     def test_unit_getattr_unitless(self, example_unitless_da):
         da = example_unitless_da
         assert da.pint.units is None
+
+    def test_unit_setattr_unitless(self, example_unitless_da):
+        da = example_unitless_da
+        da.pint.units = unit_registry.s
+        assert da.pint.units == unit_registry.s
 
 
 @pytest.fixture()
