@@ -10,3 +10,6 @@ What's new
   :py:meth:`Dataset.pint.quantify`, :py:meth:`DataArray.pint.dequantify` and
   :py:meth:`Dataset.pint.dequantify` (:pull:`17`)
 - expose :py:func:`pint_xarray.testing.assert_units_equal` as public API (:pull:`24`)
+- fix the :py:attr:`DataArray.pint.units`, :py:attr:`DataArray.pint.magnitude`
+  and :py:attr:`DataArray.pint.dimensionality` properties and add docstrings for
+  all three. (:pull:`31`)
