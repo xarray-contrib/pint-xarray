@@ -277,7 +277,7 @@ class PintDataArrayAccessor:
             The dimensionality of the data. If it is not a quantity, the
             dimensionality is :py:obj:`None`.
         """
-        return self.da.data.dimensionality
+        return getattr(self.da.data, "dimensionality", None)
 
     @property
     def registry(self):
