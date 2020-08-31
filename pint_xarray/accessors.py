@@ -244,15 +244,39 @@ class PintDataArrayAccessor:
 
     @property
     def units(self):
+        """get the units of the wrapped data
+
+        Returns
+        -------
+        units : pint.Unit or None
+            the units of the wrapped data. If it is not a quantity, the units
+            are :py:obj:`None`.
+        """
         return getattr(self.da.data, "units", None)
 
     @units.setter
     def units(self, units):
+        """set the units of the wrapped data in-place
+
+        Raises
+        ------
+        ValueError
+            If the data already is a quantity, or the units are not a
+            :py:class:`pint.Unit` instance.
+        """
         quantity = conversion.array_attach_units(self.da.data, units)
         self.da.data = quantity
 
     @property
     def dimensionality(self):
+        """get the dimensionality of the data
+
+        Returns
+        -------
+        dimensionality : str or None
+            The dimensionality of the data. If it is not a quantity, the
+            dimensionality is :py:obj:`None`.
+        """
         return self.da.data.dimensionality
 
     @property
