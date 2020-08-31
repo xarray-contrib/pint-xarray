@@ -70,19 +70,19 @@ jobs:
   - bash: python -m black --check .
     displayName: black formatting check
 
-# - job: FormattingBlackdoc
-#   variables:
-#     python.version: '3.8'
-#   pool:
-#     vmImage: 'ubuntu-20.04'
-#   steps:
-#   - task: UsePythonVersion@0
-#     inputs:
-#       versionSpec: '$(python.version)'
-#     displayName: 'Use Python $(python.version)'
-#   - bash: python -m pip install blackdoc
-#     displayName: Install blackdoc
-#   - bash: python -m pip list
-#     displayName: Version Info
-#   - bash: python -m blackdoc --check .
-#     displayName: blackdoc formatting check
+- job: FormattingBlackdoc
+  variables:
+    python.version: '3.8'
+  pool:
+    vmImage: 'ubuntu-20.04'
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
+    displayName: 'Use Python $(python.version)'
+  - bash: python -m pip install blackdoc
+    displayName: Install blackdoc
+  - bash: python -m pip list
+    displayName: Version Info
+  - bash: python -m blackdoc --check .
+    displayName: blackdoc formatting check
