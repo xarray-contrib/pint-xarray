@@ -4,12 +4,7 @@ import itertools
 import pint
 from pint.quantity import Quantity
 from pint.unit import Unit
-from xarray import (
-    DataArray,
-    Dataset,
-    register_dataarray_accessor,
-    register_dataset_accessor,
-)
+from xarray import DataArray, register_dataarray_accessor, register_dataset_accessor
 from xarray.core.npcompat import IS_NEP18_ACTIVE
 
 from . import conversion
@@ -375,27 +370,6 @@ class PintDataArrayAccessor:
 
         return conversion.convert_units(self.da, units)
 
-    def to_base_units(self):
-        quantity = self.da.data.to_base_units()
-        return DataArray(
-            dim=self.da.dims,
-            data=quantity,
-            coords=self.da.coords,
-            attrs=self.da.attrs,
-            encoding=self.da.encoding,
-        )
-
-    # TODO integrate with the uncertainties package here...?
-    def plus_minus(self, value, error, relative=False):
-        quantity = self.da.data.plus_minus(value, error, relative)
-        return DataArray(
-            dim=self.da.dims,
-            data=quantity,
-            coords=self.da.coords,
-            attrs=self.da.attrs,
-            encoding=self.da.encoding,
-        )
-
     def sel(
         self, indexers=None, method=None, tolerance=None, drop=False, **indexers_kwargs
     ):
@@ -629,14 +603,6 @@ class PintDatasetAccessor:
         units = either_dict_or_kwargs(units, unit_kwargs, "to")
 
         return conversion.convert_units(self.ds, units)
-
-    def to_base_units(self):
-        base_vars = {name: da.pint.to_base_units() for name, da in self.ds.items()}
-        return Dataset(base_vars, coords=self.ds.coords, attrs=self.ds.attrs)
-
-    # TODO unsure if the upstream capability exists in pint for this yet.
-    def to_system(self, system):
-        raise NotImplementedError
 
     def sel(
         self, indexers=None, method=None, tolerance=None, drop=False, **indexers_kwargs

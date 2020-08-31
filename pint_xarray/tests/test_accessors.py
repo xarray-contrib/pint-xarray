@@ -147,24 +147,6 @@ def example_quantity_ds():
     return ds
 
 
-@pytest.mark.skip(reason="Not yet implemented")
-class TestPropertiesDataArray:
-    def test_units(self):
-        ...
-
-
-@pytest.mark.skip(reason="Not yet implemented")
-class TestConversionDataArray:
-    def test_units(self):
-        ...
-
-
-@pytest.mark.skip(reason="Not yet implemented")
-class TestUncertainties:
-    def test_units(self):
-        ...
-
-
 class TestQuantifyDataSet:
     def test_attach_units_from_str(self, example_unitless_ds):
         orig = example_unitless_ds
@@ -242,8 +224,3 @@ class TestDequantifyDataSet:
 
         result = quantified.pint.dequantify().pint.quantify()
         assert_equal(quantified, result)
-
-
-@pytest.mark.skip(reason="Not yet implemented")
-class TestIndexing:
-    ...
