@@ -124,10 +124,20 @@ class TestDequantifyDataArray:
 
 
 class TestPropertiesDataArray:
+    def test_magnitude_getattr(self, example_quantity_da):
+        da = example_quantity_da
+        actual = da.pint.magnitude
+        assert not isinstance(actual, Quantity)
+
+    def test_magnitude_getattr_unitless(self, example_unitless_da):
+        da = example_unitless_da
+        xr.testing.assert_duckarray_equal(da.pint.magnitude, da.data)
+
     def test_units_getattr(self, example_quantity_da):
         da = example_quantity_da
-        assert isinstance(da.pint.units, Unit)
-        assert da.pint.units == unit_registry.m
+        actual = da.pint.units
+        assert isinstance(actual, Unit)
+        assert actual == unit_registry.m
 
     def test_units_setattr(self, example_quantity_da):
         da = example_quantity_da

@@ -240,7 +240,12 @@ class PintDataArrayAccessor:
 
     @property
     def magnitude(self):
-        return self.da.data.magnitude
+        """get the magnitude of the wrapped data
+
+        If not a quantity, will return the data itself.
+        """
+        data = self.da.data
+        return getattr(data, "magnitude", data)
 
     @property
     def units(self):
