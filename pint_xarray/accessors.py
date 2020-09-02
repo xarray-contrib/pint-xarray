@@ -57,6 +57,14 @@ def zip_mappings(*mappings, fill_value=None):
     return zipped
 
 
+def merge_mappings(first, *mappings):
+    result = first.copy()
+    for mapping in mappings:
+        result.update(mapping)
+
+    return result
+
+
 def units_to_str_or_none(mapping):
     return {
         key: str(value) if isinstance(value, Unit) else value
@@ -82,9 +90,20 @@ def either_dict_or_kwargs(positional, keywords, method_name):
         return keywords
 
 
-def get_registry(unit_registry):
+def get_registry(unit_registry, units):
+    registries = {unit._REGISTRY for unit in units.values() if isinstance(unit, Unit)}
+
     if unit_registry is None:
-        unit_registry = pint.get_application_registry()
+        if not registries:
+            unit_registry = pint.get_application_registry()
+            registries.add(unit_registry)
+        elif len(registries) == 1:
+            (unit_registry,) = registries
+
+    if len(registries) > 1 or unit_registry not in registries:
+        raise ValueError(
+            "using multiple unit registries in the same object is not supported"
+        )
 
     if not unit_registry.force_ndarray_like and not unit_registry.force_ndarray:
         raise ValueError(
@@ -195,7 +214,10 @@ class PintDataArrayAccessor:
 
         units = either_dict_or_kwargs(units, unit_kwargs, ".quantify")
 
-        registry = get_registry(unit_registry)
+        registry = get_registry(
+            unit_registry,
+            merge_mappings(units, conversion.extract_units(self.da)),
+        )
 
         unit_attrs = conversion.extract_unit_attributes(self.da)
         new_obj = conversion.strip_unit_attributes(self.da)
@@ -458,7 +480,10 @@ class PintDatasetAccessor:
             b        (x) int64 <Quantity([ 5 -2  1], 'decimeter')>
         """
         units = either_dict_or_kwargs(units, unit_kwargs, ".quantify")
-        registry = get_registry(unit_registry)
+        registry = get_registry(
+            unit_registry,
+            merge_mappings(units, conversion.extract_units(self.ds)),
+        )
 
         unit_attrs = conversion.extract_unit_attributes(self.ds)
         new_obj = conversion.strip_unit_attributes(self.ds)
