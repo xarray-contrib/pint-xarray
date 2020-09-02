@@ -63,7 +63,9 @@ def zip_mappings(*mappings, fill_value=None):
 def merge_mappings(first, *mappings):
     result = first.copy()
     for mapping in mappings:
-        result.update(mapping)
+        result.update(
+            {key: value for key, value in mapping.items() if value is not None}
+        )
 
     return result
 
@@ -99,9 +101,9 @@ def get_registry(unit_registry, units):
     if unit_registry is None:
         if not registries:
             unit_registry = _registry
-            registries.add(unit_registry)
         elif len(registries) == 1:
             (unit_registry,) = registries
+    registries.add(unit_registry)
 
     if len(registries) > 1 or unit_registry not in registries:
         raise ValueError(
