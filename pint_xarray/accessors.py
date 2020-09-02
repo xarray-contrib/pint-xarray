@@ -18,6 +18,9 @@ if not IS_NEP18_ACTIVE:
     raise ImportError("NUMPY_EXPERIMENTAL_ARRAY_FUNCTION is not enabled")
 
 
+_registry = pint.UnitRegistry(force_ndarray_like=True)
+
+
 # TODO could/should we overwrite xr.open_dataset and xr.open_mfdataset to make
 # them apply units upon loading???
 # TODO could even override the decode_cf kwarg?
@@ -95,7 +98,7 @@ def get_registry(unit_registry, units):
 
     if unit_registry is None:
         if not registries:
-            unit_registry = pint.get_application_registry()
+            unit_registry = _registry
             registries.add(unit_registry)
         elif len(registries) == 1:
             (unit_registry,) = registries
