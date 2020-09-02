@@ -285,7 +285,7 @@ class PintDataArrayAccessor:
     @property
     def registry(self):
         # TODO is this a bad idea? (see GH issue #1071 in pint)
-        return self.data._REGISTRY
+        return getattr(self.da.data, "_REGISTRY", None)
 
     @registry.setter
     def registry(self, _):
