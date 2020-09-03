@@ -94,11 +94,6 @@ class TestQuantifyDataArray:
         with pytest.raises(UndefinedUnitError):
             da.pint.quantify(units="aecjhbav")
 
-    def test_registry_kwargs(self, example_unitless_da):
-        orig = example_unitless_da
-        result = orig.pint.quantify(registry_kwargs={"auto_reduce_dimensions": True})
-        assert result.data._REGISTRY.auto_reduce_dimensions is True
-
 
 class TestDequantifyDataArray:
     def test_strip_units(self, example_quantity_da):
