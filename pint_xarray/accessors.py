@@ -5,18 +5,8 @@ import pint
 from pint.quantity import Quantity
 from pint.unit import Unit
 from xarray import register_dataarray_accessor, register_dataset_accessor
-from xarray.core.npcompat import IS_NEP18_ACTIVE
 
 from . import conversion
-
-if not hasattr(Quantity, "__array_function__"):
-    raise ImportError(
-        "Imported version of pint does not implement " "__array_function__"
-    )
-
-if not IS_NEP18_ACTIVE:
-    raise ImportError("NUMPY_EXPERIMENTAL_ARRAY_FUNCTION is not enabled")
-
 
 # TODO could/should we overwrite xr.open_dataset and xr.open_mfdataset to make
 # them apply units upon loading???
