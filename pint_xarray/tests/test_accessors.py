@@ -144,11 +144,11 @@ class TestPropertiesDataArray:
         with pytest.raises(ValueError):
             da.pint.units = "s"
 
-    def test_unit_getattr_unitless(self, example_unitless_da):
+    def test_units_getattr_unitless(self, example_unitless_da):
         da = example_unitless_da
         assert da.pint.units is None
 
-    def test_unit_setattr_unitless(self, example_unitless_da):
+    def test_units_setattr_unitless(self, example_unitless_da):
         da = example_unitless_da
         da.pint.units = unit_registry.s
         assert da.pint.units == unit_registry.s
