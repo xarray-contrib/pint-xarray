@@ -238,7 +238,7 @@ class PintDataArrayAccessor:
     def units(self):
         """the units of the data or :py:obj:`None` if not a quantity.
 
-        The units can only be set if the data is not already a quantity.
+        Setting the units is possible, but only if the data is not already a quantity.
         """
         return getattr(self.da.data, "units", None)
 
