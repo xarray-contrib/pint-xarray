@@ -9,6 +9,7 @@ Attaching units
     :suppress:
 
     import xarray as xr
+    import pint
 
 Usually, when loading data from disk we get a :py:class:`Dataset` or
 :py:class:`DataArray` with units in attributes:
