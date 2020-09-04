@@ -40,7 +40,7 @@ We can also override the units of a variable:
 
     In [4]: ds.pint.quantify(b="km")
 
-    In [5]: da.pint.quantify({"b": "degree"})
+    In [5]: da.pint.quantify("degree")
 
 Overriding works, even if there is no ``units`` attribute, so we could use this
 to attach units to a normal :py:class:`Dataset`:
