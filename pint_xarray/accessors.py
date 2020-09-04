@@ -95,7 +95,8 @@ def either_dict_or_kwargs(positional, keywords, method_name):
         return keywords
 
 
-def get_registry(unit_registry, units):
+def get_registry(unit_registry, new_units, existing_units):
+    units = merge_mappings(existing_units, new_units)
     registries = {unit._REGISTRY for unit in units.values() if isinstance(unit, Unit)}
 
     if unit_registry is None:
@@ -221,7 +222,8 @@ class PintDataArrayAccessor:
 
         registry = get_registry(
             unit_registry,
-            merge_mappings(units, conversion.extract_units(self.da)),
+            units,
+            conversion.extract_units(self.da),
         )
 
         unit_attrs = conversion.extract_unit_attributes(self.da)
@@ -487,7 +489,8 @@ class PintDatasetAccessor:
         units = either_dict_or_kwargs(units, unit_kwargs, ".quantify")
         registry = get_registry(
             unit_registry,
-            merge_mappings(units, conversion.extract_units(self.ds)),
+            units,
+            conversion.extract_units(self.ds),
         )
 
         unit_attrs = conversion.extract_unit_attributes(self.ds)
