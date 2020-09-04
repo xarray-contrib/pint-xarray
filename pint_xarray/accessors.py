@@ -8,7 +8,7 @@ from xarray import DataArray, register_dataarray_accessor, register_dataset_acce
 
 from . import conversion
 
-_registry = pint.UnitRegistry(force_ndarray_like=True)
+default_registry = pint.UnitRegistry(force_ndarray_like=True)
 
 # TODO could/should we overwrite xr.open_dataset and xr.open_mfdataset to make
 # them apply units upon loading???
@@ -90,7 +90,7 @@ def get_registry(unit_registry, new_units, existing_units):
 
     if unit_registry is None:
         if not registries:
-            unit_registry = _registry
+            unit_registry = default_registry
         elif len(registries) == 1:
             (unit_registry,) = registries
     registries.add(unit_registry)
