@@ -53,6 +53,13 @@ to attach units to a normal :py:class:`Dataset`:
 Of course, we could use :py:class:`pint.Unit` instances instead of strings to
 specify units, too.
 
+.. note::
+
+    Unit objects tied to different registries cannot interact with each
+    other. In order to avoid this, :py:meth:`DataArray.pint.quantify` and
+    :py:meth:`Dataset.pint.quantify` will make sure only a single registry is
+    used per ``xarray`` object.
+
 If we wanted to change the units of the data of a :py:class:`DataArray`, we
 could do so using the :py:attr:`DataArray.name` attribute:
 
