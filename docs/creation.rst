@@ -83,6 +83,31 @@ have to first swap the dimensions:
        ...: )
        ...: da_with_units
 
+By default, :py:meth:`Dataset.pint.quantify` and
+:py:meth:`DataArray.pint.quantify` will use the unit registry at
+:py:obj:`pint_xarray.unit_registry`. If we want a different registry, we can
+either pass it as the ``unit_registry`` parameter:
+
+.. ipython::
+
+   In [10]: ureg = pint.UnitRegistry(force_ndarray_like=True)
+       ...: # set up the registry
+
+   In [11]: da.pint.quantify("degree", unit_registry=ureg)
+
+or overwrite the default registry:
+
+.. ipython::
+
+   In [12]: pint_xarray.unit_registry = ureg
+
+   In [13]: da.pint.quantify("degree")
+
+.. note::
+
+    To properly work with ``xarray``, the ``force_ndarray_like`` or
+    ``force_ndarray`` options have to be enabled on the custom registry.
+
 Saving with units
 -----------------
 In order to not lose the units when saving to disk, we first have to call the
