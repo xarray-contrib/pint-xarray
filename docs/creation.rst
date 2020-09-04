@@ -42,7 +42,7 @@ We can also override the units of a variable:
 
     In [5]: da.pint.quantify("degree")
 
-Overriding works, even if there is no ``units`` attribute, so we could use this
+Overriding works even if there is no ``units`` attribute, so we could use this
 to attach units to a normal :py:class:`Dataset`:
 
 .. ipython::
