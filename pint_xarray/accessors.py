@@ -244,8 +244,7 @@ class PintDataArrayAccessor:
 
     @units.setter
     def units(self, units):
-        quantity = conversion.array_attach_units(self.da.data, units)
-        self.da.data = quantity
+        self.da.data = conversion.array_attach_units(self.da.data, units)
 
     @property
     def dimensionality(self):
