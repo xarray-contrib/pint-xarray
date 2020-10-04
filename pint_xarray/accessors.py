@@ -4,7 +4,7 @@ import itertools
 import pint
 from pint.quantity import Quantity
 from pint.unit import Unit
-from xarray import DataArray, register_dataarray_accessor, register_dataset_accessor
+from xarray import register_dataarray_accessor, register_dataset_accessor
 
 from . import conversion
 
@@ -230,22 +230,26 @@ class PintDataArrayAccessor:
 
     @property
     def magnitude(self):
-        return self.da.data.magnitude
+        """the magnitude of the data or the data itself if not a quantity."""
+        data = self.da.data
+        return getattr(data, "magnitude", data)
 
     @property
     def units(self):
-        return self.da.data.units
+        """the units of the data or :py:obj:`None` if not a quantity.
+
+        Setting the units is possible, but only if the data is not already a quantity.
+        """
+        return getattr(self.da.data, "units", None)
 
     @units.setter
     def units(self, units):
-        quantity = conversion.array_attach_units(self.da.data, units)
-        self.da = DataArray(
-            dim=self.da.dims, data=quantity, coords=self.da.coords, attrs=self.da.attrs
-        )
+        self.da.data = conversion.array_attach_units(self.da.data, units)
 
     @property
     def dimensionality(self):
-        return self.da.data.dimensionality
+        """get the dimensionality of the data or :py:obj:`None` if not a quantity."""
+        return getattr(self.da.data, "dimensionality", None)
 
     @property
     def registry(self):
