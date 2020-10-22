@@ -13,3 +13,4 @@ What's new
 - fix the :py:attr:`DataArray.pint.units`, :py:attr:`DataArray.pint.magnitude`
   and :py:attr:`DataArray.pint.dimensionality` properties and add docstrings for
   all three. (:pull:`31`)
+- use ``pint``'s application registry as a module-global registry (:pull:`32`)
