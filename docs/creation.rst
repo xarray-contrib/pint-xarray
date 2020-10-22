@@ -87,8 +87,9 @@ have to first swap the dimensions:
 
 By default, :py:meth:`Dataset.pint.quantify` and
 :py:meth:`DataArray.pint.quantify` will use the unit registry at
-:py:obj:`pint_xarray.unit_registry`. If we want a different registry, we can
-either pass it as the ``unit_registry`` parameter:
+:py:obj:`pint_xarray.unit_registry` (the
+:py:func:`application registry <pint.get_application_registry>`). If we want a
+different registry, we can either pass it as the ``unit_registry`` parameter:
 
 .. ipython::
 
