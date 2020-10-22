@@ -17,13 +17,8 @@ def setup_registry(registry):
 
     Parameters
     ----------
-    registry : pint.UnitRegistry, optional
-        The registry to use. If not given, the application registry is used.
-
-    See also
-    --------
-    pint.get_application_registry
-    pint.set_application_registry
+    registry : pint.UnitRegistry
+        The registry to modify
     """
     if not registry.force_ndarray and not registry.force_ndarray_like:
         registry.force_ndarray_like = True
