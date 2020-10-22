@@ -10,6 +10,32 @@ from . import conversion
 
 default_registry = pint.UnitRegistry(force_ndarray_like=True)
 
+
+def setup_registry(registry=None):
+    """set up the given registry for use with pint_xarray
+
+    Namely, it enables ``force_ndarray_like`` to make sure results are always
+    duck arrays.
+
+    Parameters
+    ----------
+    registry : pint.UnitRegistry, optional
+        The registry to use. If not given, the application registry is used.
+
+    See also
+    --------
+    pint.get_application_registry
+    pint.set_application_registry
+    """
+    if registry is None:
+        registry = default_registry
+
+    if not registry.force_ndarray and not registry.force_ndarray_like:
+        registry.force_ndarray_like = True
+
+    return registry
+
+
 # TODO could/should we overwrite xr.open_dataset and xr.open_mfdataset to make
 # them apply units upon loading???
 # TODO could even override the decode_cf kwarg?
