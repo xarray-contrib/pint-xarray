@@ -8,7 +8,7 @@ from xarray import register_dataarray_accessor, register_dataset_accessor
 
 from . import conversion
 
-default_registry = pint.UnitRegistry(force_ndarray_like=True)
+default_registry = pint.get_application_registry()
 
 
 def setup_registry(registry=None):
