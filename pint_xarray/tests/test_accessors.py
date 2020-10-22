@@ -118,6 +118,37 @@ class TestDequantifyDataArray:
         assert_equal(result, orig)
 
 
+class TestPropertiesDataArray:
+    def test_magnitude_getattr(self, example_quantity_da):
+        da = example_quantity_da
+        actual = da.pint.magnitude
+        assert not isinstance(actual, Quantity)
+
+    def test_magnitude_getattr_unitless(self, example_unitless_da):
+        da = example_unitless_da
+        xr.testing.assert_duckarray_equal(da.pint.magnitude, da.data)
+
+    def test_units_getattr(self, example_quantity_da):
+        da = example_quantity_da
+        actual = da.pint.units
+        assert isinstance(actual, Unit)
+        assert actual == unit_registry.m
+
+    def test_units_setattr(self, example_quantity_da):
+        da = example_quantity_da
+        with pytest.raises(ValueError):
+            da.pint.units = "s"
+
+    def test_units_getattr_unitless(self, example_unitless_da):
+        da = example_unitless_da
+        assert da.pint.units is None
+
+    def test_units_setattr_unitless(self, example_unitless_da):
+        da = example_unitless_da
+        da.pint.units = unit_registry.s
+        assert da.pint.units == unit_registry.s
+
+
 @pytest.fixture()
 def example_unitless_ds():
     users = np.linspace(0, 10, 20)
