@@ -8,10 +8,8 @@ from xarray import register_dataarray_accessor, register_dataset_accessor
 
 from . import conversion
 
-default_registry = pint.get_application_registry()
 
-
-def setup_registry(registry=None):
+def setup_registry(registry):
     """set up the given registry for use with pint_xarray
 
     Namely, it enables ``force_ndarray_like`` to make sure results are always
@@ -27,14 +25,13 @@ def setup_registry(registry=None):
     pint.get_application_registry
     pint.set_application_registry
     """
-    if registry is None:
-        registry = default_registry
-
     if not registry.force_ndarray and not registry.force_ndarray_like:
         registry.force_ndarray_like = True
 
     return registry
 
+
+default_registry = setup_registry(pint.get_application_registry())
 
 # TODO could/should we overwrite xr.open_dataset and xr.open_mfdataset to make
 # them apply units upon loading???
