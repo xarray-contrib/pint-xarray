@@ -8,6 +8,26 @@ from xarray import register_dataarray_accessor, register_dataset_accessor
 
 from . import conversion
 
+
+def setup_registry(registry):
+    """set up the given registry for use with pint_xarray
+
+    Namely, it enables ``force_ndarray_like`` to make sure results are always
+    duck arrays.
+
+    Parameters
+    ----------
+    registry : pint.UnitRegistry
+        The registry to modify
+    """
+    if not registry.force_ndarray and not registry.force_ndarray_like:
+        registry.force_ndarray_like = True
+
+    return registry
+
+
+default_registry = setup_registry(pint.get_application_registry())
+
 # TODO could/should we overwrite xr.open_dataset and xr.open_mfdataset to make
 # them apply units upon loading???
 # TODO could even override the decode_cf kwarg?
@@ -47,6 +67,16 @@ def zip_mappings(*mappings, fill_value=None):
     return zipped
 
 
+def merge_mappings(first, *mappings):
+    result = first.copy()
+    for mapping in mappings:
+        result.update(
+            {key: value for key, value in mapping.items() if value is not None}
+        )
+
+    return result
+
+
 def units_to_str_or_none(mapping):
     return {
         key: str(value) if isinstance(value, Unit) else value
@@ -72,13 +102,27 @@ def either_dict_or_kwargs(positional, keywords, method_name):
         return keywords
 
 
-def _get_registry(unit_registry, registry_kwargs):
+def get_registry(unit_registry, new_units, existing_units):
+    units = merge_mappings(existing_units, new_units)
+    registries = {unit._REGISTRY for unit in units.values() if isinstance(unit, Unit)}
+
     if unit_registry is None:
-        if registry_kwargs is None:
-            registry_kwargs = {}
-        registry_kwargs.update(force_ndarray=True)
-        # TODO should this registry object then be stored somewhere global?
-        unit_registry = pint.UnitRegistry(**registry_kwargs)
+        if not registries:
+            unit_registry = default_registry
+        elif len(registries) == 1:
+            (unit_registry,) = registries
+    registries.add(unit_registry)
+
+    if len(registries) > 1 or unit_registry not in registries:
+        raise ValueError(
+            "using multiple unit registries in the same object is not supported"
+        )
+
+    if not unit_registry.force_ndarray_like and not unit_registry.force_ndarray:
+        raise ValueError(
+            "invalid registry. Please enable 'force_ndarray_like' or 'force_ndarray'."
+        )
+
     return unit_registry
 
 
@@ -110,9 +154,7 @@ class PintDataArrayAccessor:
     def __init__(self, da):
         self.da = da
 
-    def quantify(
-        self, units=None, unit_registry=None, registry_kwargs=None, **unit_kwargs
-    ):
+    def quantify(self, units=None, unit_registry=None, **unit_kwargs):
         """
         Attaches units to the DataArray.
 
@@ -145,8 +187,6 @@ class PintDataArrayAccessor:
         unit_registry : pint.UnitRegistry, optional
             Unit registry to be used for the units attached to this DataArray.
             If not given then a default registry will be created.
-        registry_kwargs : dict, optional
-            Keyword arguments to be passed to the unit registry.
         **unit_kwargs
             Keyword argument form of units.
 
@@ -187,7 +227,11 @@ class PintDataArrayAccessor:
 
         units = either_dict_or_kwargs(units, unit_kwargs, ".quantify")
 
-        registry = _get_registry(unit_registry, registry_kwargs)
+        registry = get_registry(
+            unit_registry,
+            units,
+            conversion.extract_units(self.da),
+        )
 
         unit_attrs = conversion.extract_unit_attributes(self.da)
         new_obj = conversion.strip_unit_attributes(self.da)
@@ -254,7 +298,7 @@ class PintDataArrayAccessor:
     @property
     def registry(self):
         # TODO is this a bad idea? (see GH issue #1071 in pint)
-        return self.data._REGISTRY
+        return getattr(self.da.data, "_REGISTRY", None)
 
     @registry.setter
     def registry(self, _):
@@ -385,9 +429,7 @@ class PintDatasetAccessor:
     def __init__(self, ds):
         self.ds = ds
 
-    def quantify(
-        self, units=None, unit_registry=None, registry_kwargs=None, **unit_kwargs
-    ):
+    def quantify(self, units=None, unit_registry=None, **unit_kwargs):
         """
         Attaches units to each variable in the Dataset.
 
@@ -420,8 +462,6 @@ class PintDatasetAccessor:
             Unit registry to be used for the units attached to each
             DataArray in this Dataset. If not given then a default
             registry will be created.
-        registry_kwargs : dict, optional
-            Keyword arguments to be passed to `pint.UnitRegistry`.
         **unit_kwargs
             Keyword argument form of ``units``.
 
@@ -458,7 +498,11 @@ class PintDatasetAccessor:
             b        (x) int64 <Quantity([ 5 -2  1], 'decimeter')>
         """
         units = either_dict_or_kwargs(units, unit_kwargs, ".quantify")
-        registry = _get_registry(unit_registry, registry_kwargs)
+        registry = get_registry(
+            unit_registry,
+            units,
+            conversion.extract_units(self.ds),
+        )
 
         unit_attrs = conversion.extract_unit_attributes(self.ds)
         new_obj = conversion.strip_unit_attributes(self.ds)

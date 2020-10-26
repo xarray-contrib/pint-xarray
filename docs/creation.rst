@@ -8,6 +8,8 @@ Attaching units
 .. ipython:: python
     :suppress:
 
+    import pint
+    import pint_xarray
     import xarray as xr
 
 Usually, when loading data from disk we get a :py:class:`Dataset` or
@@ -40,9 +42,9 @@ We can also override the units of a variable:
 
     In [4]: ds.pint.quantify(b="km")
 
-    In [5]: da.pint.quantify({"b": "degree"})
+    In [5]: da.pint.quantify("degree")
 
-Overriding works, even if there is no ``units`` attribute, so we could use this
+Overriding works even if there is no ``units`` attribute, so we could use this
 to attach units to a normal :py:class:`Dataset`:
 
 .. ipython::
@@ -52,6 +54,13 @@ to attach units to a normal :py:class:`Dataset`:
 
 Of course, we could use :py:class:`pint.Unit` instances instead of strings to
 specify units, too.
+
+.. note::
+
+    Unit objects tied to different registries cannot interact with each
+    other. In order to avoid this, :py:meth:`DataArray.pint.quantify` and
+    :py:meth:`Dataset.pint.quantify` will make sure only a single registry is
+    used per ``xarray`` object.
 
 If we wanted to change the units of the data of a :py:class:`DataArray`, we
 could do so using the :py:attr:`DataArray.name` attribute:
@@ -75,6 +84,32 @@ have to first swap the dimensions:
        ...:     {"lat": "degree", "lon": "degree"}
        ...: )
        ...: da_with_units
+
+By default, :py:meth:`Dataset.pint.quantify` and
+:py:meth:`DataArray.pint.quantify` will use the unit registry at
+:py:obj:`pint_xarray.unit_registry` (the
+:py:func:`application registry <pint.get_application_registry>`). If we want a
+different registry, we can either pass it as the ``unit_registry`` parameter:
+
+.. ipython::
+
+   In [10]: ureg = pint.UnitRegistry(force_ndarray_like=True)
+       ...: # set up the registry
+
+   In [11]: da.pint.quantify("degree", unit_registry=ureg)
+
+or overwrite the default registry:
+
+.. ipython::
+
+   In [12]: pint_xarray.unit_registry = ureg
+
+   In [13]: da.pint.quantify("degree")
+
+.. note::
+
+    To properly work with ``xarray``, the ``force_ndarray_like`` or
+    ``force_ndarray`` options have to be enabled on the custom registry.
 
 Saving with units
 -----------------
