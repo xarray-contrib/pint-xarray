@@ -9,7 +9,7 @@ Release process
 2. look at `whats-new.rst` and make sure it is complete and with
    references to issues and pull requests
 
-3. open and merge a pull request with these changes and update the release date
+3. open and merge a pull request with these changes and the filled in release date
 
 4. run the test suite
 
