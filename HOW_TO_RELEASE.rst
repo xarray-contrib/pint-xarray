@@ -11,9 +11,9 @@ Release process
 
 3. open and merge a pull request with these changes and the filled in release date
 
-4. run the test suite
+4. make sure the CI on master pass
 
-5. check that the documentation is building
+5. check that the documentation build on readthedocs completed successfully
 
 6. Commit the release:
 
