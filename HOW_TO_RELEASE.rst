@@ -9,17 +9,17 @@ Release process
 2. look at `whats-new.rst` and make sure it is complete and with
    references to issues and pull requests
 
-3. open and merge a pull request with these changes and the filled in release date
+3. open and merge a pull request with these changes
 
 4. make sure the CI on master pass
 
 5. check that the documentation build on readthedocs completed successfully
 
-6. Commit the release:
+6. Fill in the release date and commit the release:
 
    .. code:: sh
 
-      git commit --allow-empty -am "Release v0.X.Y"
+      git commit -am "Release v0.X.Y"
 
 7. Tag the release and push to master:
 
