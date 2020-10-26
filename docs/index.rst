@@ -5,6 +5,11 @@ A convenience wrapper for using `pint`_ in `xarray`_ objects.
 .. _pint: https://pint.readthedocs.io/en/stable
 .. _xarray: https://xarray.pydata.org/en/stable
 
+.. warning::
+
+   This package is experimental, and new versions might introduce backwards incompatible
+   changes.
+
 Documentation
 -------------
 
