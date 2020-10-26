@@ -1,8 +1,8 @@
 What's new
 ==========
 
-0.1 (*unreleased*)
-------------------
+0.1 (October 26 2020)
+---------------------
 - add initial draft of documentation (:pull:`13`, :pull:`20`)
 - implement :py:meth:`DataArray.pint.to` and :py:meth:`Dataset.pint.to`
   (:pull:`11`)
