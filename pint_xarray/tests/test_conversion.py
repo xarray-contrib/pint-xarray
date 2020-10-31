@@ -459,10 +459,3 @@ class TestXarrayFunctions:
         assert (
             filter_none_values(conversion.extract_unit_attributes(actual)) == expected
         )
-
-
-class TestParsing:
-    def test_parse_integer_inverse(self):
-        da = DataArray([10], attrs={'units': 'm^-1'})
-        result = da.pint.quantify()
-        assert result.pint.units == pint.Unit('1 / meter')
