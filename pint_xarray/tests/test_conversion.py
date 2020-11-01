@@ -196,7 +196,7 @@ class TestXarrayFunctions:
                 {"a": "K", "b": "hPa", "u": "m"},
                 id="Dataset",
             ),
-            pytest.param(Variable("x", []), {None: "hPa"}, id="Variable",),
+            pytest.param(Variable("x", []), {None: "hPa"}, id="Variable"),
         ),
     )
     def test_attach_unit_attributes(self, obj, units):
