@@ -228,9 +228,7 @@ class PintDataArrayAccessor:
         units = either_dict_or_kwargs(units, unit_kwargs, ".quantify")
 
         registry = get_registry(
-            unit_registry,
-            units,
-            conversion.extract_units(self.da),
+            unit_registry, units, conversion.extract_units(self.da),
         )
 
         unit_attrs = conversion.extract_unit_attributes(self.da)
@@ -266,8 +264,7 @@ class PintDataArrayAccessor:
 
         units = units_to_str_or_none(conversion.extract_units(self.da))
         new_obj = conversion.attach_unit_attributes(
-            conversion.strip_units(self.da),
-            units,
+            conversion.strip_units(self.da), units,
         )
 
         return new_obj
@@ -499,9 +496,7 @@ class PintDatasetAccessor:
         """
         units = either_dict_or_kwargs(units, unit_kwargs, ".quantify")
         registry = get_registry(
-            unit_registry,
-            units,
-            conversion.extract_units(self.ds),
+            unit_registry, units, conversion.extract_units(self.ds),
         )
 
         unit_attrs = conversion.extract_unit_attributes(self.ds)

@@ -196,11 +196,7 @@ class TestXarrayFunctions:
                 {"a": "K", "b": "hPa", "u": "m"},
                 id="Dataset",
             ),
-            pytest.param(
-                Variable("x", []),
-                {None: "hPa"},
-                id="Variable",
-            ),
+            pytest.param(Variable("x", []), {None: "hPa"}, id="Variable",),
         ),
     )
     def test_attach_unit_attributes(self, obj, units):
@@ -370,9 +366,7 @@ class TestXarrayFunctions:
                 id="Dataset",
             ),
             pytest.param(
-                Variable("x", [], {"units": "hPa"}),
-                {None: "hPa"},
-                id="Variable",
+                Variable("x", [], {"units": "hPa"}), {None: "hPa"}, id="Variable",
             ),
         ),
     )
@@ -446,9 +440,7 @@ class TestXarrayFunctions:
                 id="Dataset",
             ),
             pytest.param(
-                Variable("x", [], {"units": "hPa"}),
-                {None: "hPa"},
-                id="Variable",
+                Variable("x", [], {"units": "hPa"}), {None: "hPa"}, id="Variable",
             ),
         ),
     )
@@ -463,6 +455,6 @@ class TestXarrayFunctions:
 
 class TestParsing:
     def test_parse_integer_inverse(self):
-        da = DataArray([10], attrs={'units': 'm^-1'})
+        da = DataArray([10], attrs={"units": "m^-1"})
         result = da.pint.quantify()
-        assert result.pint.units == pint.Unit('1 / meter')
+        assert result.pint.units == pint.Unit("1 / meter")
