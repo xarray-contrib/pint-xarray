@@ -94,6 +94,12 @@ class TestQuantifyDataArray:
         with pytest.raises(UndefinedUnitError):
             da.pint.quantify(units="aecjhbav")
 
+    def test_parse_integer_inverse(self):
+        # Regression test for issue #40
+        da = xr.DataArray([10], attrs={"units": "m^-1"})
+        result = da.pint.quantify()
+        assert result.pint.units == Unit("1 / meter")
+
 
 class TestDequantifyDataArray:
     def test_strip_units(self, example_quantity_da):
