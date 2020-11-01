@@ -366,7 +366,7 @@ class TestXarrayFunctions:
                 id="Dataset",
             ),
             pytest.param(
-                Variable("x", [], {"units": "hPa"}), {None: "hPa"}, id="Variable",
+                Variable("x", [], {"units": "hPa"}), {None: "hPa"}, id="Variable"
             ),
         ),
     )
@@ -440,7 +440,7 @@ class TestXarrayFunctions:
                 id="Dataset",
             ),
             pytest.param(
-                Variable("x", [], {"units": "hPa"}), {None: "hPa"}, id="Variable",
+                Variable("x", [], {"units": "hPa"}), {None: "hPa"}, id="Variable"
             ),
         ),
     )
