@@ -3,7 +3,8 @@ What's new
 
 0.2 (*unreleased*)
 ------------------
-
+- rewrite :py:meth:`Dataset.pint.quantify` and :py:meth:`DataArray.pint.quantify`, 
+  to use pint's `parse_units` instead of `parse_expression` (:pull:`40`)
 
 v0.1 (October 26 2020)
 ----------------------
