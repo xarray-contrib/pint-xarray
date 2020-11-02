@@ -502,7 +502,11 @@ class PintDatasetAccessor:
         new_units = {}
         for name, (unit, attr) in possible_new_units.items():
             if unit is not None or attr is not None:
-                new_units[name] = _decide_units(unit, registry, attr)
+                try:
+                    new_units[name] = _decide_units(unit, registry, attr)
+                except Exception as e:
+                    raise ValueError(
+                        f"Failed to assign units to variable {name}") from e
 
         # TODO: remove once indexes support units
         dim_units = {name: unit for name, unit in new_units.items() if name in new_obj.dims}
