@@ -498,19 +498,19 @@ class PintDatasetAccessor:
         unit_attrs = conversion.extract_unit_attributes(self.ds)
         new_obj = conversion.strip_unit_attributes(self.ds)
 
-        units = {
-            name: _decide_units(unit, registry, attr)
-            for name, (unit, attr) in zip_mappings(units, unit_attrs).items()
-            if unit is not None or attr is not None
-        }
+        possible_new_units = zip_mappings(units, unit_attrs)
+        new_units = {}
+        for name, (unit, attr) in possible_new_units.items():
+            if unit is not None or attr is not None:
+                new_units[name] = _decide_units(unit, registry, attr)
 
         # TODO: remove once indexes support units
-        dim_units = {name: unit for name, unit in units.items() if name in new_obj.dims}
+        dim_units = {name: unit for name, unit in new_units.items() if name in new_obj.dims}
         for name in dim_units.keys():
-            units.pop(name)
+            new_units.pop(name)
         new_obj = conversion.attach_unit_attributes(new_obj, dim_units)
 
-        return conversion.attach_units(new_obj, units)
+        return conversion.attach_units(new_obj, new_units)
 
     def dequantify(self):
         """
