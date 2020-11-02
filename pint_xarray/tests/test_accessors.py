@@ -222,6 +222,11 @@ class TestQuantifyDataSet:
         with pytest.raises(UndefinedUnitError):
             ds.pint.quantify(units={"users": "aecjhbav"})
 
+    def test_error_indicates_problematic_variable(self, example_unitless_ds):
+        ds = example_unitless_ds
+        with raises_regex(UndefinedUnitError, "users"):
+            ds.pint.quantify(units={"users": "aecjhbav"})
+
 
 class TestDequantifyDataSet:
     def test_strip_units(self, example_quantity_ds):
