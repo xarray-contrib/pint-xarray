@@ -5,6 +5,8 @@ What's new
 ------------------
 - rewrite :py:meth:`Dataset.pint.quantify` and :py:meth:`DataArray.pint.quantify`, 
   to use pint's `parse_units` instead of `parse_expression` (:pull:`40`)
+- ensure the variable which causes the error is explicit if an error occurs in
+  :py:meth:`Dataset.pint.quantify` (:pull:`43`)
 
 v0.1 (October 26 2020)
 ----------------------
