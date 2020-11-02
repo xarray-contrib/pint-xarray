@@ -508,7 +508,9 @@ class PintDatasetAccessor:
                     raise type(e)(f"Failed to assign units to variable {name}") from e
 
         # TODO: remove once indexes support units
-        dim_units = {name: unit for name, unit in new_units.items() if name in new_obj.dims}
+        dim_units = {
+            name: unit for name, unit in new_units.items() if name in new_obj.dims
+        }
         for name in dim_units.keys():
             new_units.pop(name)
         new_obj = conversion.attach_unit_attributes(new_obj, dim_units)
