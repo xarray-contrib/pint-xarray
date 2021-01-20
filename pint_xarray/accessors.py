@@ -86,6 +86,26 @@ def units_to_str_or_none(mapping, unit_format):
     }
 
 
+def _dequantify(obj):
+    units = conversion.extract_units(obj)
+    attrs = {
+        k: v
+        for k, v in conversion.extract_unit_attributes(obj).items()
+        if isinstance(v, (Quantity, Unit))
+    }
+
+    if format is None:
+        registry = get_registry(None, units, attrs)
+        unit_format = registry.default_format
+    else:
+        unit_format = f"{{:{format}}}"
+
+    units = units_to_str_or_none(merge_mappings(units, attrs), unit_format)
+    new_obj = conversion.attach_unit_attributes(conversion.strip_units(obj), units)
+
+    return new_obj
+
+
 # based on xarray.core.utils.either_dict_or_kwargs
 # https://github.com/pydata/xarray/blob/v0.15.1/xarray/core/utils.py#L249-L268
 def either_dict_or_kwargs(positional, keywords, method_name):
@@ -248,7 +268,7 @@ class PintDataArrayAccessor:
 
         return conversion.attach_units(new_obj, units)
 
-    def dequantify(self, format="~P"):
+    def dequantify(self, format=None):
         """
         Removes units from the DataArray and its coordinates.
 
@@ -263,14 +283,7 @@ class PintDataArrayAccessor:
         format : str, optional
             The format used for the string representations.
         """
-        unit_format = f"{{:{format}}}"
-
-        units = units_to_str_or_none(conversion.extract_units(self.da), unit_format)
-        new_obj = conversion.attach_unit_attributes(
-            conversion.strip_units(self.da), units
-        )
-
-        return new_obj
+        return _dequantify(self.da)
 
     @property
     def magnitude(self):
@@ -517,7 +530,7 @@ class PintDatasetAccessor:
 
         return conversion.attach_units(new_obj, units)
 
-    def dequantify(self, format="~P"):
+    def dequantify(self, format=None):
         """
         Removes units from the Dataset and its coordinates.
 
@@ -532,12 +545,7 @@ class PintDatasetAccessor:
         format : str, optional
             The format used for the string representations.
         """
-        unit_format = f"{{:{format}}}"
-        units = units_to_str_or_none(conversion.extract_units(self.ds), unit_format)
-        new_obj = conversion.attach_unit_attributes(
-            conversion.strip_units(self.ds), units
-        )
-        return new_obj
+        return _dequantify(self.ds)
 
     def to(self, units=None, **unit_kwargs):
         """convert the quantities in a DataArray
