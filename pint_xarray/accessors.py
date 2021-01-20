@@ -246,7 +246,7 @@ class PintDataArrayAccessor:
 
         return conversion.attach_units(new_obj, units)
 
-    def dequantify(self):
+    def dequantify(self, format="~P"):
         """
         Removes units from the DataArray and its coordinates.
 
@@ -258,9 +258,12 @@ class PintDataArrayAccessor:
         dequantified : DataArray
             DataArray whose array data is unitless, and of the type
             that was previously wrapped by `pint.Quantity`.
+        format : str, optional
+            The format used for the string representations.
         """
+        unit_format = f"{{:{format}}}"
 
-        units = units_to_str_or_none(conversion.extract_units(self.da))
+        units = units_to_str_or_none(conversion.extract_units(self.da), unit_format)
         new_obj = conversion.attach_unit_attributes(
             conversion.strip_units(self.da), units
         )
@@ -512,7 +515,7 @@ class PintDatasetAccessor:
 
         return conversion.attach_units(new_obj, units)
 
-    def dequantify(self):
+    def dequantify(self, format="~P"):
         """
         Removes units from the Dataset and its coordinates.
 
@@ -524,8 +527,11 @@ class PintDatasetAccessor:
         dequantified : Dataset
             Dataset whose data variables are unitless, and of the type
             that was previously wrapped by ``pint.Quantity``.
+        format : str, optional
+            The format used for the string representations.
         """
-        units = units_to_str_or_none(conversion.extract_units(self.ds))
+        unit_format = f"{{:{format}}}"
+        units = units_to_str_or_none(conversion.extract_units(self.ds), unit_format)
         new_obj = conversion.attach_unit_attributes(
             conversion.strip_units(self.ds), units
         )
