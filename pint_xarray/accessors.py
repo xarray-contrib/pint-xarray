@@ -78,8 +78,10 @@ def merge_mappings(first, *mappings):
 
 
 def units_to_str_or_none(mapping, unit_format):
+    formatter = str if not unit_format else lambda v: unit_format.format(v)
+
     return {
-        key: unit_format.format(value) if isinstance(value, Unit) else value
+        key: formatter(value) if isinstance(value, Unit) else value
         for key, value in mapping.items()
     }
 
