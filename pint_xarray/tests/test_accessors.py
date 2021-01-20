@@ -101,7 +101,7 @@ class TestQuantifyDataArray:
         assert result.pint.units == Unit("1 / meter")
 
 
-@pytest.mark.parametrize("formatter", ("P", "C"))
+@pytest.mark.parametrize("formatter", ("", "P", "C"))
 @pytest.mark.parametrize("flags", ("", "~", "#", "~#"))
 def test_units_to_str_or_none(formatter, flags):
     unit_format = f"{{:{flags}{formatter}}}"
