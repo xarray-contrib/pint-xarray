@@ -77,9 +77,9 @@ def merge_mappings(first, *mappings):
     return result
 
 
-def units_to_str_or_none(mapping):
+def units_to_str_or_none(mapping, unit_format):
     return {
-        key: str(value) if isinstance(value, Unit) else value
+        key: unit_format.format(value) if isinstance(value, Unit) else value
         for key, value in mapping.items()
     }
 
