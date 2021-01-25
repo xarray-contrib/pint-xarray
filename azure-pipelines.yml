@@ -17,9 +17,6 @@ jobs:
         python.version: '3.7'
       Python38:
         python.version: '3.8'
-      Python38-upstream-dev:
-        python.version: '3.8'
-        upstream_dev: true
 
   steps:
   - template: ci/install.yml
