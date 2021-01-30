@@ -110,7 +110,7 @@ class TestArrayFunctions:
         "data",
         (
             pytest.param(np.array([0, 1]), id="array_like"),
-            pytest.param(np.array([1, 2]) * unit_registry.m, id="quantity"),
+            pytest.param(Quantity([1, 2], "m"), id="quantity"),
         ),
     )
     def test_array_extract_units(self, data):
@@ -123,7 +123,7 @@ class TestArrayFunctions:
         "data",
         (
             pytest.param(np.array([1, 2]), id="array_like"),
-            pytest.param(np.array([1, 2]) * unit_registry.m, id="quantity"),
+            pytest.param(Quantity([1, 2], "m"), id="quantity"),
         ),
     )
     def test_array_strip_units(self, data):
