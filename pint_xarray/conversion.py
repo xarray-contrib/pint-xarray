@@ -1,7 +1,9 @@
 import itertools
 
 import pint
-from xarray import DataArray, Dataset, Variable
+from xarray import DataArray, Dataset, IndexVariable, Variable
+
+unit_attribute_name = "units"
 
 
 def array_attach_units(data, unit):
@@ -88,6 +90,19 @@ def array_strip_units(data):
         return data
 
 
+def attach_units_variable(variable, units):
+    if isinstance(variable, IndexVariable):
+        new_obj = variable.copy()
+        new_obj.attrs[unit_attribute_name] = units
+    elif isinstance(variable, Variable):
+        new_data = array_attach_units(variable.data, units)
+        new_obj = variable.copy(data=new_data)
+    else:
+        raise ValueError(f"invalid type: {variable!r}")
+
+    return new_obj
+
+
 def attach_units(obj, units):
     if isinstance(obj, DataArray):
         old_name = obj.name
@@ -100,18 +115,17 @@ def attach_units(obj, units):
         new_obj = new_ds.get(new_name).rename(old_name)
     elif isinstance(obj, Dataset):
         data_vars = {
-            name: attach_units(array.variable, {None: units.get(name)})
-            for name, array in obj.data_vars.items()
+            name: attach_units_variable(var, units.get(name))
+            for name, var in obj.variables.items()
+            if name not in obj._coord_names
         }
         coords = {
-            name: attach_units(array.variable, {None: units.get(name)})
-            for name, array in obj.coords.items()
+            name: attach_units_variable(var, units.get(name))
+            for name, var in obj.variables.items()
+            if name in obj._coord_names
         }
 
         new_obj = Dataset(data_vars=data_vars, coords=coords, attrs=obj.attrs)
-    elif isinstance(obj, Variable):
-        new_data = array_attach_units(obj.data, units.get(None))
-        new_obj = obj.copy(data=new_data)
     else:
         raise ValueError(f"cannot attach units to {obj!r}: unknown type")
 
