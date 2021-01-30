@@ -86,7 +86,7 @@ def units_to_str_or_none(mapping, unit_format):
     }
 
 
-def _dequantify(obj):
+def _dequantify(obj, format):
     units = conversion.extract_units(obj)
     attrs = {
         k: v
@@ -283,7 +283,7 @@ class PintDataArrayAccessor:
         format : str, optional
             The format used for the string representations.
         """
-        return _dequantify(self.da)
+        return _dequantify(self.da, format=format)
 
     @property
     def magnitude(self):
@@ -545,7 +545,7 @@ class PintDatasetAccessor:
         format : str, optional
             The format used for the string representations.
         """
-        return _dequantify(self.ds)
+        return _dequantify(self.ds, format=format)
 
     def to(self, units=None, **unit_kwargs):
         """convert the quantities in a DataArray
