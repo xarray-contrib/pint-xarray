@@ -196,26 +196,20 @@ def convert_units(obj, units):
 
 def extract_units(obj):
     if isinstance(obj, Dataset):
-        vars_units = {
+        units = {
             name: array_extract_units(value.data)
-            for name, value in obj.data_vars.items()
+            for name, value in obj.variables.items()
         }
-        coords_units = {
-            name: array_extract_units(value.data) for name, value in obj.coords.items()
-        }
-
-        units = {**vars_units, **coords_units}
     elif isinstance(obj, DataArray):
-        vars_units = {obj.name: array_extract_units(obj.data)}
-        coords_units = {
-            name: array_extract_units(value.data) for name, value in obj.coords.items()
-        }
+        original_name = obj.name
+        name = obj.name if obj.name is not None else "<this-array>"
 
-        units = {**vars_units, **coords_units}
+        ds = obj.rename(name).to_dataset()
+
+        units = extract_units(ds)
+        units[original_name] = units.pop(name)
     elif isinstance(obj, Variable):
-        vars_units = {None: array_extract_units(obj.data)}
-
-        units = {**vars_units}
+        units = {None: array_extract_units(obj.data)}
     else:
         raise ValueError(f"unknown type: {type(obj)}")
 
@@ -224,8 +218,13 @@ def extract_units(obj):
 
 def extract_unit_attributes(obj, attr="units"):
     if isinstance(obj, DataArray):
-        variables = itertools.chain([(obj.name, obj)], obj.coords.items())
-        units = {name: var.attrs.get(attr, None) for name, var in variables}
+        original_name = obj.name
+        name = obj.name if obj.name is not None else "<this-array>"
+
+        ds = obj.rename(name).to_dataset()
+
+        units = extract_unit_attributes(ds)
+        units[original_name] = units.pop(name)
     elif isinstance(obj, Dataset):
         units = {name: var.attrs.get(attr, None) for name, var in obj.variables.items()}
     elif isinstance(obj, Variable):
