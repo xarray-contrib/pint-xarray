@@ -185,28 +185,23 @@ class TestXarrayFunctions:
         actual = conversion.attach_units(obj, units)
         assert_identical(actual, expected)
 
-    @pytest.mark.parametrize(
-        ["obj", "units"],
-        (
-            pytest.param(
-                DataArray(dims="x", coords={"x": [], "u": ("x", [])}),
-                {None: "hPa", "x": "m"},
-                id="DataArray",
-            ),
-            pytest.param(
-                Dataset(
-                    data_vars={"a": ("x", []), "b": ("x", [])},
-                    coords={"x": [], "u": ("x", [])},
-                ),
-                {"a": "K", "b": "hPa", "u": "m"},
-                id="Dataset",
-            ),
-            pytest.param(Variable("x", []), {None: "hPa"}, id="Variable"),
-        ),
-    )
-    def test_attach_unit_attributes(self, obj, units):
+    @pytest.mark.parametrize("type", ("DataArray", "Dataset"))
+    def test_attach_unit_attributes(self, type):
+        units = {"a": "K", "b": "hPa", "u": "m", "x": "s"}
+        obj = Dataset(
+            data_vars={"a": ("x", []), "b": ("x", [])},
+            coords={"x": [], "u": ("x", [])},
+        )
+        expected = Dataset(
+            {"a": ("x", [], {"units": "K"}), "b": ("x", [], {"units": "hPa"})},
+            coords={"x": ("x", [], {"units": "s"}), "u": ("x", [], {"units": "m"})},
+        )
+        if type == "DataArray":
+            obj = obj["a"]
+            expected = expected["a"]
+
         actual = conversion.attach_unit_attributes(obj, units)
-        assert units == filter_none_values(conversion.extract_unit_attributes(actual))
+        assert_identical(actual, expected)
 
     @pytest.mark.parametrize(
         "variant",
