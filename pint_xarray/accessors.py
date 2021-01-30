@@ -237,15 +237,8 @@ class PintDataArrayAccessor:
             if unit is not None or unit_attribute is not None
         }
 
-        # TODO: remove once indexes support units
-        dim_units = {name: unit for name, unit in units.items() if name in self.da.dims}
-        for name in dim_units.keys():
-            units.pop(name)
-
-        return (
-            self.da.pipe(conversion.strip_unit_attributes)
-            .pipe(conversion.attach_unit_attributes, dim_units)
-            .pipe(conversion.attach_units, units)
+        return conversion.strip_unit_attributes(self.da).pipe(
+            conversion.attach_units, units
         )
 
     def dequantify(self):
