@@ -5,7 +5,12 @@ from xarray import DataArray, Dataset, Variable
 
 from pint_xarray import conversion
 
-from .utils import assert_array_equal, assert_array_units_equal, assert_equal
+from .utils import (
+    assert_array_equal,
+    assert_array_units_equal,
+    assert_equal,
+    assert_identical,
+)
 
 unit_registry = pint.UnitRegistry()
 Quantity = unit_registry.Quantity
@@ -134,50 +139,51 @@ class TestArrayFunctions:
 
 
 class TestXarrayFunctions:
-    @pytest.mark.parametrize(
-        "obj",
-        (
-            pytest.param(Variable("x", np.linspace(0, 1, 5)), id="Variable"),
-            pytest.param(
-                DataArray(
-                    data=np.linspace(0, 1, 5),
-                    dims="x",
-                    coords={"u": ("x", np.arange(5))},
-                ),
-                id="DataArray",
-            ),
-            pytest.param(
-                Dataset(
-                    {
-                        "a": ("x", np.linspace(-1, 1, 5)),
-                        "b": ("x", np.linspace(0, 1, 5)),
-                    },
-                    coords={"u": ("x", np.arange(5))},
-                ),
-                id="Dataset",
-            ),
-        ),
-    )
+    @pytest.mark.parametrize("type", ("Dataset", "DataArray"))
     @pytest.mark.parametrize(
         "units",
         (
-            pytest.param({None: None, "u": None}, id="no units"),
-            pytest.param({None: unit_registry.m, "u": None}, id="data units"),
-            pytest.param({None: None, "u": unit_registry.s}, id="coord units"),
+            pytest.param({"a": None, "b": None, "u": None, "x": None}, id="no units"),
+            pytest.param(
+                {"a": unit_registry.m, "b": unit_registry.m, "u": None, "x": None},
+                id="data units",
+            ),
+            pytest.param(
+                {"a": None, "b": None, "u": unit_registry.s, "x": None},
+                id="coord units",
+            ),
+            pytest.param(
+                {"a": None, "b": None, "u": None, "x": unit_registry.m}, id="dim units"
+            ),
         ),
     )
-    def test_attach_units(self, obj, units):
-        if isinstance(obj, Variable) and "u" in units:
-            pytest.skip(msg="variables don't have coordinates")
+    def test_attach_units(self, type, units):
+        def to_quantity(v, u):
+            if u is None:
+                return v
 
-        if isinstance(obj, Dataset):
-            units = units.copy()
-            data_units = units.pop(None)
-            units.update({"a": data_units, "b": data_units})
+            return Quantity(v, u)
+
+        a = np.linspace(-1, 1, 5)
+        b = np.linspace(0, 1, 5)
+        x = np.linspace(0, 100, 5)
+        u = np.arange(5)
+
+        q_a = to_quantity(a, units.get("a"))
+        q_b = to_quantity(b, units.get("b"))
+        q_u = to_quantity(u, units.get("u"))
+
+        obj = Dataset({"a": ("x", a), "b": ("x", b)}, coords={"u": ("x", u), "x": x})
+        expected = Dataset(
+            {"a": ("x", q_a), "b": ("x", q_b)},
+            coords={"u": ("x", q_u), "x": ("x", x, {"units": units.get("x")})},
+        )
+        if type == "DataArray":
+            obj = obj["a"]
+            expected = expected["a"]
 
         actual = conversion.attach_units(obj, units)
-
-        assert conversion.extract_units(actual) == units
+        assert_identical(actual, expected)
 
     @pytest.mark.parametrize(
         ["obj", "units"],
