@@ -255,12 +255,14 @@ class PintDataArrayAccessor:
             that was previously wrapped by `pint.Quantity`.
         """
 
-        units = units_to_str_or_none(conversion.extract_units(self.da))
-        new_obj = conversion.attach_unit_attributes(
-            conversion.strip_units(self.da), units
-        )
+        units = conversion.extract_unit_attributes(self.da)
+        units.update(conversion.extract_units(self.da))
 
-        return new_obj
+        return (
+            self.da.pipe(conversion.strip_units)
+            .pipe(conversion.strip_unit_attributes)
+            .pipe(conversion.attach_unit_attributes, units_to_str_or_none(units))
+        )
 
     @property
     def magnitude(self):
