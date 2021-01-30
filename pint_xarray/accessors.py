@@ -230,7 +230,6 @@ class PintDataArrayAccessor:
         registry = get_registry(unit_registry, units, conversion.extract_units(self.da))
 
         unit_attrs = conversion.extract_unit_attributes(self.da)
-        new_obj = conversion.strip_unit_attributes(self.da)
 
         units = {
             name: _decide_units(unit, registry, unit_attribute)
@@ -242,9 +241,12 @@ class PintDataArrayAccessor:
         dim_units = {name: unit for name, unit in units.items() if name in self.da.dims}
         for name in dim_units.keys():
             units.pop(name)
-        new_obj = conversion.attach_unit_attributes(new_obj, dim_units)
 
-        return conversion.attach_units(new_obj, units)
+        return (
+            self.da.pipe(conversion.strip_unit_attributes)
+            .pipe(conversion.attach_unit_attributes, dim_units)
+            .pipe(conversion.attach_units, units)
+        )
 
     def dequantify(self):
         """
