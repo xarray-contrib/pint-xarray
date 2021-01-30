@@ -18,13 +18,6 @@ def filter_none_values(mapping):
 
 class TestArrayFunctions:
     @pytest.mark.parametrize(
-        "registry",
-        (
-            pytest.param(None, id="without registry"),
-            pytest.param(unit_registry, id="with registry"),
-        ),
-    )
-    @pytest.mark.parametrize(
         "unit",
         (
             pytest.param(1, id="not a unit"),
@@ -40,24 +33,22 @@ class TestArrayFunctions:
             pytest.param(np.array([1, 2]) * unit_registry.m, id="quantity"),
         ),
     )
-    def test_array_attach_units(self, data, unit, registry):
-        if unit == 1:
+    def test_array_attach_units(self, data, unit):
+        if unit == 1 or isinstance(unit, str):
             match = "cannot use .+ as a unit"
         elif isinstance(data, pint.Quantity) and unit is not None:
             match = "already has units"
-        elif isinstance(unit, str) and registry is None:
-            match = "a string as unit"
         else:
             match = None
 
         if match is not None:
             with pytest.raises(ValueError, match=match):
-                conversion.array_attach_units(data, unit, registry=registry)
+                conversion.array_attach_units(data, unit)
 
             return
 
         expected = unit_registry.Quantity(data, "m") if unit is not None else data
-        actual = conversion.array_attach_units(data, unit, registry=registry)
+        actual = conversion.array_attach_units(data, unit)
 
         assert_array_units_equal(expected, actual)
         assert_array_equal(expected, actual)

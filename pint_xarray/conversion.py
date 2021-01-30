@@ -4,18 +4,15 @@ import pint
 from xarray import DataArray, Dataset, Variable
 
 
-def array_attach_units(data, unit, registry=None):
+def array_attach_units(data, unit):
     """attach a unit to the data
 
     Parameters
     ----------
     data : array-like
         The data to attach units to.
-    unit : str or pint.Unit
+    unit : pint.Unit
         The desired unit.
-    registry : pint.UnitRegistry, optional
-        The registry to use if ``unit`` is a string. Must not be
-        specified otherwise.
 
     Returns
     -------
@@ -25,7 +22,7 @@ def array_attach_units(data, unit, registry=None):
     if unit is None:
         return data
 
-    if not isinstance(unit, (pint.Unit, str)):
+    if not isinstance(unit, pint.Unit):
         raise ValueError(f"cannot use {unit!r} as a unit")
 
     if isinstance(data, pint.Quantity):
@@ -34,14 +31,7 @@ def array_attach_units(data, unit, registry=None):
             f"already has units {data.units}"
         )
 
-    if registry is None:
-        if isinstance(unit, str):
-            raise ValueError(
-                "cannot use a string as unit without specifying a registry"
-            )
-
-        registry = unit._REGISTRY
-
+    registry = unit._REGISTRY
     return registry.Quantity(data, unit)
 
 
@@ -98,7 +88,7 @@ def array_strip_units(data):
         return data
 
 
-def attach_units(obj, units, registry=None):
+def attach_units(obj, units):
     if isinstance(obj, DataArray):
         old_name = obj.name
         new_name = old_name if old_name is not None else "<this-array>"
@@ -106,25 +96,21 @@ def attach_units(obj, units, registry=None):
         units = units.copy()
         units[new_name] = units.get(old_name)
 
-        new_ds = attach_units(ds, units, registry=registry)
+        new_ds = attach_units(ds, units)
         new_obj = new_ds.get(new_name).rename(old_name)
     elif isinstance(obj, Dataset):
         data_vars = {
-            name: attach_units(
-                array.variable, {None: units.get(name)}, registry=registry
-            )
+            name: attach_units(array.variable, {None: units.get(name)})
             for name, array in obj.data_vars.items()
         }
         coords = {
-            name: attach_units(
-                array.variable, {None: units.get(name)}, registry=registry
-            )
+            name: attach_units(array.variable, {None: units.get(name)})
             for name, array in obj.coords.items()
         }
 
         new_obj = Dataset(data_vars=data_vars, coords=coords, attrs=obj.attrs)
     elif isinstance(obj, Variable):
-        new_data = array_attach_units(obj.data, units.get(None), registry=registry)
+        new_data = array_attach_units(obj.data, units.get(None))
         new_obj = obj.copy(data=new_data)
     else:
         raise ValueError(f"cannot attach units to {obj!r}: unknown type")
