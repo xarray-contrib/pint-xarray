@@ -18,29 +18,26 @@ def filter_none_values(mapping):
 
 class TestArrayFunctions:
     @pytest.mark.parametrize(
-        "unit",
+        ["unit", "data", "match"],
         (
-            pytest.param(1, id="not a unit"),
-            pytest.param(None, id="no unit"),
-            pytest.param("m", id="string"),
-            pytest.param(unit_registry.m, id="unit object"),
+            pytest.param(
+                1.2, np.array([0, 1]), "cannot use .+ as a unit", id="not a unit"
+            ),
+            pytest.param(
+                1, np.array([0, 1]), "cannot use .+ as a unit", id="no unit (1)"
+            ),
+            pytest.param(None, np.array([0, 1]), None, id="no unit (None)"),
+            pytest.param("m", np.array([0, 1]), "cannot use .+ as a unit", id="string"),
+            pytest.param(unit_registry.m, np.array([0, 1]), None, id="unit object"),
+            pytest.param(
+                unit_registry.m,
+                unit_registry.Quantity(np.array([0, 1]), "s"),
+                "already has units",
+                id="unit object on quantity",
+            ),
         ),
     )
-    @pytest.mark.parametrize(
-        "data",
-        (
-            pytest.param(np.array([0, 1]), id="array_like"),
-            pytest.param(np.array([1, 2]) * unit_registry.m, id="quantity"),
-        ),
-    )
-    def test_array_attach_units(self, data, unit):
-        if unit == 1 or isinstance(unit, str):
-            match = "cannot use .+ as a unit"
-        elif isinstance(data, pint.Quantity) and unit is not None:
-            match = "already has units"
-        else:
-            match = None
-
+    def test_array_attach_units(self, data, unit, match):
         if match is not None:
             with pytest.raises(ValueError, match=match):
                 conversion.array_attach_units(data, unit)
