@@ -156,14 +156,32 @@ def attach_unit_attributes(obj, units, attr="units"):
     return new_obj
 
 
+def convert_units_variable(variable, units):
+    if isinstance(variable, IndexVariable):
+        if variable.level_names:
+            # don't try to convert MultiIndexes
+            return variable
+
+        quantity = array_attach_units(
+            variable.data, variable.attrs.get(unit_attribute_name)
+        )
+        converted = array_convert_units(quantity, units)
+        new_obj = variable.copy(data=array_strip_units(converted))
+        new_obj.attrs[unit_attribute_name] = array_extract_units(converted)
+    elif isinstance(variable, Variable):
+        converted = array_convert_units(variable.data, units)
+        new_obj = variable.copy(data=converted)
+    else:
+        raise ValueError(f"unknown type: {variable}")
+
+    return new_obj
+
+
 def convert_units(obj, units):
     if not isinstance(units, dict):
         units = {None: units}
 
-    if isinstance(obj, Variable):
-        new_data = array_convert_units(obj.data, units.get(None))
-        new_obj = obj.copy(data=new_data)
-    elif isinstance(obj, DataArray):
+    if isinstance(obj, DataArray):
         original_name = obj.name
         name = obj.name if obj.name is not None else "<this-array>"
 
@@ -177,19 +195,19 @@ def convert_units(obj, units):
         new_obj = converted[name].rename(original_name)
     elif isinstance(obj, Dataset):
         coords = {
-            name: convert_units(data.variable, units.get(name))
-            if name not in obj.dims
-            else data
-            for name, data in obj.coords.items()
+            name: convert_units_variable(variable, units.get(name))
+            for name, variable in obj.variables.items()
+            if name in obj._coord_names
         }
         data_vars = {
-            name: convert_units(data.variable, units.get(name))
-            for name, data in obj.items()
+            name: convert_units_variable(variable, units.get(name))
+            for name, variable in obj.variables.items()
+            if name not in obj._coord_names
         }
 
         new_obj = Dataset(coords=coords, data_vars=data_vars, attrs=obj.attrs)
     else:
-        raise ValueError("cannot convert non-xarray objects")
+        raise ValueError(f"cannot convert object: {obj}")
 
     return new_obj
 
