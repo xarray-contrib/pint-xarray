@@ -101,6 +101,14 @@ class TestArrayFunctions:
                 id="no unit (None)-ndarray",
             ),
             pytest.param(
+                Unit("deg"),
+                np.array([0, np.pi / 2, np.pi]),
+                Quantity([0, 90, 180], "deg"),
+                None,
+                None,
+                id="dimensionless-ndarray",
+            ),
+            pytest.param(
                 "mm",
                 np.array([0, 1, 2]),
                 None,
