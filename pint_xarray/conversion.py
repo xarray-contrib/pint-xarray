@@ -250,10 +250,14 @@ def strip_units(obj):
         new_obj = stripped[name].rename(original_name)
     elif isinstance(obj, Dataset):
         data_vars = {
-            name: strip_units(array.variable) for name, array in obj.data_vars.items()
+            name: strip_units(variable)
+            for name, variable in obj.variables.items()
+            if name not in obj._coord_names
         }
         coords = {
-            name: strip_units(array.variable) for name, array in obj.coords.items()
+            name: strip_units(variable)
+            for name, variable in obj.variables.items()
+            if name in obj._coord_names
         }
 
         new_obj = Dataset(data_vars=data_vars, coords=coords, attrs=obj.attrs)
@@ -264,19 +268,23 @@ def strip_units(obj):
 
 
 def strip_unit_attributes(obj, attr="units"):
-    new_obj = obj.copy()
     if isinstance(obj, DataArray):
-        variables = itertools.chain([(new_obj.name, new_obj)], new_obj.coords.items())
-        for _, var in variables:
-            var.attrs.pop(attr, None)
+        original_name = obj.name
+        name = obj.name if obj.name is not None else "<this-array>"
+
+        ds = obj.rename(name).to_dataset()
+
+        stripped = strip_unit_attributes(ds)
+
+        new_obj = stripped[name].rename(original_name)
     elif isinstance(obj, Dataset):
+        new_obj = obj.copy()
         for var in new_obj.variables.values():
             var.attrs.pop(attr, None)
     elif isinstance(obj, Variable):
+        new_obj = obj.copy()
         new_obj.attrs.pop(attr, None)
     else:
-        raise ValueError(
-            f"cannot retrieve unit attributes from unknown type: {type(obj)}"
-        )
+        raise ValueError(f"cannot strip unit attributes from unknown type: {type(obj)}")
 
     return new_obj
