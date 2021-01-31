@@ -74,57 +74,74 @@ class TestArrayFunctions:
         assert_array_equal(expected, actual)
 
     @pytest.mark.parametrize(
-        ["unit", "data", "error", "match"],
+        ["unit", "data", "expected", "error", "match"],
         (
             pytest.param(
-                1.2, np.array([0, 1, 2]), ValueError, "", id="not a unit-ndarray"
+                1.2,
+                np.array([0, 1, 2]),
+                None,
+                ValueError,
+                "cannot use .+ as a unit",
+                id="not a unit-ndarray",
             ),
             pytest.param(
                 1,
                 np.array([0, 1, 2]),
+                None,
                 ValueError,
                 "cannot use .+ as a unit",
                 id="no unit (1)-ndarray",
             ),
             pytest.param(
-                None, np.array([0, 1, 2]), None, None, id="no unit (None)-ndarray"
+                None,
+                np.array([0, 1, 2]),
+                np.array([0, 1, 2]),
+                None,
+                None,
+                id="no unit (None)-ndarray",
             ),
             pytest.param(
                 "mm",
                 np.array([0, 1, 2]),
+                None,
                 ValueError,
                 "cannot convert a non-quantity using .+ as unit",
                 id="string-ndarray",
             ),
             pytest.param(
-                "mm", Quantity([0, 1, 2], "m"), None, None, id="string-quantity"
+                "mm",
+                Quantity([0, 1, 2], "m"),
+                Quantity([0, 1000, 2000], "mm"),
+                None,
+                None,
+                id="string-quantity",
             ),
             pytest.param(
-                unit_registry.mm, Quantity([0, 1, 2], "m"), None, None, id="unit object"
+                unit_registry.mm,
+                Quantity([0, 1, 2], "m"),
+                Quantity([0, 1000, 2000], "mm"),
+                None,
+                None,
+                id="unit object",
             ),
             pytest.param(
                 "s",
                 Quantity([0, 1, 2], "m"),
+                None,
                 pint.DimensionalityError,
                 None,
                 id="quantity-incompatible unit",
             ),
         ),
     )
-    def test_array_convert_units(self, data, unit, error, match):
+    def test_array_convert_units(self, data, unit, expected, error, match):
         if error is not None:
             with pytest.raises(error, match=match):
                 conversion.array_convert_units(data, unit)
 
             return
 
-        expected = (
-            unit_registry.Quantity(np.array([0, 1000, 2000]), "mm")
-            if unit is not None
-            else data
-        )
         actual = conversion.array_convert_units(data, unit)
-
         assert_array_equal(expected, actual)
 
     @pytest.mark.parametrize(
