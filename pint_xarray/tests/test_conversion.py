@@ -29,6 +29,9 @@ def convert_quantity(q, u):
     if u is None:
         return q
 
+    if not isinstance(q, Quantity):
+        q = Quantity(q)
+
     return q.to(u)
 
 
