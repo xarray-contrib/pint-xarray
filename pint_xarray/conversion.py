@@ -148,8 +148,6 @@ def attach_unit_attributes(obj, units, attr="units"):
                 continue
 
             var.attrs[attr] = unit
-    elif isinstance(obj, Variable):
-        new_obj.attrs[attr] = units.get(None)
     else:
         raise ValueError(f"cannot attach unit attributes to {obj!r}: unknown type")
 
