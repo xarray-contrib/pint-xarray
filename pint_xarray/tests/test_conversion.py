@@ -349,45 +349,35 @@ class TestXarrayFunctions:
     @pytest.mark.parametrize(
         "units",
         (
-            pytest.param({None: None, "u": None}, id="no units"),
-            pytest.param({None: unit_registry.m, "u": None}, id="data units"),
-            pytest.param({None: None, "u": unit_registry.s}, id="coord units"),
+            pytest.param({"a": None, "b": None, "u": None, "x": None}, id="none"),
             pytest.param(
-                {None: unit_registry.m, "u": unit_registry.s}, id="data and coord units"
+                {"a": Unit("kg"), "b": Unit("hPa"), "u": None, "x": None}, id="data"
             ),
+            pytest.param({"a": None, "b": None, "u": Unit("s"), "x": None}, id="coord"),
+            pytest.param({"a": None, "b": None, "u": None, "x": Unit("m")}, id="dims"),
         ),
     )
-    @pytest.mark.parametrize("typename", ("Variable", "DataArray", "Dataset"))
-    def test_extract_units(self, typename, units):
-        if typename == "Variable":
-            data_units = units.get(None) or 1
-            data = np.linspace(0, 1, 2) * data_units
+    @pytest.mark.parametrize("type", ("DataArray", "Dataset"))
+    def test_extract_units(self, type, units):
+        a = np.linspace(-1, 1, 2)
+        b = np.linspace(0, 1, 2)
+        u = np.linspace(0, 100, 2)
+        x = np.arange(2)
 
+        obj = Dataset(
+            {
+                "a": ("x", to_quantity(a, units.get("a"))),
+                "b": ("x", to_quantity(b, units.get("b"))),
+            },
+            coords={
+                "u": ("x", to_quantity(u, units.get("u"))),
+                "x": ("x", x, {"units": units.get("x")}),
+            },
+        )
+        if type == "DataArray":
+            obj = obj["a"]
             units = units.copy()
-            units.pop("u")
-
-            obj = Variable("x", data)
-        elif typename == "DataArray":
-            data_units = units.get(None) or 1
-            data = np.linspace(0, 1, 2) * data_units
-
-            coord_units = units.get("u") or 1
-            coords = {"u": ("x", np.arange(2) * coord_units)}
-
-            obj = DataArray(data, dims="x", coords=coords)
-        elif typename == "Dataset":
-            data_units = units.get(None)
-            data1 = np.linspace(-1, 1, 2) * (data_units or 1)
-            data2 = np.linspace(0, 1, 2) * (data_units or 1)
-
-            coord_units = units.get("u") or 1
-            coords = {"u": ("x", np.arange(2) * coord_units)}
-
-            units = units.copy()
-            units.pop(None)
-            units.update({"a": data_units, "b": data_units})
-
-            obj = Dataset({"a": ("x", data1), "b": ("x", data2)}, coords=coords)
+            del units["b"]
 
         assert conversion.extract_units(obj) == units
 
