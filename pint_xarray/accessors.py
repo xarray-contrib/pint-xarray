@@ -501,12 +501,6 @@ class PintDatasetAccessor:
             if unit is not None or attr is not None
         }
 
-        # TODO: remove once indexes support units
-        dim_units = {name: unit for name, unit in units.items() if name in new_obj.dims}
-        for name in dim_units.keys():
-            units.pop(name)
-        new_obj = conversion.attach_unit_attributes(new_obj, dim_units)
-
         return conversion.attach_units(new_obj, units)
 
     def dequantify(self):
@@ -522,11 +516,14 @@ class PintDatasetAccessor:
             Dataset whose data variables are unitless, and of the type
             that was previously wrapped by ``pint.Quantity``.
         """
-        units = units_to_str_or_none(conversion.extract_units(self.ds))
-        new_obj = conversion.attach_unit_attributes(
-            conversion.strip_units(self.ds), units
+        units = conversion.extract_unit_attributes(self.ds)
+        units.update(conversion.extract_units(self.ds))
+
+        return (
+            self.ds.pipe(conversion.strip_units)
+            .pipe(conversion.strip_unit_attributes)
+            .pipe(conversion.attach_unit_attributes, units_to_str_or_none(units))
         )
-        return new_obj
 
     def to(self, units=None, **unit_kwargs):
         """convert the quantities in a DataArray
