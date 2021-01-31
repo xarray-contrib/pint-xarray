@@ -257,7 +257,7 @@ class TestXarrayFunctions:
             pytest.param(
                 "none",
                 {"a": Unit("g"), "b": Unit("Pa"), "u": Unit("ms"), "x": Unit("mm")},
-                None,
+                pint.DimensionalityError,
                 None,
                 id="none-with units",
             ),
@@ -272,7 +272,7 @@ class TestXarrayFunctions:
             pytest.param(
                 "data",
                 {"a": Unit("s"), "b": Unit("m")},
-                None,
+                pint.DimensionalityError,
                 None,
                 id="data-incompatible units",
             ),
@@ -293,7 +293,7 @@ class TestXarrayFunctions:
             pytest.param(
                 "dims",
                 {"x": Unit("ms")},
-                None,
+                pint.DimensionalityError,
                 None,
                 id="dims-incompatible units",
             ),
@@ -314,7 +314,7 @@ class TestXarrayFunctions:
             pytest.param(
                 "coords",
                 {"u": Unit("mm")},
-                None,
+                pint.DimensionalityError,
                 None,
                 id="coords-incompatible units",
             ),
@@ -349,6 +349,13 @@ class TestXarrayFunctions:
                 "x": ("x", x, {"units": original_units.get("x")}),
             },
         )
+
+        if error is not None:
+            with pytest.raises(error, match=match):
+                conversion.convert_units(obj, units)
+
+            return
+
         expected = Dataset(
             {
                 "a": (
