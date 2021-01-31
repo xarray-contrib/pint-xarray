@@ -101,6 +101,14 @@ class TestArrayFunctions:
                 id="no unit (None)-ndarray",
             ),
             pytest.param(
+                "mm",
+                np.array([0, 1, 2]),
+                None,
+                ValueError,
+                "cannot convert a non-quantity using .+ as unit",
+                id="string-ndarray",
+            ),
+            pytest.param(
                 Unit("deg"),
                 np.array([0, np.pi / 2, np.pi]),
                 Quantity([0, 90, 180], "deg"),
@@ -109,12 +117,12 @@ class TestArrayFunctions:
                 id="dimensionless-ndarray",
             ),
             pytest.param(
-                "mm",
-                np.array([0, 1, 2]),
+                Unit("mm"),
+                np.array([0, np.pi / 2, np.pi]),
                 None,
-                ValueError,
-                "cannot convert a non-quantity using .+ as unit",
-                id="string-ndarray",
+                pint.DimensionalityError,
+                None,
+                id="unit-ndarray",
             ),
             pytest.param(
                 "mm",
