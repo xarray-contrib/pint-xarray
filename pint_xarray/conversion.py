@@ -196,10 +196,15 @@ def convert_units(obj, units):
 
 def extract_units(obj):
     if isinstance(obj, Dataset):
-        units = {
-            name: array_extract_units(value.data)
-            for name, value in obj.variables.items()
-        }
+        units = extract_unit_attributes(obj)
+        dims = obj.dims
+        units.update(
+            {
+                name: array_extract_units(value.data)
+                for name, value in obj.variables.items()
+                if name not in dims
+            }
+        )
     elif isinstance(obj, DataArray):
         original_name = obj.name
         name = obj.name if obj.name is not None else "<this-array>"
