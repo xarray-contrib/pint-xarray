@@ -176,9 +176,6 @@ def convert_units_variable(variable, units):
 
 
 def convert_units(obj, units):
-    if not isinstance(units, dict):
-        units = {None: units}
-
     if isinstance(obj, DataArray):
         original_name = obj.name
         name = obj.name if obj.name is not None else "<this-array>"
