@@ -194,13 +194,14 @@ def convert_units(obj, units):
             for name, variable in obj.variables.items()
             if name in obj._coord_names
         }
+
         data_vars = {
             name: convert_units_variable(variable, units.get(name))
             for name, variable in obj.variables.items()
             if name not in obj._coord_names
         }
 
-        new_obj = Dataset(coords=coords, data_vars=data_vars, attrs=obj.attrs)
+        new_obj = Dataset(data_vars=data_vars, coords=coords, attrs=obj.attrs)
     else:
         raise ValueError(f"cannot convert object: {obj}")
 
