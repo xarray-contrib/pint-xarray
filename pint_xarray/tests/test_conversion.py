@@ -1,7 +1,7 @@
 import numpy as np
 import pint
 import pytest
-from xarray import DataArray, Dataset, Variable
+from xarray import DataArray, Dataset
 
 from pint_xarray import conversion
 
@@ -453,9 +453,6 @@ class TestXarrayFunctions:
                 {"a": "K", "b": "hPa", "x": "m", "u": "s"},
                 id="Dataset",
             ),
-            pytest.param(
-                Variable("x", [], {"units": "hPa"}), {None: "hPa"}, id="Variable"
-            ),
         ),
     )
     def test_extract_unit_attributes(self, obj, expected):
@@ -463,15 +460,15 @@ class TestXarrayFunctions:
         assert expected == actual
 
     @pytest.mark.parametrize(
-        "obj",
+        ["obj", "expected"],
         (
-            pytest.param(Variable("x", [0, 4, 3] * unit_registry.m), id="Variable"),
             pytest.param(
                 DataArray(
                     dims="x",
                     data=[0, 4, 3] * unit_registry.m,
                     coords={"u": ("x", [2, 3, 4] * unit_registry.s)},
                 ),
+                {None: None, "u": None},
                 id="DataArray",
             ),
             pytest.param(
@@ -482,21 +479,14 @@ class TestXarrayFunctions:
                     },
                     coords={"u": ("x", [2, 3, 4] * unit_registry.s)},
                 ),
+                {"a": None, "b": None, "u": None},
                 id="Dataset",
             ),
         ),
     )
-    def test_strip_units(self, obj):
-        if isinstance(obj, Variable):
-            expected_units = {None: None}
-        elif isinstance(obj, DataArray):
-            expected_units = {None: None}
-            expected_units.update({name: None for name in obj.coords.keys()})
-        elif isinstance(obj, Dataset):
-            expected_units = {name: None for name in obj.variables.keys()}
-
+    def test_strip_units(self, obj, expected):
         actual = conversion.strip_units(obj)
-        assert conversion.extract_units(actual) == expected_units
+        assert conversion.extract_units(actual) == expected
 
     @pytest.mark.parametrize(
         ["obj", "expected"],
@@ -526,9 +516,6 @@ class TestXarrayFunctions:
                 ),
                 {"a": "K", "b": "hPa", "x": "m", "u": "s"},
                 id="Dataset",
-            ),
-            pytest.param(
-                Variable("x", [], {"units": "hPa"}), {None: "hPa"}, id="Variable"
             ),
         ),
     )

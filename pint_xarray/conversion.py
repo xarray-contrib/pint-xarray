@@ -226,8 +226,6 @@ def extract_units(obj):
 
         units = extract_units(ds)
         units[original_name] = units.pop(name)
-    elif isinstance(obj, Variable):
-        units = {None: array_extract_units(obj.data)}
     else:
         raise ValueError(f"unknown type: {type(obj)}")
 
@@ -245,8 +243,6 @@ def extract_unit_attributes(obj, attr="units"):
         units[original_name] = units.pop(name)
     elif isinstance(obj, Dataset):
         units = {name: var.attrs.get(attr, None) for name, var in obj.variables.items()}
-    elif isinstance(obj, Variable):
-        units = {None: obj.attrs.get(attr, None)}
     else:
         raise ValueError(
             f"cannot retrieve unit attributes from unknown type: {type(obj)}"
@@ -255,11 +251,13 @@ def extract_unit_attributes(obj, attr="units"):
     return units
 
 
+def strip_units_variable(var):
+    data = array_strip_units(var.data)
+    return var.copy(data=data)
+
+
 def strip_units(obj):
-    if isinstance(obj, Variable):
-        data = array_strip_units(obj.data)
-        new_obj = obj.copy(data=data)
-    elif isinstance(obj, DataArray):
+    if isinstance(obj, DataArray):
         original_name = obj.name
         name = obj.name if obj.name is not None else "<this-array>"
         ds = obj.rename(name).to_dataset()
@@ -268,12 +266,12 @@ def strip_units(obj):
         new_obj = stripped[name].rename(original_name)
     elif isinstance(obj, Dataset):
         data_vars = {
-            name: strip_units(variable)
+            name: strip_units_variable(variable)
             for name, variable in obj.variables.items()
             if name not in obj._coord_names
         }
         coords = {
-            name: strip_units(variable)
+            name: strip_units_variable(variable)
             for name, variable in obj.variables.items()
             if name in obj._coord_names
         }
@@ -299,9 +297,6 @@ def strip_unit_attributes(obj, attr="units"):
         new_obj = obj.copy()
         for var in new_obj.variables.values():
             var.attrs.pop(attr, None)
-    elif isinstance(obj, Variable):
-        new_obj = obj.copy()
-        new_obj.attrs.pop(attr, None)
     else:
         raise ValueError(f"cannot strip unit attributes from unknown type: {type(obj)}")
 
