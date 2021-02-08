@@ -237,7 +237,7 @@ class PintDataArrayAccessor:
             if unit is not None or unit_attribute is not None
         }
 
-        return conversion.strip_unit_attributes(self.da).pipe(
+        return self.da.pipe(conversion.strip_unit_attributes).pipe(
             conversion.attach_units, units
         )
 
@@ -493,7 +493,6 @@ class PintDatasetAccessor:
         registry = get_registry(unit_registry, units, conversion.extract_units(self.ds))
 
         unit_attrs = conversion.extract_unit_attributes(self.ds)
-        new_obj = conversion.strip_unit_attributes(self.ds)
 
         units = {
             name: _decide_units(unit, registry, attr)
@@ -501,7 +500,9 @@ class PintDatasetAccessor:
             if unit is not None or attr is not None
         }
 
-        return conversion.attach_units(new_obj, units)
+        return self.ds.pipe(conversion.strip_unit_attributes).pipe(
+            conversion.attach_units, units
+        )
 
     def dequantify(self):
         """
