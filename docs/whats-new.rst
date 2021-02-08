@@ -5,7 +5,10 @@ What's new
 ------------------
 - rewrite :py:meth:`Dataset.pint.quantify` and :py:meth:`DataArray.pint.quantify`,
   to use pint's `parse_units` instead of `parse_expression` (:pull:`40`)
-- refactor the internal conversion functions (:pull:``)
+- refactor the internal conversion functions (:pull:`56`)
+- allow converting indexes (except :py:class:`pandas.MultiIndex`) (:pull:`56`)
+- document the reason for requiring the ``force_ndarray_like`` or ``force_ndarray``
+  options on unit registries (:pull:`59`)
 
 v0.1 (October 26 2020)
 ----------------------
