@@ -86,26 +86,6 @@ def units_to_str_or_none(mapping, unit_format):
     }
 
 
-def _dequantify(obj, format):
-    units = conversion.extract_units(obj)
-    attrs = {
-        k: v
-        for k, v in conversion.extract_unit_attributes(obj).items()
-        if isinstance(v, (Quantity, Unit))
-    }
-
-    if format is None:
-        registry = get_registry(None, units, attrs)
-        unit_format = registry.default_format
-    else:
-        unit_format = f"{{:{format}}}"
-
-    units = units_to_str_or_none(merge_mappings(units, attrs), unit_format)
-    new_obj = conversion.attach_unit_attributes(conversion.strip_units(obj), units)
-
-    return new_obj
-
-
 # based on xarray.core.utils.either_dict_or_kwargs
 # https://github.com/pydata/xarray/blob/v0.15.1/xarray/core/utils.py#L249-L268
 def either_dict_or_kwargs(positional, keywords, method_name):
@@ -247,12 +227,11 @@ class PintDataArrayAccessor:
             unit_kwargs[self.da.name] = units
             units = None
 
-        units = either_dict_or_kwargs(units, unit_kwargs, ".quantify")
+        units = either_dict_or_kwargs(units, unit_kwargs, "quantify")
 
         registry = get_registry(unit_registry, units, conversion.extract_units(self.da))
 
         unit_attrs = conversion.extract_unit_attributes(self.da)
-        new_obj = conversion.strip_unit_attributes(self.da)
 
         units = {
             name: _decide_units(unit, registry, unit_attribute)
@@ -260,13 +239,9 @@ class PintDataArrayAccessor:
             if unit is not None or unit_attribute is not None
         }
 
-        # TODO: remove once indexes support units
-        dim_units = {name: unit for name, unit in units.items() if name in self.da.dims}
-        for name in dim_units.keys():
-            units.pop(name)
-        new_obj = conversion.attach_unit_attributes(new_obj, dim_units)
-
-        return conversion.attach_units(new_obj, units)
+        return self.da.pipe(conversion.strip_unit_attributes).pipe(
+            conversion.attach_units, units
+        )
 
     def dequantify(self, format=None):
         """
@@ -283,7 +258,17 @@ class PintDataArrayAccessor:
         format : str, optional
             The format used for the string representations.
         """
-        return _dequantify(self.da, format=format)
+        units = conversion.extract_unit_attributes(self.da)
+        units.update(conversion.extract_units(self.da))
+
+        unit_format = f"{{:{format}}}" if isinstance(format, str) else format
+
+        units = units_to_str_or_none(units, unit_format)
+        return (
+            self.da.pipe(conversion.strip_units)
+            .pipe(conversion.strip_unit_attributes)
+            .pipe(conversion.attach_unit_attributes, units)
+        )
 
     @property
     def magnitude(self):
@@ -510,11 +495,10 @@ class PintDatasetAccessor:
             a        (x) int64 <Quantity([0 3 2], 'meter')>
             b        (x) int64 <Quantity([ 5 -2  1], 'decimeter')>
         """
-        units = either_dict_or_kwargs(units, unit_kwargs, ".quantify")
+        units = either_dict_or_kwargs(units, unit_kwargs, "quantify")
         registry = get_registry(unit_registry, units, conversion.extract_units(self.ds))
 
         unit_attrs = conversion.extract_unit_attributes(self.ds)
-        new_obj = conversion.strip_unit_attributes(self.ds)
 
         units = {
             name: _decide_units(unit, registry, attr)
@@ -522,13 +506,9 @@ class PintDatasetAccessor:
             if unit is not None or attr is not None
         }
 
-        # TODO: remove once indexes support units
-        dim_units = {name: unit for name, unit in units.items() if name in new_obj.dims}
-        for name in dim_units.keys():
-            units.pop(name)
-        new_obj = conversion.attach_unit_attributes(new_obj, dim_units)
-
-        return conversion.attach_units(new_obj, units)
+        return self.ds.pipe(conversion.strip_unit_attributes).pipe(
+            conversion.attach_units, units
+        )
 
     def dequantify(self, format=None):
         """
@@ -545,7 +525,17 @@ class PintDatasetAccessor:
         format : str, optional
             The format used for the string representations.
         """
-        return _dequantify(self.ds, format=format)
+        units = conversion.extract_unit_attributes(self.ds)
+        units.update(conversion.extract_units(self.ds))
+
+        unit_format = f"{{:{format}}}" if isinstance(format, str) else format
+
+        units = units_to_str_or_none(units, unit_format)
+        return (
+            self.ds.pipe(conversion.strip_units)
+            .pipe(conversion.strip_unit_attributes)
+            .pipe(conversion.attach_unit_attributes, units)
+        )
 
     def to(self, units=None, **unit_kwargs):
         """convert the quantities in a DataArray
