@@ -304,35 +304,6 @@ def strip_unit_attributes(obj, attr="units"):
     return new_obj
 
 
-def convert_indexes(obj, units, attr="units"):
-    dims = obj.dims
-    if isinstance(obj, DataArray):
-        variables = itertools.chain([(obj.name, obj)], obj.coords.items())
-    elif isinstance(obj, Dataset):
-        variables = obj.variables.items()
-    else:
-        raise ValueError(f"invalid object: {obj}")
-
-    index_variables = {name: var for name, var in variables if name in dims}
-    index_units = {k: v for k, v in extract_unit_attributes(obj).items() if k in dims}
-    variables = {
-        name: attach_units(
-            strip_unit_attributes(var.to_base_variable()),
-            {None: index_units.get(name)},
-        )
-        for name, var in index_variables.items()
-    }
-    converted = {
-        name: convert_units(var, {None: units.get(name)})
-        for name, var in variables.items()
-    }
-    new_coords = {
-        name: attach_unit_attributes(strip_units(var), extract_units(var))
-        for name, var in converted.items()
-    }
-    return obj.assign_coords(new_coords)
-
-
 def slice_extract_units(indexer):
     elements = {name: getattr(indexer, name) for name in ("start", "stop", "step")}
     extracted_units = [
