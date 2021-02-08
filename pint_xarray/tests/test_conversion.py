@@ -546,7 +546,7 @@ class TestXarrayFunctions:
                 Unit("s"),
                 id="DataArray-units",
             ),
-            pytest.param(slice(None), slice(None), id="empty slice-no units"),
+            pytest.param(slice(None), None, id="empty slice-no units"),
             pytest.param(slice(1, None), None, id="slice-no units"),
             pytest.param(
                 slice(Quantity(1, "m"), Quantity(2, "m")),
