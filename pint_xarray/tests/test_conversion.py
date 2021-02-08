@@ -1,7 +1,7 @@
 import numpy as np
 import pint
 import pytest
-from xarray import DataArray, Dataset
+from xarray import DataArray, Dataset, Variable
 
 from pint_xarray import conversion
 
@@ -528,3 +528,57 @@ class TestXarrayFunctions:
         assert (
             filter_none_values(conversion.extract_unit_attributes(actual)) == expected
         )
+
+    @pytest.mark.parametrize(
+        ["indexer", "expected"],
+        (
+            pytest.param(1, None, id="scalar-no units"),
+            pytest.param(Quantity(1, "m"), Unit("m"), id="scalar-units"),
+            pytest.param(np.array([1, 2]), None, id="array-no units"),
+            pytest.param(Quantity([1, 2], "s"), Unit("s"), id="array-units"),
+            pytest.param(Variable("x", [1, 2]), None, id="Variable-no units"),
+            pytest.param(
+                Variable("x", Quantity([1, 2], "m")), Unit("m"), id="Variable-units"
+            ),
+            pytest.param(DataArray([1, 2], dims="x"), None, id="DataArray-no units"),
+            pytest.param(
+                DataArray(Quantity([1, 2], "s"), dims="x"),
+                Unit("s"),
+                id="DataArray-units",
+            ),
+            pytest.param(slice(None), slice(None), id="empty slice-no units"),
+            pytest.param(slice(1, None), None, id="slice-no units"),
+            pytest.param(
+                slice(Quantity(1, "m"), Quantity(2, "m")),
+                Unit("m"),
+                id="slice-identical units",
+            ),
+            pytest.param(
+                slice(Quantity(1, "m"), Quantity(2000, "mm")),
+                Unit("m"),
+                id="slice-compatible units",
+            ),
+            pytest.param(
+                slice(Quantity(1, "m"), Quantity(2, "ms")),
+                ValueError,
+                id="slice-incompatible units",
+            ),
+            pytest.param(
+                slice(1, Quantity(2, "ms")),
+                ValueError,
+                id="slice-incompatible units-mixed",
+            ),
+            pytest.param(
+                slice(1, Quantity(2, "rad")),
+                Unit("rad"),
+                id="slice-incompatible units-mixed-dimensionless",
+            ),
+        ),
+    )
+    def test_extract_indexer_units(self, indexer, expected):
+        if expected is not None and not isinstance(expected, Unit):
+            with pytest.raises(expected):
+                conversion.extract_indexer_units(indexer)
+        else:
+            actual = conversion.extract_indexer_units(indexer)
+            assert actual == expected
