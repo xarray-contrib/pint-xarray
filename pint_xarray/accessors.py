@@ -225,7 +225,7 @@ class PintDataArrayAccessor:
             unit_kwargs[self.da.name] = units
             units = None
 
-        units = either_dict_or_kwargs(units, unit_kwargs, ".quantify")
+        units = either_dict_or_kwargs(units, unit_kwargs, "quantify")
 
         registry = get_registry(unit_registry, units, conversion.extract_units(self.da))
 
@@ -489,7 +489,7 @@ class PintDatasetAccessor:
             a        (x) int64 <Quantity([0 3 2], 'meter')>
             b        (x) int64 <Quantity([ 5 -2  1], 'decimeter')>
         """
-        units = either_dict_or_kwargs(units, unit_kwargs, ".quantify")
+        units = either_dict_or_kwargs(units, unit_kwargs, "quantify")
         registry = get_registry(unit_registry, units, conversion.extract_units(self.ds))
 
         unit_attrs = conversion.extract_unit_attributes(self.ds)
