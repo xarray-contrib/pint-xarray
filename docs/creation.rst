@@ -111,6 +111,9 @@ or overwrite the default registry:
     To properly work with ``xarray``, the ``force_ndarray_like`` or
     ``force_ndarray`` options have to be enabled on the custom registry.
 
+   Without it, python scalars wrapped by :py:class:`pint.Quantity` may raise errors or
+   have their units stripped.
+
 Saving with units
 -----------------
 In order to not lose the units when saving to disk, we first have to call the
