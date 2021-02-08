@@ -44,35 +44,44 @@ def strip_quantity(q):
 
 class TestArrayFunctions:
     @pytest.mark.parametrize(
-        ["unit", "data", "match"],
+        ["unit", "data", "expected", "match"],
         (
             pytest.param(
-                1.2, np.array([0, 1]), "cannot use .+ as a unit", id="not a unit"
+                1.2, np.array([0, 1]), None, "cannot use .+ as a unit", id="not a unit"
             ),
             pytest.param(
-                1, np.array([0, 1]), "cannot use .+ as a unit", id="no unit (1)"
+                1, np.array([0, 1]), None, "cannot use .+ as a unit", id="no unit (1)"
             ),
-            pytest.param(None, np.array([0, 1]), None, id="no unit (None)"),
-            pytest.param("m", np.array([0, 1]), "cannot use .+ as a unit", id="string"),
-            pytest.param(unit_registry.m, np.array([0, 1]), None, id="unit object"),
             pytest.param(
-                unit_registry.m,
+                None, np.array([0, 1]), np.array([0, 1]), None, id="no unit (None)"
+            ),
+            pytest.param(
+                "m", np.array([0, 1]), None, "cannot use .+ as a unit", id="string"
+            ),
+            pytest.param(
+                Unit("m"),
+                np.array([0, 1]),
+                Quantity([0, 1], "m"),
+                None,
+                id="unit object",
+            ),
+            pytest.param(
+                Unit("m"),
                 Quantity(np.array([0, 1]), "s"),
+                None,
                 "already has units",
                 id="unit object on quantity",
             ),
         ),
     )
-    def test_array_attach_units(self, data, unit, match):
+    def test_array_attach_units(self, data, unit, expected, match):
         if match is not None:
             with pytest.raises(ValueError, match=match):
                 conversion.array_attach_units(data, unit)
 
             return
 
-        expected = unit_registry.Quantity(data, "m") if unit is not None else data
         actual = conversion.array_attach_units(data, unit)
-
         assert_array_units_equal(expected, actual)
         assert_array_equal(expected, actual)
 
@@ -164,27 +173,25 @@ class TestArrayFunctions:
         assert_array_equal(expected, actual)
 
     @pytest.mark.parametrize(
-        "data",
+        ["data", "expected"],
         (
-            pytest.param(np.array([0, 1]), id="array_like"),
-            pytest.param(Quantity([1, 2], "m"), id="quantity"),
+            pytest.param(np.array([0, 1]), None, id="array_like"),
+            pytest.param(Quantity([1, 2], "m"), Unit("m"), id="quantity"),
         ),
     )
-    def test_array_extract_units(self, data):
-        expected = unit_registry.m if isinstance(data, pint.Quantity) else None
+    def test_array_extract_units(self, data, expected):
         actual = conversion.array_extract_units(data)
 
         assert expected == actual
 
     @pytest.mark.parametrize(
-        "data",
+        ["data", "expected"],
         (
-            pytest.param(np.array([1, 2]), id="array_like"),
-            pytest.param(Quantity([1, 2], "m"), id="quantity"),
+            pytest.param(np.array([1, 2]), np.array([1, 2]), id="array_like"),
+            pytest.param(Quantity([1, 2], "m"), np.array([1, 2]), id="quantity"),
         ),
     )
-    def test_array_strip_units(self, data):
-        expected = np.array([1, 2])
+    def test_array_strip_units(self, data, expected):
         actual = conversion.array_strip_units(data)
 
         assert_array_equal(expected, actual)
@@ -356,25 +363,20 @@ class TestXarrayFunctions:
 
             return
 
+        expected_a = convert_quantity(q_a, units.get("a", original_units.get("a")))
+        expected_b = convert_quantity(q_b, units.get("b", original_units.get("b")))
+        expected_u = convert_quantity(q_u, units.get("u", original_units.get("u")))
+        expected_x = strip_quantity(convert_quantity(q_x, units.get("x")))
         expected = Dataset(
             {
-                "a": (
-                    "x",
-                    convert_quantity(q_a, units.get("a", original_units.get("a"))),
-                ),
-                "b": (
-                    "x",
-                    convert_quantity(q_b, units.get("b", original_units.get("b"))),
-                ),
+                "a": ("x", expected_a),
+                "b": ("x", expected_b),
             },
             coords={
-                "u": (
-                    "x",
-                    convert_quantity(q_u, units.get("u", original_units.get("u"))),
-                ),
+                "u": ("x", expected_u),
                 "x": (
                     "x",
-                    strip_quantity(convert_quantity(q_x, units.get("x"))),
+                    expected_x,
                     {"units": units.get("x", original_units.get("x"))},
                 ),
             },
