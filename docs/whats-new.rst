@@ -6,6 +6,8 @@ What's new
 - rewrite :py:meth:`Dataset.pint.quantify` and :py:meth:`DataArray.pint.quantify`,
   to use pint's `parse_units` instead of `parse_expression` (:pull:`40`)
 - refactor the internal conversion functions (:pull:``)
+- allow passing a format string to :py:meth:`Dataset.pint.dequantify` and
+  :py:meth:`DataArray.pint.dequantify` (:pull:`49`)
 
 v0.1 (October 26 2020)
 ----------------------
