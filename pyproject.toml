@@ -7,3 +7,10 @@ fallback_version = "999"
 
 [tool.pytest.ini_options]
 junit_family = "xunit2"
+
+[tool.isort]
+profile = "black"
+skip_gitignore = "true"
+force_to_top = "true"
+default_section = "THIRDPARTY"
+known_first_party = "pint_xarray"
