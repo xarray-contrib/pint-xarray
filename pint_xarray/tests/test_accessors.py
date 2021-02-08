@@ -6,7 +6,7 @@ from pint import Unit, UnitRegistry
 from pint.errors import UndefinedUnitError
 from xarray.testing import assert_equal
 
-from .. import conversion
+from .. import accessors, conversion
 from .utils import raises_regex
 
 pytestmark = [
@@ -99,6 +99,23 @@ class TestQuantifyDataArray:
         da = xr.DataArray([10], attrs={"units": "m^-1"})
         result = da.pint.quantify()
         assert result.pint.units == Unit("1 / meter")
+
+
+@pytest.mark.parametrize("formatter", ("", "P", "C"))
+@pytest.mark.parametrize("flags", ("", "~", "#", "~#"))
+def test_units_to_str_or_none(formatter, flags):
+    unit_format = f"{{:{flags}{formatter}}}"
+    unit_attrs = {None: "m", "a": "s", "b": "degC", "c": "degF", "d": "degK"}
+    units = {key: unit_registry.Unit(value) for key, value in unit_attrs.items()}
+
+    expected = {key: unit_format.format(value) for key, value in units.items()}
+    actual = accessors.units_to_str_or_none(units, unit_format)
+
+    assert expected == actual
+    assert units == {key: unit_registry.Unit(value) for key, value in actual.items()}
+
+    expected = {None: None}
+    assert expected == accessors.units_to_str_or_none(expected, unit_format)
 
 
 class TestDequantifyDataArray:

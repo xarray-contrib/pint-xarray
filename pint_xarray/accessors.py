@@ -77,9 +77,11 @@ def merge_mappings(first, *mappings):
     return result
 
 
-def units_to_str_or_none(mapping):
+def units_to_str_or_none(mapping, unit_format):
+    formatter = str if not unit_format else lambda v: unit_format.format(v)
+
     return {
-        key: str(value) if isinstance(value, Unit) else value
+        key: formatter(value) if isinstance(value, Unit) else value
         for key, value in mapping.items()
     }
 
@@ -241,7 +243,7 @@ class PintDataArrayAccessor:
             conversion.attach_units, units
         )
 
-    def dequantify(self):
+    def dequantify(self, format=None):
         """
         Removes units from the DataArray and its coordinates.
 
@@ -253,15 +255,19 @@ class PintDataArrayAccessor:
         dequantified : DataArray
             DataArray whose array data is unitless, and of the type
             that was previously wrapped by `pint.Quantity`.
+        format : str, optional
+            The format used for the string representations.
         """
-
         units = conversion.extract_unit_attributes(self.da)
         units.update(conversion.extract_units(self.da))
 
+        unit_format = f"{{:{format}}}" if isinstance(format, str) else format
+
+        units = units_to_str_or_none(units, unit_format)
         return (
             self.da.pipe(conversion.strip_units)
             .pipe(conversion.strip_unit_attributes)
-            .pipe(conversion.attach_unit_attributes, units_to_str_or_none(units))
+            .pipe(conversion.attach_unit_attributes, units)
         )
 
     @property
@@ -504,7 +510,7 @@ class PintDatasetAccessor:
             conversion.attach_units, units
         )
 
-    def dequantify(self):
+    def dequantify(self, format=None):
         """
         Removes units from the Dataset and its coordinates.
 
@@ -516,14 +522,19 @@ class PintDatasetAccessor:
         dequantified : Dataset
             Dataset whose data variables are unitless, and of the type
             that was previously wrapped by ``pint.Quantity``.
+        format : str, optional
+            The format used for the string representations.
         """
         units = conversion.extract_unit_attributes(self.ds)
         units.update(conversion.extract_units(self.ds))
 
+        unit_format = f"{{:{format}}}" if isinstance(format, str) else format
+
+        units = units_to_str_or_none(units, unit_format)
         return (
             self.ds.pipe(conversion.strip_units)
             .pipe(conversion.strip_unit_attributes)
-            .pipe(conversion.attach_unit_attributes, units_to_str_or_none(units))
+            .pipe(conversion.attach_unit_attributes, units)
         )
 
     def to(self, units=None, **unit_kwargs):

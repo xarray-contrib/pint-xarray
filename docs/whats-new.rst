@@ -9,6 +9,8 @@ What's new
 - allow converting indexes (except :py:class:`pandas.MultiIndex`) (:pull:`56`)
 - document the reason for requiring the ``force_ndarray_like`` or ``force_ndarray``
   options on unit registries (:pull:`59`)
+- allow passing a format string to :py:meth:`Dataset.pint.dequantify` and
+  :py:meth:`DataArray.pint.dequantify` (:pull:`49`)
 
 v0.1 (October 26 2020)
 ----------------------
