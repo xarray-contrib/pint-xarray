@@ -225,12 +225,11 @@ class PintDataArrayAccessor:
             unit_kwargs[self.da.name] = units
             units = None
 
-        units = either_dict_or_kwargs(units, unit_kwargs, ".quantify")
+        units = either_dict_or_kwargs(units, unit_kwargs, "quantify")
 
         registry = get_registry(unit_registry, units, conversion.extract_units(self.da))
 
         unit_attrs = conversion.extract_unit_attributes(self.da)
-        new_obj = conversion.strip_unit_attributes(self.da)
 
         units = {
             name: _decide_units(unit, registry, unit_attribute)
@@ -238,13 +237,9 @@ class PintDataArrayAccessor:
             if unit is not None or unit_attribute is not None
         }
 
-        # TODO: remove once indexes support units
-        dim_units = {name: unit for name, unit in units.items() if name in self.da.dims}
-        for name in dim_units.keys():
-            units.pop(name)
-        new_obj = conversion.attach_unit_attributes(new_obj, dim_units)
-
-        return conversion.attach_units(new_obj, units)
+        return self.da.pipe(conversion.strip_unit_attributes).pipe(
+            conversion.attach_units, units
+        )
 
     def dequantify(self):
         """
@@ -260,12 +255,14 @@ class PintDataArrayAccessor:
             that was previously wrapped by `pint.Quantity`.
         """
 
-        units = units_to_str_or_none(conversion.extract_units(self.da))
-        new_obj = conversion.attach_unit_attributes(
-            conversion.strip_units(self.da), units
-        )
+        units = conversion.extract_unit_attributes(self.da)
+        units.update(conversion.extract_units(self.da))
 
-        return new_obj
+        return (
+            self.da.pipe(conversion.strip_units)
+            .pipe(conversion.strip_unit_attributes)
+            .pipe(conversion.attach_unit_attributes, units_to_str_or_none(units))
+        )
 
     @property
     def magnitude(self):
@@ -492,11 +489,10 @@ class PintDatasetAccessor:
             a        (x) int64 <Quantity([0 3 2], 'meter')>
             b        (x) int64 <Quantity([ 5 -2  1], 'decimeter')>
         """
-        units = either_dict_or_kwargs(units, unit_kwargs, ".quantify")
+        units = either_dict_or_kwargs(units, unit_kwargs, "quantify")
         registry = get_registry(unit_registry, units, conversion.extract_units(self.ds))
 
         unit_attrs = conversion.extract_unit_attributes(self.ds)
-        new_obj = conversion.strip_unit_attributes(self.ds)
 
         units = {
             name: _decide_units(unit, registry, attr)
@@ -504,13 +500,9 @@ class PintDatasetAccessor:
             if unit is not None or attr is not None
         }
 
-        # TODO: remove once indexes support units
-        dim_units = {name: unit for name, unit in units.items() if name in new_obj.dims}
-        for name in dim_units.keys():
-            units.pop(name)
-        new_obj = conversion.attach_unit_attributes(new_obj, dim_units)
-
-        return conversion.attach_units(new_obj, units)
+        return self.ds.pipe(conversion.strip_unit_attributes).pipe(
+            conversion.attach_units, units
+        )
 
     def dequantify(self):
         """
@@ -525,11 +517,14 @@ class PintDatasetAccessor:
             Dataset whose data variables are unitless, and of the type
             that was previously wrapped by ``pint.Quantity``.
         """
-        units = units_to_str_or_none(conversion.extract_units(self.ds))
-        new_obj = conversion.attach_unit_attributes(
-            conversion.strip_units(self.ds), units
+        units = conversion.extract_unit_attributes(self.ds)
+        units.update(conversion.extract_units(self.ds))
+
+        return (
+            self.ds.pipe(conversion.strip_units)
+            .pipe(conversion.strip_unit_attributes)
+            .pipe(conversion.attach_unit_attributes, units_to_str_or_none(units))
         )
-        return new_obj
 
     def to(self, units=None, **unit_kwargs):
         """convert the quantities in a DataArray
