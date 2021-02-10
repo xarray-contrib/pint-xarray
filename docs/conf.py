@@ -106,4 +106,5 @@ intersphinx_mapping = {
     "python": ("https://docs.python.org/3/", None),
     "xarray": ("https://xarray.pydata.org/en/stable", None),
     "pint": ("https://pint.readthedocs.io/en/stable", None),
+    "pandas": ("https://pandas.pydata.org/pandas-docs/stable", None),
 }
