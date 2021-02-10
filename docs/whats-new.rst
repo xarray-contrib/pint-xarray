@@ -1,3 +1,5 @@
+.. currentmodule:: xarray
+
 What's new
 ==========
 
