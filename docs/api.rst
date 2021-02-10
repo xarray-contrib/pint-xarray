@@ -2,6 +2,10 @@ API reference
 =============
 This page contains a auto-generated summary of ``pint-xarray``'s API.
 
+.. autosummary::
+   :toctree: generated/
+
+   pint_xarray.unit_registry
 
 Dataset
 -------
