@@ -5,4 +5,5 @@ sphinx>=3.2
 sphinx_rtd_theme
 ipython
 nbsphinx
+matplotlib-base
 sphinx-autosummary-accessors
