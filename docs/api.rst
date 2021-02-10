@@ -16,8 +16,6 @@ Dataset
    xarray.Dataset.pint.quantify
    xarray.Dataset.pint.dequantify
    xarray.Dataset.pint.to
-   xarray.Dataset.pint.to_base_units
-   xarray.Dataset.pint.to_system
 
 DataArray
 ---------
@@ -37,7 +35,6 @@ DataArray
    xarray.DataArray.pint.quantify
    xarray.DataArray.pint.dequantify
    xarray.DataArray.pint.to
-   xarray.DataArray.pint.to_base_units
 
 Testing
 -------
