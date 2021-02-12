@@ -273,3 +273,29 @@ class TestDequantifyDataSet:
 
         result = quantified.pint.dequantify().pint.quantify()
         assert_equal(quantified, result)
+
+
+@pytest.mark.parametrize(
+    ["units_arg", "units_kwargs"],
+    [
+        ({"a": "g", "b": unit_registry.g}, {}),
+        ("g", {}),
+        ("g", {"a": "g"}),
+        (None, {"a": "g", "b": unit_registry.g}),
+    ],
+)
+def test_to_dataset(units_arg, units_kwargs):
+    a = np.linspace(0, 10, 21) * unit_registry.kg
+    b = np.linspace(0, 20, 21) * unit_registry.mg
+    t = np.arange(21)
+    ds = xr.Dataset(data_vars={"a": (["t"], a), "b": (["t"], b)}, coords={"t": t})
+
+    ae = np.linspace(0, 10_000, 21) * unit_registry.g
+    be = np.linspace(0, 20.0 / 1000, 21) * unit_registry.g
+    expected = xr.Dataset(
+        data_vars={"a": (["t"], ae), "b": (["t"], be)}, coords={"t": t}
+    )
+
+    actual = ds.pint.to(units_arg, **units_kwargs)
+    assert conversion.extract_units(actual) == conversion.extract_units(expected)
+    assert_equal(expected, actual)

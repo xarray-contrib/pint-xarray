@@ -538,19 +538,22 @@ class PintDatasetAccessor:
         )
 
     def to(self, units=None, **unit_kwargs):
-        """convert the quantities in a DataArray
+        """convert the quantities in a Dataset
 
         Parameters
         ----------
-        units : mapping of hashable to unit-like, optional
-            Maps variable names to the unit to convert to.
+        units : unit-like or mapping of hashable to unit-like, optional
+            The units to convert to. If a unit name or ``pint.Unit``
+            object, convert all the Dataset's data variables. If a dict-like, it
+            maps variable names to unit names or ``pint.Unit``
+            objects.
         **unit_kwargs
             The kwargs form of ``units``. Can only be used for
             variable names that are strings and valid python identifiers.
 
         Returns
         -------
-        object : DataArray
+        object : Dataset
             A new object with converted units.
 
         Examples
@@ -634,7 +637,45 @@ class PintDatasetAccessor:
         Data variables:
             a        (x) float64 <Quantity([   0.  250.  500.  750. 1000.], 'millimet...
             b        (x) float64 <Quantity([-1000.  -750.  -500.  -250.     0.], 'gra...
+
+        Convert homogeneous data
+
+        >>> ds = xr.Dataset(
+        ...     data_vars={
+        ...         "a": ("x", np.linspace(0, 1, 5) * ureg.kg),
+        ...         "b": ("x", np.linspace(-1, 0, 5) * ureg.mg),
+        ...     },
+        ...     coords={"u": ("x", np.arange(5) * ureg.s)},
+        ... )
+        >>> ds
+        <xarray.Dataset>
+        Dimensions:  (x: 5)
+        Coordinates:
+            u        (x) int64 [s] 0 1 2 3 4
+        Dimensions without coordinates: x
+        Data variables:
+            a        (x) float64 [kg] 0.0 0.25 0.5 0.75 1.0
+            b        (x) float64 [mg] -1.0 -0.75 -0.5 -0.25 0.0
+        >>> ds.pint.to("g")
+        <xarray.Dataset>
+        Dimensions:  (x: 5)
+        Coordinates:
+            u        (x) int64 [s] 0 1 2 3 4
+        Dimensions without coordinates: x
+        Data variables:
+            a        (x) float64 [g] 0.0 250.0 500.0 750.0 1e+03
+            b        (x) float64 [g] -0.001 -0.00075 -0.0005 -0.00025 0.0
         """
+        if isinstance(units, (str, pint.Unit)):
+            units = {x: units for x in self.ds.keys()}
+            units.update(unit_kwargs)
+            unit_kwargs = None
+        elif units is not None and not is_dict_like(units):
+            raise ValueError(
+                "units must be either a string, a pint.Unit object or a dict-like,"
+                f" but got {units!r}"
+            )
+
         units = either_dict_or_kwargs(units, unit_kwargs, "to")
 
         return conversion.convert_units(self.ds, units)
