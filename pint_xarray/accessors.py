@@ -158,7 +158,7 @@ class PintDataArrayAccessor:
 
     def quantify(self, units=None, unit_registry=None, **unit_kwargs):
         """
-        Attaches units to the DataArray.
+        Attach units to the DataArray.
 
         Units can be specified as a pint.Unit or as a string, which will be
         parsed by the given unit registry. If no units are specified then the
@@ -245,7 +245,7 @@ class PintDataArrayAccessor:
 
     def dequantify(self, format=None):
         """
-        Removes units from the DataArray and its coordinates.
+        Convert the units of the DataArray to string attributes.
 
         Will replace ``.attrs['units']`` on each variable with a string
         representation of the ``pint.Unit`` instance.
@@ -432,7 +432,7 @@ class PintDatasetAccessor:
 
     def quantify(self, units=None, unit_registry=None, **unit_kwargs):
         """
-        Attaches units to each variable in the Dataset.
+        Attach units to the variables of the Dataset.
 
         Units can be specified as a ``pint.Unit`` or as a
         string, which will be parsed by the given unit registry. If no
@@ -515,7 +515,7 @@ class PintDatasetAccessor:
 
     def dequantify(self, format=None):
         """
-        Removes units from the Dataset and its coordinates.
+        Convert units from the Dataset to string attributes.
 
         Will replace ``.attrs['units']`` on each variable with a string
         representation of the ``pint.Unit`` instance.
