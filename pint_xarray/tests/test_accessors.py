@@ -7,7 +7,7 @@ from pint.errors import UndefinedUnitError
 from xarray.testing import assert_equal
 
 from .. import accessors, conversion
-from .utils import raises_regex
+from .utils import assert_units_equal, raises_regex
 
 pytestmark = [
     pytest.mark.filterwarnings("error::pint.UnitStrippedWarning"),
