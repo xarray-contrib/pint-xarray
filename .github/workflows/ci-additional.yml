@@ -39,4 +39,4 @@ jobs:
         python -c 'import pint_xarray'
     - name: run doctests
       run: |
-        python -m pytest --doctest-modules --ignore pint_xarray/tests
+        python -m pytest --doctest-modules pint_xarray --ignore pint_xarray/tests
