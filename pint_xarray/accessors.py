@@ -667,9 +667,10 @@ class PintDatasetAccessor:
             b        (x) float64 [g] -0.001 -0.00075 -0.0005 -0.00025 0.0
         """
         if isinstance(units, (str, pint.Unit)):
-            units = {x: units for x in self.ds.keys()}
-            units.update(unit_kwargs)
-            unit_kwargs = None
+            unit_kwargs.update(
+                {name: units for name in self.ds.keys() if name not in unit_kwargs}
+            )
+            units = None
         elif units is not None and not is_dict_like(units):
             raise ValueError(
                 "units must be either a string, a pint.Unit object or a dict-like,"
