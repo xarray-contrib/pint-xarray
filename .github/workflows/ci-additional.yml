@@ -20,7 +20,7 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: 3.8
-    - name: Cache pip
+    - name: initialize cache
       uses: actions/cache@v2
       with:
         path: ~/.cache/pip
