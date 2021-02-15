@@ -202,14 +202,14 @@ class PintDataArrayAccessor:
         --------
         >>> da = xr.DataArray(
         ...     data=[0.4, 0.9, 1.7, 4.8, 3.2, 9.1],
-        ...     dims="frequency",
+        ...     dims=["wavelength"],
         ...     coords={"wavelength": [1e-4, 2e-4, 4e-4, 6e-4, 1e-3, 2e-3]},
         ... )
         >>> da.pint.quantify(units="Hz")
-        <xarray.DataArray (frequency: 6)>
-        Quantity([ 0.4,  0.9,  1.7,  4.8,  3.2,  9.1], 'Hz')
+        <xarray.DataArray (wavelength: 6)>
+        <Quantity([0.4 0.9 1.7 4.8 3.2 9.1], 'hertz')>
         Coordinates:
-        * wavelength  (wavelength) np.array 1e-4, 2e-4, 4e-4, 6e-4, 1e-3, 2e-3
+          * wavelength  (wavelength) float64 0.0001 0.0002 0.0004 0.0006 0.001 0.002
         """
 
         if isinstance(self.da.data, Quantity):
@@ -333,7 +333,7 @@ class PintDataArrayAccessor:
         <xarray.DataArray 'arr' (x: 5)>
         <Quantity([0.   0.25 0.5  0.75 1.  ], 'meter')>
         Coordinates:
-            u        (x) int64 <Quantity([0 1 2 3 4], 'second')>
+            u        (x) int64 [s] 0 1 2 3 4
         Dimensions without coordinates: x
 
         Convert the data
@@ -342,19 +342,19 @@ class PintDataArrayAccessor:
         <xarray.DataArray 'arr' (x: 5)>
         <Quantity([   0.  250.  500.  750. 1000.], 'millimeter')>
         Coordinates:
-            u        (x) int64 <Quantity([0 1 2 3 4], 'second')>
+            u        (x) int64 [s] 0 1 2 3 4
         Dimensions without coordinates: x
         >>> da.pint.to(ureg.mm)
         <xarray.DataArray 'arr' (x: 5)>
         <Quantity([   0.  250.  500.  750. 1000.], 'millimeter')>
         Coordinates:
-            u        (x) int64 <Quantity([0 1 2 3 4], 'second')>
+            u        (x) int64 [s] 0 1 2 3 4
         Dimensions without coordinates: x
         >>> da.pint.to({da.name: "mm"})
         <xarray.DataArray 'arr' (x: 5)>
         <Quantity([   0.  250.  500.  750. 1000.], 'millimeter')>
         Coordinates:
-            u        (x) int64 <Quantity([0 1 2 3 4], 'second')>
+            u        (x) int64 [s] 0 1 2 3 4
         Dimensions without coordinates: x
 
         Convert coordinates
@@ -363,13 +363,13 @@ class PintDataArrayAccessor:
         <xarray.DataArray 'arr' (x: 5)>
         <Quantity([0.   0.25 0.5  0.75 1.  ], 'meter')>
         Coordinates:
-            u        (x) float64 <Quantity([   0. 1000. 2000. 3000. 4000.], 'millisec...
+            u        (x) float64 [ms] 0.0 1e+03 2e+03 3e+03 4e+03
         Dimensions without coordinates: x
         >>> da.pint.to(u="ms")
         <xarray.DataArray 'arr' (x: 5)>
         <Quantity([0.   0.25 0.5  0.75 1.  ], 'meter')>
         Coordinates:
-            u        (x) float64 <Quantity([   0. 1000. 2000. 3000. 4000.], 'millisec...
+            u        (x) float64 [ms] 0.0 1e+03 2e+03 3e+03 4e+03
         Dimensions without coordinates: x
 
         Convert both simultaneously
@@ -378,19 +378,19 @@ class PintDataArrayAccessor:
         <xarray.DataArray 'arr' (x: 5)>
         <Quantity([   0.  250.  500.  750. 1000.], 'millimeter')>
         Coordinates:
-            u        (x) float64 <Quantity([   0. 1000. 2000. 3000. 4000.], 'millisec...
+            u        (x) float64 [ms] 0.0 1e+03 2e+03 3e+03 4e+03
         Dimensions without coordinates: x
         >>> da.pint.to({"arr": ureg.mm, "u": ureg.ms})
         <xarray.DataArray 'arr' (x: 5)>
         <Quantity([   0.  250.  500.  750. 1000.], 'millimeter')>
         Coordinates:
-            u        (x) float64 <Quantity([   0. 1000. 2000. 3000. 4000.], 'millisec...
+            u        (x) float64 [ms] 0.0 1e+03 2e+03 3e+03 4e+03
         Dimensions without coordinates: x
         >>> da.pint.to(arr="mm", u="ms")
         <xarray.DataArray 'arr' (x: 5)>
         <Quantity([   0.  250.  500.  750. 1000.], 'millimeter')>
         Coordinates:
-            u        (x) float64 <Quantity([   0. 1000. 2000. 3000. 4000.], 'millisec...
+            u        (x) float64 [ms] 0.0 1e+03 2e+03 3e+03 4e+03
         Dimensions without coordinates: x
         """
         if isinstance(units, (str, pint.Unit)):
@@ -472,7 +472,7 @@ class PintDatasetAccessor:
         Examples
         --------
         >>> ds = xr.Dataset(
-        ...     {"a": ("x", [0, 3, 2], {"units": "m"}), "b": ("x", 5, -2, 1)},
+        ...     {"a": ("x", [0, 3, 2], {"units": "m"}), "b": ("x", [5, -2, 1])},
         ...     coords={"x": [0, 1, 2], "u": ("x", [-1, 0, 1], {"units": "s"})},
         ... )
 
@@ -481,19 +481,19 @@ class PintDatasetAccessor:
         Dimensions:  (x: 3)
         Coordinates:
           * x        (x) int64 0 1 2
-            u        (x) int64 <Quantity([-1  0  1], 'second')>
+            u        (x) int64 [s] -1 0 1
         Data variables:
-            a        (x) int64 <Quantity([0 3 2], 'meter')>
+            a        (x) int64 [m] 0 3 2
             b        (x) int64 5 -2 1
         >>> ds.pint.quantify({"b": "dm"})
         <xarray.Dataset>
         Dimensions:  (x: 3)
         Coordinates:
           * x        (x) int64 0 1 2
-            u        (x) int64 <Quantity([-1  0  1], 'second')>
+            u        (x) int64 [s] -1 0 1
         Data variables:
-            a        (x) int64 <Quantity([0 3 2], 'meter')>
-            b        (x) int64 <Quantity([ 5 -2  1], 'decimeter')>
+            a        (x) int64 [m] 0 3 2
+            b        (x) int64 [dm] 5 -2 1
         """
         units = either_dict_or_kwargs(units, unit_kwargs, "quantify")
         registry = get_registry(unit_registry, units, conversion.extract_units(self.ds))
@@ -569,11 +569,11 @@ class PintDatasetAccessor:
         <xarray.Dataset>
         Dimensions:  (x: 5)
         Coordinates:
-            u        (x) int64 <Quantity([0 1 2 3 4], 'second')>
+            u        (x) int64 [s] 0 1 2 3 4
         Dimensions without coordinates: x
         Data variables:
-            a        (x) float64 <Quantity([0.   0.25 0.5  0.75 1.  ], 'meter')>
-            b        (x) float64 <Quantity([-1.   -0.75 -0.5  -0.25  0.  ], 'kilogram')>
+            a        (x) float64 [m] 0.0 0.25 0.5 0.75 1.0
+            b        (x) float64 [kg] -1.0 -0.75 -0.5 -0.25 0.0
 
         Convert the data
 
@@ -581,20 +581,20 @@ class PintDatasetAccessor:
         <xarray.Dataset>
         Dimensions:  (x: 5)
         Coordinates:
-            u        (x) int64 <Quantity([0 1 2 3 4], 'second')>
+            u        (x) int64 [s] 0 1 2 3 4
         Dimensions without coordinates: x
         Data variables:
-            a        (x) float64 <Quantity([   0.  250.  500.  750. 1000.], 'millimet...
-            b        (x) float64 <Quantity([-1000.  -750.  -500.  -250.     0.], 'gra...
+            a        (x) float64 [mm] 0.0 250.0 500.0 750.0 1e+03
+            b        (x) float64 [g] -1e+03 -750.0 -500.0 -250.0 0.0
         >>> ds.pint.to(a=ureg.mm, b="g")
         <xarray.Dataset>
         Dimensions:  (x: 5)
         Coordinates:
-            u        (x) int64 <Quantity([0 1 2 3 4], 'second')>
+            u        (x) int64 [s] 0 1 2 3 4
         Dimensions without coordinates: x
         Data variables:
-            a        (x) float64 <Quantity([   0.  250.  500.  750. 1000.], 'millimet...
-            b        (x) float64 <Quantity([-1000.  -750.  -500.  -250.     0.], 'gra...
+            a        (x) float64 [mm] 0.0 250.0 500.0 750.0 1e+03
+            b        (x) float64 [g] -1e+03 -750.0 -500.0 -250.0 0.0
 
         Convert coordinates
 
@@ -602,20 +602,20 @@ class PintDatasetAccessor:
         <xarray.Dataset>
         Dimensions:  (x: 5)
         Coordinates:
-            u        (x) float64 <Quantity([   0. 1000. 2000. 3000. 4000.], 'millisec...
+            u        (x) float64 [ms] 0.0 1e+03 2e+03 3e+03 4e+03
         Dimensions without coordinates: x
         Data variables:
-            a        (x) float64 <Quantity([0.   0.25 0.5  0.75 1.  ], 'meter')>
-            b        (x) float64 <Quantity([-1.   -0.75 -0.5  -0.25  0.  ], 'kilogram')>
+            a        (x) float64 [m] 0.0 0.25 0.5 0.75 1.0
+            b        (x) float64 [kg] -1.0 -0.75 -0.5 -0.25 0.0
         >>> ds.pint.to(u="ms")
         <xarray.Dataset>
         Dimensions:  (x: 5)
         Coordinates:
-            u        (x) float64 <Quantity([   0. 1000. 2000. 3000. 4000.], 'millisec...
+            u        (x) float64 [ms] 0.0 1e+03 2e+03 3e+03 4e+03
         Dimensions without coordinates: x
         Data variables:
-            a        (x) float64 <Quantity([0.   0.25 0.5  0.75 1.  ], 'meter')>
-            b        (x) float64 <Quantity([-1.   -0.75 -0.5  -0.25  0.  ], 'kilogram')>
+            a        (x) float64 [m] 0.0 0.25 0.5 0.75 1.0
+            b        (x) float64 [kg] -1.0 -0.75 -0.5 -0.25 0.0
 
         Convert both simultaneously
 
@@ -623,20 +623,20 @@ class PintDatasetAccessor:
         <xarray.Dataset>
         Dimensions:  (x: 5)
         Coordinates:
-            u        (x) float64 <Quantity([   0. 1000. 2000. 3000. 4000.], 'millisec...
+            u        (x) float64 [ms] 0.0 1e+03 2e+03 3e+03 4e+03
         Dimensions without coordinates: x
         Data variables:
-            a        (x) float64 <Quantity([   0.  250.  500.  750. 1000.], 'millimet...
-            b        (x) float64 <Quantity([-1000.  -750.  -500.  -250.     0.], 'gra...
+            a        (x) float64 [mm] 0.0 250.0 500.0 750.0 1e+03
+            b        (x) float64 [g] -1e+03 -750.0 -500.0 -250.0 0.0
         >>> ds.pint.to({"a": "mm", "b": "g", "u": ureg.ms})
         <xarray.Dataset>
         Dimensions:  (x: 5)
         Coordinates:
-            u        (x) float64 <Quantity([   0. 1000. 2000. 3000. 4000.], 'millisec...
+            u        (x) float64 [ms] 0.0 1e+03 2e+03 3e+03 4e+03
         Dimensions without coordinates: x
         Data variables:
-            a        (x) float64 <Quantity([   0.  250.  500.  750. 1000.], 'millimet...
-            b        (x) float64 <Quantity([-1000.  -750.  -500.  -250.     0.], 'gra...
+            a        (x) float64 [mm] 0.0 250.0 500.0 750.0 1e+03
+            b        (x) float64 [g] -1e+03 -750.0 -500.0 -250.0 0.0
 
         Convert homogeneous data
 

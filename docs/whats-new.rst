@@ -16,6 +16,8 @@ What's new
 - allow converting all data variables in a Dataset to the same units using
   :py:meth:`Dataset.pint.to` (:issue:`45`, :pull:`63`).
   By `Mika Pflüger <https://github.com/mikapfl>`_.
+- update format of examples in docstrings (:pull:`64`).
+  By `Mika Pflüger <https://github.com/mikapfl>`_.
 
 v0.1 (October 26 2020)
 ----------------------
