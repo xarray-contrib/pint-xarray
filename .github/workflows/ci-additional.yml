@@ -24,7 +24,7 @@ jobs:
       uses: actions/cache@v2
       with:
         path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-py3.8-${{hashFiles('ci/requirements/**.txt')}}
+        key: ${{ runner.os }}-pip-py3.8-${{ hashFiles('ci/requirements/**.txt') }}
         restore-keys: |
           ${{ runner.os }}-pip-py3.8-
     - name: upgrade pip
