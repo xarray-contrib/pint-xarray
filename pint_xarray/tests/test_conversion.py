@@ -356,10 +356,10 @@ class TestXarrayFunctions:
                 "x": ("x", x, {"units": original_units.get("x")}),
             },
         )
+        if type == "DataArray":
+            obj = obj["a"]
 
         if error is not None:
-            if type == "DataArray":
-                obj = obj["a"]
             with pytest.raises(error, match=match):
                 conversion.convert_units(obj, units)
 
@@ -385,7 +385,6 @@ class TestXarrayFunctions:
         )
 
         if type == "DataArray":
-            obj = obj["a"]
             expected = expected["a"]
 
         actual = conversion.convert_units(obj, units)
