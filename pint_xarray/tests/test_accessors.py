@@ -297,5 +297,5 @@ def test_to_dataset(units_arg, units_kwargs):
     )
 
     actual = ds.pint.to(units_arg, **units_kwargs)
-    assert conversion.extract_units(actual) == conversion.extract_units(expected)
+    assert_units_equal(actual, expected)
     assert_equal(expected, actual)
