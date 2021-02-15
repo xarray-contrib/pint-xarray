@@ -23,8 +23,7 @@ jobs:
     - name: Cache pip
       uses: actions/cache@v2
       with:
-        path:
-          - ~/.cache/pip
+        path: ~/.cache/pip
         key: ${{ runner.os }}-pip-py${{ matrix.python-version }}-
     - name: upgrade pip
       run: |
