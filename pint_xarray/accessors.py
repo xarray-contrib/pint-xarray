@@ -432,6 +432,8 @@ class PintDataArrayAccessor:
             for name, indexer in indexers.items()
         }
 
+        # TODO: handle tolerance
+
         # make sure we only have compatible units
         dims = self.da.dims
         unit_attrs = conversion.extract_unit_attributes(self.da)
@@ -766,6 +768,8 @@ class PintDatasetAccessor:
             name: conversion.extract_indexer_units(indexer)
             for name, indexer in indexers.items()
         }
+
+        # TODO: handle tolerance
 
         # make sure we only have compatible units
         dims = self.ds.dims
