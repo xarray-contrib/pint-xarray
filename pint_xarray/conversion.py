@@ -194,13 +194,14 @@ def convert_units(obj, units):
             for name, variable in obj.variables.items()
             if name in obj._coord_names
         }
+
         data_vars = {
             name: convert_units_variable(variable, units.get(name))
             for name, variable in obj.variables.items()
             if name not in obj._coord_names
         }
 
-        new_obj = Dataset(coords=coords, data_vars=data_vars, attrs=obj.attrs)
+        new_obj = Dataset(data_vars=data_vars, coords=coords, attrs=obj.attrs)
     else:
         raise ValueError(f"cannot convert object: {obj}")
 
@@ -301,3 +302,55 @@ def strip_unit_attributes(obj, attr="units"):
         raise ValueError(f"cannot strip unit attributes from unknown type: {type(obj)}")
 
     return new_obj
+
+
+def slice_extract_units(indexer):
+    elements = {name: getattr(indexer, name) for name in ("start", "stop", "step")}
+    extracted_units = [
+        array_extract_units(value)
+        for name, value in elements.items()
+        if value is not None
+    ]
+    none_values = [_ is None for _ in extracted_units]
+    if not extracted_units or all(none_values):
+        # empty slice (slice(None)) or slice without units
+        return None
+
+    dimensionalities = {
+        str(getattr(units, "dimensionality", "dimensionless"))
+        for units in extracted_units
+    }
+    if len(dimensionalities) > 1:
+        raise ValueError(f"incompatible units in {indexer}: {dimensionalities}")
+
+    units = [_ for _ in extracted_units if _ is not None]
+    if len(set(units)) == 1:
+        return units[0]
+    else:
+        units_ = units[0]
+        registry = units_._REGISTRY
+        return registry.Quantity(1, units_).to_base_units().units
+
+
+def extract_indexer_units(indexer):
+    if isinstance(indexer, slice):
+        return slice_extract_units(indexer)
+    elif isinstance(indexer, (DataArray, Variable)):
+        return array_extract_units(indexer.data)
+    else:
+        return array_extract_units(indexer)
+
+
+def strip_indexer_units(indexer):
+    if isinstance(indexer, slice):
+        return slice(
+            array_strip_units(indexer.start),
+            array_strip_units(indexer.stop),
+            array_strip_units(indexer.step),
+        )
+    elif isinstance(indexer, DataArray):
+        return strip_units(indexer)
+    elif isinstance(indexer, Variable):
+        return strip_units_variable(indexer)
+    else:
+        return array_strip_units(indexer)
