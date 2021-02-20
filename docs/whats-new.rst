@@ -18,6 +18,8 @@ What's new
   By `Mika Pflüger <https://github.com/mikapfl>`_.
 - update format of examples in docstrings (:pull:`64`).
   By `Mika Pflüger <https://github.com/mikapfl>`_.
+- implement :py:meth:`Dataset.pint.sel` and :py:meth:`DataArray.pint.sel` (:pull:`60`).
+  By `Justus Magin <https://github.com/keewis>`_.
 
 v0.1 (October 26 2020)
 ----------------------
