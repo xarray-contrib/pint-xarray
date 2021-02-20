@@ -1,3 +1,5 @@
+.. currentmodule:: xarray
+
 What's new
 ==========
 
@@ -11,6 +13,11 @@ What's new
   options on unit registries (:pull:`59`)
 - allow passing a format string to :py:meth:`Dataset.pint.dequantify` and
   :py:meth:`DataArray.pint.dequantify` (:pull:`49`)
+- allow converting all data variables in a Dataset to the same units using
+  :py:meth:`Dataset.pint.to` (:issue:`45`, :pull:`63`).
+  By `Mika Pflüger <https://github.com/mikapfl>`_.
+- update format of examples in docstrings (:pull:`64`).
+  By `Mika Pflüger <https://github.com/mikapfl>`_.
 
 v0.1 (October 26 2020)
 ----------------------
