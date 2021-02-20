@@ -643,6 +643,15 @@ class PintDatasetAccessor:
     def sel(
         self, indexers=None, method=None, tolerance=None, drop=False, **indexers_kwargs
     ):
+        """unit-aware version of sel
+
+        Just like ``Dataset.sel``, except the dataset's indexes are converted to the units
+        of the indexers first.
+
+        .. note::
+            ``tolerance`` is not supported, yet. It will be passed through to
+            ``Dataset.sel`` unmodified.
+        """
         indexers = either_dict_or_kwargs(indexers, indexers_kwargs, "sel")
 
         dims = self.ds.dims
