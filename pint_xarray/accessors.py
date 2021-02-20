@@ -159,7 +159,7 @@ class PintDataArrayAccessor:
 
     def quantify(self, units=None, unit_registry=None, **unit_kwargs):
         """
-        Attaches units to the DataArray.
+        Attach units to the DataArray.
 
         Units can be specified as a pint.Unit or as a string, which will be
         parsed by the given unit registry. If no units are specified then the
@@ -246,18 +246,21 @@ class PintDataArrayAccessor:
 
     def dequantify(self, format=None):
         """
-        Removes units from the DataArray and its coordinates.
+        Convert the units of the DataArray to string attributes.
 
         Will replace ``.attrs['units']`` on each variable with a string
         representation of the ``pint.Unit`` instance.
+
+        Parameters
+        ----------
+        format : str, optional
+            The format used for the string representations.
 
         Returns
         -------
         dequantified : DataArray
             DataArray whose array data is unitless, and of the type
             that was previously wrapped by `pint.Quantity`.
-        format : str, optional
-            The format used for the string representations.
         """
         units = conversion.extract_unit_attributes(self.da)
         units.update(conversion.extract_units(self.da))
@@ -492,7 +495,7 @@ class PintDatasetAccessor:
 
     def quantify(self, units=None, unit_registry=None, **unit_kwargs):
         """
-        Attaches units to each variable in the Dataset.
+        Attach units to the variables of the Dataset.
 
         Units can be specified as a ``pint.Unit`` or as a
         string, which will be parsed by the given unit registry. If no
@@ -575,18 +578,21 @@ class PintDatasetAccessor:
 
     def dequantify(self, format=None):
         """
-        Removes units from the Dataset and its coordinates.
+        Convert units from the Dataset to string attributes.
 
         Will replace ``.attrs['units']`` on each variable with a string
         representation of the ``pint.Unit`` instance.
+
+        Parameters
+        ----------
+        format : str, optional
+            The format used for the string representations.
 
         Returns
         -------
         dequantified : Dataset
             Dataset whose data variables are unitless, and of the type
             that was previously wrapped by ``pint.Quantity``.
-        format : str, optional
-            The format used for the string representations.
         """
         units = conversion.extract_unit_attributes(self.ds)
         units.update(conversion.extract_units(self.ds))
