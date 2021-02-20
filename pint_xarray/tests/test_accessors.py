@@ -335,7 +335,7 @@ class TestDequantifyDataSet:
             ),
             {"x": Quantity([10, 30], "dm"), "y": Quantity([60], "s")},
             xr.DataArray(
-                [[0], [2]],
+                [[0], [4]],
                 dims=("x", "y"),
                 coords={
                     "x": ("x", [10, 30], {"units": unit_registry.Unit("dm")}),
@@ -356,7 +356,7 @@ class TestDequantifyDataSet:
             ),
             {"x": Quantity([1, 3], "m"), "y": Quantity([1], "min")},
             xr.DataArray(
-                [[0], [2]],
+                [[0], [4]],
                 dims=("x", "y"),
                 coords={
                     "x": ("x", [1, 3], {"units": unit_registry.Unit("m")}),
@@ -375,16 +375,9 @@ class TestDequantifyDataSet:
                     "y": ("y", [60, 120], {"units": unit_registry.Unit("s")}),
                 },
             ),
-            {"x": Quantity([10, 30], "dm"), "y": Quantity([60], "s")},
-            xr.DataArray(
-                [[0], [2]],
-                dims=("x", "y"),
-                coords={
-                    "x": ("x", [10, 30], {"units": unit_registry.Unit("dm")}),
-                    "y": ("y", [60], {"units": unit_registry.Unit("s")}),
-                },
-            ),
+            {"x": Quantity([10, 30], "s"), "y": Quantity([60], "m")},
             None,
+            DimensionalityError,
             id="DataArray-incompatible units",
         ),
     ),
