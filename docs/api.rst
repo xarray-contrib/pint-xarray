@@ -16,6 +16,7 @@ Dataset
    xarray.Dataset.pint.quantify
    xarray.Dataset.pint.dequantify
    xarray.Dataset.pint.to
+   xarray.Dataset.pint.sel
 
 DataArray
 ---------
@@ -35,6 +36,7 @@ DataArray
    xarray.DataArray.pint.quantify
    xarray.DataArray.pint.dequantify
    xarray.DataArray.pint.to
+   xarray.DataArray.pint.sel
 
 Testing
 -------
