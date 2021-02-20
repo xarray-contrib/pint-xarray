@@ -1,3 +1,7 @@
 Examples
 ========
-There are no examples yet.
+
+.. toctree::
+    :maxdepth: 1
+
+    examples/plotting

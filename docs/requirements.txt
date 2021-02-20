@@ -4,5 +4,8 @@ netCDF4
 sphinx>=3.2
 sphinx_rtd_theme
 ipython
+ipykernel
+jupyter_client
 nbsphinx
+matplotlib
 sphinx-autosummary-accessors

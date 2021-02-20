@@ -46,6 +46,7 @@ extensions = [
     "sphinx_autosummary_accessors",
     "IPython.sphinxext.ipython_directive",
     "IPython.sphinxext.ipython_console_highlighting",
+    "nbsphinx",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -99,6 +100,10 @@ napoleon_type_aliases = {
     # pint / pint-xarray
     "unit-like": ":term:`unit-like`",
 }
+
+# nbsphinx
+nbsphinx_timeout = 600
+nbsphinx_execute = "always"
 
 # -- Options for intersphinx extension ---------------------------------------
 
