@@ -659,30 +659,30 @@ class PintDatasetAccessor:
         index_units = {
             name: units for name, units in unit_attrs.items() if name in dims
         }
-        indexers_units = {
+        indexer_units = {
             name: conversion.extract_indexer_units(indexer)
             for name, indexer in indexers.items()
         }
-        units = zip_mappings(indexers_units, index_units)
 
-        registry = get_registry(None, index_units, indexers_units)
+        registry = get_registry(None, index_units, indexer_units)
 
         # make sure we only have compatible units
-        incompatible_units = {
-            key: (indexer_unit, index_unit)
+        units = zip_mappings(indexer_units, index_units)
+        incompatible_units = [
+            key
             for key, (indexer_unit, index_unit) in units.items()
             if (
                 None not in (indexer_unit, index_unit)
                 and not registry.is_compatible_with(indexer_unit, index_unit)
             )
-        }
+        ]
         if incompatible_units:
-            units1 = {key: value for key, (value, _) in incompatible_units.items()}
-            units2 = {key: value for key, (_, value) in incompatible_units.items()}
+            units1 = {key: indexer_units[key] for key in incompatible_units}
+            units2 = {key: index_units[key] for key in incompatible_units}
             raise DimensionalityError(units1, units2)
 
         # convert the indexes to the indexer's units
-        converted = conversion.convert_units(self.ds, indexers_units)
+        converted = conversion.convert_units(self.ds, indexer_units)
 
         # index
         stripped_indexers = {
