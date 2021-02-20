@@ -654,19 +654,20 @@ class PintDatasetAccessor:
         """
         indexers = either_dict_or_kwargs(indexers, indexers_kwargs, "sel")
 
-        dims = self.ds.dims
-        unit_attrs = conversion.extract_unit_attributes(self.ds)
-        index_units = {
-            name: units for name, units in unit_attrs.items() if name in dims
-        }
         indexer_units = {
             name: conversion.extract_indexer_units(indexer)
             for name, indexer in indexers.items()
         }
 
+        # make sure we only have compatible units
+        dims = self.ds.dims
+        unit_attrs = conversion.extract_unit_attributes(self.ds)
+        index_units = {
+            name: units for name, units in unit_attrs.items() if name in dims
+        }
+
         registry = get_registry(None, index_units, indexer_units)
 
-        # make sure we only have compatible units
         units = zip_mappings(indexer_units, index_units)
         incompatible_units = [
             key
