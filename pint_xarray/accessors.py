@@ -645,12 +645,18 @@ class PintDatasetAccessor:
     ):
         """unit-aware version of sel
 
-        Just like ``Dataset.sel``, except the dataset's indexes are converted to the units
+        Just like :py:meth:`xarray.Dataset.sel`, except the dataset's indexes are converted to the units
         of the indexers first.
 
         .. note::
             ``tolerance`` is not supported, yet. It will be passed through to
             ``Dataset.sel`` unmodified.
+
+        See Also
+        --------
+        xarray.DataArray.pint.sel
+        xarray.Dataset.sel
+        xarray.DataArray.sel
         """
         indexers = either_dict_or_kwargs(indexers, indexers_kwargs, "sel")
 
