@@ -420,7 +420,21 @@ class PintDataArrayAccessor:
         fill_value=NA,
         **indexers_kwargs,
     ):
-        """unit-aware version of reindex"""
+        """unit-aware version of reindex
+
+        Just like :py:meth:`DataArray.reindex`, except the dataset's indexes are converted
+        to the units of the indexers first.
+
+        .. note::
+            ``tolerance`` and ``fill_value`` are not supported, yet. They will be passed through to
+            ``DataArray.reindex`` unmodified.
+
+        See Also
+        --------
+        xarray.Dataset.pint.reindex
+        xarray.DataArray.pint.reindex_like
+        xarray.DataArray.reindex
+        """
         indexers = either_dict_or_kwargs(indexers, indexers_kwargs, "reindex")
 
         indexer_units = {
@@ -474,7 +488,21 @@ class PintDataArrayAccessor:
     def reindex_like(
         self, other, method=None, tolerance=None, copy=True, fill_value=NA
     ):
-        """unit-aware version of reindex_like"""
+        """unit-aware version of reindex_like
+
+        Just like :py:meth:`DataArray.reindex_like`, except the dataset's indexes are converted
+        to the units of the indexers first.
+
+        .. note::
+            ``tolerance`` and ``fill_value`` are not supported, yet. They will be passed through to
+            ``DataArray.reindex_like`` unmodified.
+
+        See Also
+        --------
+        xarray.Dataset.pint.reindex_like
+        xarray.DataArray.pint.reindex
+        xarray.DataArray.reindex_like
+        """
         indexer_units = conversion.extract_unit_attributes(other)
 
         # TODO: handle tolerance
@@ -861,7 +889,21 @@ class PintDatasetAccessor:
         fill_value=NA,
         **indexers_kwargs,
     ):
-        """unit-aware version of reindex"""
+        """unit-aware version of reindex
+
+        Just like :py:meth:`Dataset.reindex`, except the dataset's indexes are converted
+        to the units of the indexers first.
+
+        .. note::
+            ``tolerance`` and ``fill_value`` are not supported, yet. They will be passed through to
+            ``Dataset.reindex`` unmodified.
+
+        See Also
+        --------
+        xarray.DataArray.pint.reindex
+        xarray.Dataset.pint.reindex_like
+        xarray.Dataset.reindex
+        """
         indexers = either_dict_or_kwargs(indexers, indexers_kwargs, "reindex")
 
         indexer_units = {
@@ -915,7 +957,21 @@ class PintDatasetAccessor:
     def reindex_like(
         self, other, method=None, tolerance=None, copy=True, fill_value=NA
     ):
-        """unit-aware version of reindex_like"""
+        """unit-aware version of reindex_like
+
+        Just like :py:meth:`Dataset.reindex_like`, except the dataset's indexes are converted
+        to the units of the indexers first.
+
+        .. note::
+            ``tolerance`` and ``fill_value`` are not supported, yet. They will be passed through to
+            ``Dataset.reindex_like`` unmodified.
+
+        See Also
+        --------
+        xarray.DataArray.pint.reindex_like
+        xarray.Dataset.pint.reindex
+        xarray.Dataset.reindex_like
+        """
         indexer_units = conversion.extract_unit_attributes(other)
 
         # TODO: handle tolerance
