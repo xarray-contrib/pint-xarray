@@ -536,7 +536,7 @@ def test_reindex(obj, indexers, expected, error):
 
 
 @pytest.mark.parametrize(
-    ["obj", "indexers", "expected", "error"],
+    ["obj", "other", "expected", "error"],
     (
         pytest.param(
             xr.Dataset(
@@ -546,7 +546,10 @@ def test_reindex(obj, indexers, expected, error):
                 }
             ),
             xr.Dataset(
-                {"x": Quantity([10, 30, 50], "dm"), "y": Quantity([0, 120, 240], "s")}
+                {
+                    "x": ("x", [10, 30, 50], {"units": unit_registry.Unit("dm")}),
+                    "y": ("y", [0, 120, 240], {"units": unit_registry.Unit("s")}),
+                }
             ),
             xr.Dataset(
                 {
@@ -565,7 +568,10 @@ def test_reindex(obj, indexers, expected, error):
                 }
             ),
             xr.Dataset(
-                {"x": Quantity([0, 1, 3, 5], "m"), "y": Quantity([0, 2, 4], "min")}
+                {
+                    "x": ("x", [0, 1, 3, 5], {"units": unit_registry.Unit("m")}),
+                    "y": ("y", [0, 2, 4], {"units": unit_registry.Unit("min")}),
+                }
             ),
             xr.Dataset(
                 {
@@ -583,7 +589,12 @@ def test_reindex(obj, indexers, expected, error):
                     "y": ("y", [60, 120], {"units": unit_registry.Unit("s")}),
                 }
             ),
-            xr.Dataset({"x": Quantity([1, 3], "s"), "y": Quantity([1], "m")}),
+            xr.Dataset(
+                {
+                    "x": ("x", [1, 3], {"units": unit_registry.Unit("s")}),
+                    "y": ("y", [1], {"units": unit_registry.Unit("m")}),
+                }
+            ),
             None,
             DimensionalityError,
             id="Dataset-incompatible units",
@@ -598,7 +609,10 @@ def test_reindex(obj, indexers, expected, error):
                 },
             ),
             xr.Dataset(
-                {"x": Quantity([10, 30, 50], "dm"), "y": Quantity([0, 240], "s")}
+                {
+                    "x": ("x", [10, 30, 50], {"units": unit_registry.Unit("dm")}),
+                    "y": ("y", [0, 240], {"units": unit_registry.Unit("s")}),
+                }
             ),
             xr.DataArray(
                 [[np.nan, np.nan], [np.nan, np.nan], [np.nan, np.nan]],
@@ -620,7 +634,12 @@ def test_reindex(obj, indexers, expected, error):
                     "y": ("y", [60, 120], {"units": unit_registry.Unit("s")}),
                 },
             ),
-            xr.Dataset({"x": Quantity([1, 3, 5], "m"), "y": Quantity([0, 2], "min")}),
+            xr.Dataset(
+                {
+                    "x": ("x", [1, 3, 5], {"units": unit_registry.Unit("m")}),
+                    "y": ("y", [0, 2], {"units": unit_registry.Unit("min")}),
+                }
+            ),
             xr.DataArray(
                 [[np.nan, 1], [np.nan, 5], [np.nan, np.nan]],
                 dims=("x", "y"),
@@ -641,7 +660,12 @@ def test_reindex(obj, indexers, expected, error):
                     "y": ("y", [60, 120], {"units": unit_registry.Unit("s")}),
                 },
             ),
-            xr.Dataset({"x": Quantity([10, 30], "s"), "y": Quantity([60], "m")}),
+            xr.Dataset(
+                {
+                    "x": ("x", [10, 30], {"units": unit_registry.Unit("s")}),
+                    "y": ("y", [60], {"units": unit_registry.Unit("m")}),
+                }
+            ),
             None,
             DimensionalityError,
             id="DataArray-incompatible units",
