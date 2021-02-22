@@ -475,11 +475,37 @@ class PintDataArrayAccessor:
         self, other, method=None, tolerance=None, copy=True, fill_value=NA
     ):
         """unit-aware version of reindex_like"""
-        from xarray.core import alignment
+        indexer_units = conversion.extract_unit_attributes(other)
 
-        indexers = alignment.reindex_like_indexers(self, other)
-        return self.reindex(
-            indexers=indexers,
+        # TODO: handle tolerance
+        # TODO: handle fill_value
+
+        # make sure we only have compatible units
+        dims = self.da.dims
+        unit_attrs = conversion.extract_unit_attributes(self.da)
+        index_units = {
+            name: units for name, units in unit_attrs.items() if name in dims
+        }
+
+        registry = get_registry(None, index_units, indexer_units)
+
+        units = zip_mappings(indexer_units, index_units)
+        incompatible_units = [
+            key
+            for key, (indexer_unit, index_unit) in units.items()
+            if (
+                None not in (indexer_unit, index_unit)
+                and not registry.is_compatible_with(indexer_unit, index_unit)
+            )
+        ]
+        if incompatible_units:
+            units1 = {key: indexer_units[key] for key in incompatible_units}
+            units2 = {key: index_units[key] for key in incompatible_units}
+            raise DimensionalityError(units1, units2)
+
+        converted = conversion.convert_units(self.da, indexer_units)
+        return converted.reindex_like(
+            other,
             method=method,
             tolerance=tolerance,
             copy=copy,
@@ -890,11 +916,37 @@ class PintDatasetAccessor:
         self, other, method=None, tolerance=None, copy=True, fill_value=NA
     ):
         """unit-aware version of reindex_like"""
-        from xarray.core import alignment
+        indexer_units = conversion.extract_unit_attributes(other)
 
-        indexers = alignment.reindex_like_indexers(self, other)
-        return self.reindex(
-            indexers=indexers,
+        # TODO: handle tolerance
+        # TODO: handle fill_value
+
+        # make sure we only have compatible units
+        dims = self.ds.dims
+        unit_attrs = conversion.extract_unit_attributes(self.ds)
+        index_units = {
+            name: units for name, units in unit_attrs.items() if name in dims
+        }
+
+        registry = get_registry(None, index_units, indexer_units)
+
+        units = zip_mappings(indexer_units, index_units)
+        incompatible_units = [
+            key
+            for key, (indexer_unit, index_unit) in units.items()
+            if (
+                None not in (indexer_unit, index_unit)
+                and not registry.is_compatible_with(indexer_unit, index_unit)
+            )
+        ]
+        if incompatible_units:
+            units1 = {key: indexer_units[key] for key in incompatible_units}
+            units2 = {key: index_units[key] for key in incompatible_units}
+            raise DimensionalityError(units1, units2)
+
+        converted = conversion.convert_units(self.ds, indexer_units)
+        return converted.reindex_like(
+            other,
             method=method,
             tolerance=tolerance,
             copy=copy,
