@@ -811,6 +811,21 @@ class PintDatasetAccessor:
         )
         return indexed
 
+    def reindex_like(
+        self, other, method=None, tolerance=None, copy=True, fill_value=NA
+    ):
+        """unit-aware version of reindex_like"""
+        from xarray.core import alignment
+
+        indexers = alignment.reindex_like_indexers(self, other)
+        return self.reindex(
+            indexers=indexers,
+            method=method,
+            tolerance=tolerance,
+            copy=copy,
+            fill_value=fill_value,
+        )
+
     def sel(
         self, indexers=None, method=None, tolerance=None, drop=False, **indexers_kwargs
     ):
