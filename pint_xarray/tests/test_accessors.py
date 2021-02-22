@@ -499,7 +499,7 @@ def test_sel(obj, indexers, expected, error):
             ),
             {"x": Quantity([1, 3, 5], "m"), "y": Quantity([0, 2], "min")},
             xr.DataArray(
-                [[np.nan, np.nan], [np.nan, np.nan], [np.nan, np.nan]],
+                [[np.nan, 1], [np.nan, 5], [np.nan, np.nan]],
                 dims=("x", "y"),
                 coords={
                     "x": ("x", [1, 3, 5], {"units": unit_registry.Unit("m")}),
