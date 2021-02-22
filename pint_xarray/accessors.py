@@ -5,6 +5,7 @@ import pint
 from pint.quantity import Quantity
 from pint.unit import Unit
 from xarray import register_dataarray_accessor, register_dataset_accessor
+from xarray.core.dtypes import NA
 
 from . import conversion
 from .errors import DimensionalityError
@@ -749,6 +750,66 @@ class PintDatasetAccessor:
         units = either_dict_or_kwargs(units, unit_kwargs, "to")
 
         return conversion.convert_units(self.ds, units)
+
+    def reindex(
+        self,
+        indexers=None,
+        method=None,
+        tolerance=None,
+        copy=True,
+        fill_value=NA,
+        **indexers_kwargs,
+    ):
+        """unit-aware version of reindex"""
+        indexers = either_dict_or_kwargs(indexers, indexers_kwargs, "reindex")
+
+        indexer_units = {
+            name: conversion.extract_indexer_units(indexer)
+            for name, indexer in indexers.items()
+        }
+
+        # TODO: handle tolerance
+        # TODO: handle fill_value
+
+        # make sure we only have compatible units
+        dims = self.ds.dims
+        unit_attrs = conversion.extract_unit_attributes(self.ds)
+        index_units = {
+            name: units for name, units in unit_attrs.items() if name in dims
+        }
+
+        registry = get_registry(None, index_units, indexer_units)
+
+        units = zip_mappings(indexer_units, index_units)
+        incompatible_units = [
+            key
+            for key, (indexer_unit, index_unit) in units.items()
+            if (
+                None not in (indexer_unit, index_unit)
+                and not registry.is_compatible_with(indexer_unit, index_unit)
+            )
+        ]
+        if incompatible_units:
+            units1 = {key: indexer_units[key] for key in incompatible_units}
+            units2 = {key: index_units[key] for key in incompatible_units}
+            raise DimensionalityError(units1, units2)
+
+        # convert the indexes to the indexer's units
+        converted = conversion.convert_units(self.ds, indexer_units)
+
+        # index
+        stripped_indexers = {
+            name: conversion.strip_indexer_units(indexer)
+            for name, indexer in indexers.items()
+        }
+        indexed = converted.reindex(
+            stripped_indexers,
+            method=method,
+            tolerance=tolerance,
+            copy=copy,
+            fill_value=fill_value,
+        )
+        return indexed
 
     def sel(
         self, indexers=None, method=None, tolerance=None, drop=False, **indexers_kwargs
