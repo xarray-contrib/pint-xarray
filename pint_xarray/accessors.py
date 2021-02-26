@@ -5,6 +5,7 @@ import pint
 from pint.quantity import Quantity
 from pint.unit import Unit
 from xarray import register_dataarray_accessor, register_dataset_accessor
+from xarray.core.dtypes import NA
 
 from . import conversion
 from .errors import DimensionalityError
@@ -410,12 +411,141 @@ class PintDataArrayAccessor:
 
         return conversion.convert_units(self.da, units)
 
+    def reindex(
+        self,
+        indexers=None,
+        method=None,
+        tolerance=None,
+        copy=True,
+        fill_value=NA,
+        **indexers_kwargs,
+    ):
+        """unit-aware version of reindex
+
+        Just like :py:meth:`xarray.DataArray.reindex`, except the dataset's indexes are converted
+        to the units of the indexers first.
+
+        .. note::
+            ``tolerance`` and ``fill_value`` are not supported, yet. They will be passed through to
+            ``DataArray.reindex`` unmodified.
+
+        See Also
+        --------
+        xarray.Dataset.pint.reindex
+        xarray.DataArray.pint.reindex_like
+        xarray.DataArray.reindex
+        """
+        indexers = either_dict_or_kwargs(indexers, indexers_kwargs, "reindex")
+
+        indexer_units = {
+            name: conversion.extract_indexer_units(indexer)
+            for name, indexer in indexers.items()
+        }
+
+        # TODO: handle tolerance
+        # TODO: handle fill_value
+
+        # make sure we only have compatible units
+        dims = self.da.dims
+        unit_attrs = conversion.extract_unit_attributes(self.da)
+        index_units = {
+            name: units for name, units in unit_attrs.items() if name in dims
+        }
+
+        registry = get_registry(None, index_units, indexer_units)
+
+        units = zip_mappings(indexer_units, index_units)
+        incompatible_units = [
+            key
+            for key, (indexer_unit, index_unit) in units.items()
+            if (
+                None not in (indexer_unit, index_unit)
+                and not registry.is_compatible_with(indexer_unit, index_unit)
+            )
+        ]
+        if incompatible_units:
+            units1 = {key: indexer_units[key] for key in incompatible_units}
+            units2 = {key: index_units[key] for key in incompatible_units}
+            raise DimensionalityError(units1, units2)
+
+        # convert the indexes to the indexer's units
+        converted = conversion.convert_units(self.da, indexer_units)
+
+        # index
+        stripped_indexers = {
+            name: conversion.strip_indexer_units(indexer)
+            for name, indexer in indexers.items()
+        }
+        indexed = converted.reindex(
+            stripped_indexers,
+            method=method,
+            tolerance=tolerance,
+            copy=copy,
+            fill_value=fill_value,
+        )
+        return indexed
+
+    def reindex_like(
+        self, other, method=None, tolerance=None, copy=True, fill_value=NA
+    ):
+        """unit-aware version of reindex_like
+
+        Just like :py:meth:`xarray.DataArray.reindex_like`, except the dataset's indexes are converted
+        to the units of the indexers first.
+
+        .. note::
+            ``tolerance`` and ``fill_value`` are not supported, yet. They will be passed through to
+            ``DataArray.reindex_like`` unmodified.
+
+        See Also
+        --------
+        xarray.Dataset.pint.reindex_like
+        xarray.DataArray.pint.reindex
+        xarray.DataArray.reindex_like
+        """
+        indexer_units = conversion.extract_unit_attributes(other)
+
+        # TODO: handle tolerance
+        # TODO: handle fill_value
+
+        # make sure we only have compatible units
+        dims = self.da.dims
+        unit_attrs = conversion.extract_unit_attributes(self.da)
+        index_units = {
+            name: units for name, units in unit_attrs.items() if name in dims
+        }
+
+        registry = get_registry(None, index_units, indexer_units)
+
+        units = zip_mappings(indexer_units, index_units)
+        incompatible_units = [
+            key
+            for key, (indexer_unit, index_unit) in units.items()
+            if (
+                None not in (indexer_unit, index_unit)
+                and not registry.is_compatible_with(indexer_unit, index_unit)
+            )
+        ]
+        if incompatible_units:
+            units1 = {key: indexer_units[key] for key in incompatible_units}
+            units2 = {key: index_units[key] for key in incompatible_units}
+            raise DimensionalityError(units1, units2)
+
+        converted = conversion.convert_units(self.da, indexer_units)
+        return converted.reindex_like(
+            other,
+            method=method,
+            tolerance=tolerance,
+            copy=copy,
+            fill_value=fill_value,
+        )
+
     def sel(
         self, indexers=None, method=None, tolerance=None, drop=False, **indexers_kwargs
     ):
         """unit-aware version of sel
 
-        Just like :py:meth:`DataArray.sel`, except the dataset's indexes are converted
+        Just like :py:meth:`xarray.DataArray.sel`, except the dataset's indexes are converted
         to the units of the indexers first.
 
         .. note::
@@ -749,6 +879,135 @@ class PintDatasetAccessor:
         units = either_dict_or_kwargs(units, unit_kwargs, "to")
 
         return conversion.convert_units(self.ds, units)
+
+    def reindex(
+        self,
+        indexers=None,
+        method=None,
+        tolerance=None,
+        copy=True,
+        fill_value=NA,
+        **indexers_kwargs,
+    ):
+        """unit-aware version of reindex
+
+        Just like :py:meth:`xarray.Dataset.reindex`, except the dataset's indexes are converted
+        to the units of the indexers first.
+
+        .. note::
+            ``tolerance`` and ``fill_value`` are not supported, yet. They will be passed through to
+            ``Dataset.reindex`` unmodified.
+
+        See Also
+        --------
+        xarray.DataArray.pint.reindex
+        xarray.Dataset.pint.reindex_like
+        xarray.Dataset.reindex
+        """
+        indexers = either_dict_or_kwargs(indexers, indexers_kwargs, "reindex")
+
+        indexer_units = {
+            name: conversion.extract_indexer_units(indexer)
+            for name, indexer in indexers.items()
+        }
+
+        # TODO: handle tolerance
+        # TODO: handle fill_value
+
+        # make sure we only have compatible units
+        dims = self.ds.dims
+        unit_attrs = conversion.extract_unit_attributes(self.ds)
+        index_units = {
+            name: units for name, units in unit_attrs.items() if name in dims
+        }
+
+        registry = get_registry(None, index_units, indexer_units)
+
+        units = zip_mappings(indexer_units, index_units)
+        incompatible_units = [
+            key
+            for key, (indexer_unit, index_unit) in units.items()
+            if (
+                None not in (indexer_unit, index_unit)
+                and not registry.is_compatible_with(indexer_unit, index_unit)
+            )
+        ]
+        if incompatible_units:
+            units1 = {key: indexer_units[key] for key in incompatible_units}
+            units2 = {key: index_units[key] for key in incompatible_units}
+            raise DimensionalityError(units1, units2)
+
+        # convert the indexes to the indexer's units
+        converted = conversion.convert_units(self.ds, indexer_units)
+
+        # index
+        stripped_indexers = {
+            name: conversion.strip_indexer_units(indexer)
+            for name, indexer in indexers.items()
+        }
+        indexed = converted.reindex(
+            stripped_indexers,
+            method=method,
+            tolerance=tolerance,
+            copy=copy,
+            fill_value=fill_value,
+        )
+        return indexed
+
+    def reindex_like(
+        self, other, method=None, tolerance=None, copy=True, fill_value=NA
+    ):
+        """unit-aware version of reindex_like
+
+        Just like :py:meth:`xarray.Dataset.reindex_like`, except the dataset's indexes are converted
+        to the units of the indexers first.
+
+        .. note::
+            ``tolerance`` and ``fill_value`` are not supported, yet. They will be passed through to
+            ``Dataset.reindex_like`` unmodified.
+
+        See Also
+        --------
+        xarray.DataArray.pint.reindex_like
+        xarray.Dataset.pint.reindex
+        xarray.Dataset.reindex_like
+        """
+        indexer_units = conversion.extract_unit_attributes(other)
+
+        # TODO: handle tolerance
+        # TODO: handle fill_value
+
+        # make sure we only have compatible units
+        dims = self.ds.dims
+        unit_attrs = conversion.extract_unit_attributes(self.ds)
+        index_units = {
+            name: units for name, units in unit_attrs.items() if name in dims
+        }
+
+        registry = get_registry(None, index_units, indexer_units)
+
+        units = zip_mappings(indexer_units, index_units)
+        incompatible_units = [
+            key
+            for key, (indexer_unit, index_unit) in units.items()
+            if (
+                None not in (indexer_unit, index_unit)
+                and not registry.is_compatible_with(indexer_unit, index_unit)
+            )
+        ]
+        if incompatible_units:
+            units1 = {key: indexer_units[key] for key in incompatible_units}
+            units2 = {key: index_units[key] for key in incompatible_units}
+            raise DimensionalityError(units1, units2)
+
+        converted = conversion.convert_units(self.ds, indexer_units)
+        return converted.reindex_like(
+            other,
+            method=method,
+            tolerance=tolerance,
+            copy=copy,
+            fill_value=fill_value,
+        )
 
     def sel(
         self, indexers=None, method=None, tolerance=None, drop=False, **indexers_kwargs
