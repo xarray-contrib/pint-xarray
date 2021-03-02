@@ -530,6 +530,8 @@ class TestXarrayFunctions:
             filter_none_values(conversion.extract_unit_attributes(actual)) == expected
         )
 
+
+class TestIndexerFunctions:
     @pytest.mark.parametrize(
         ["indexer", "expected"],
         (
