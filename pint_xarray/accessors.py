@@ -610,6 +610,57 @@ class PintDataArrayAccessor:
         )
         return conversion.attach_units(interpolated, indexer_units)
 
+    def interp_like(self, other, method="linear", assume_sorted=False, kwargs=None):
+        """unit-aware version of interp_like
+
+        Just like :py:meth:`xarray.DataArray.interp_like`, except the object's indexes are converted
+        to the units of the indexers first.
+
+        .. note::
+            ``tolerance`` and ``fill_value`` are not supported, yet. They will be passed through to
+            ``DataArray.interp_like`` unmodified.
+
+        See Also
+        --------
+        xarray.Dataset.pint.interp_like
+        xarray.DataArray.pint.interp
+        xarray.DataArray.interp_like
+        """
+        indexer_units = conversion.extract_unit_attributes(other)
+
+        # make sure we only have compatible units
+        dims = self.da.dims
+        unit_attrs = conversion.extract_unit_attributes(self.da)
+        index_units = {
+            name: units for name, units in unit_attrs.items() if name in dims
+        }
+
+        registry = get_registry(None, index_units, indexer_units)
+
+        units = zip_mappings(indexer_units, index_units)
+        incompatible_units = [
+            key
+            for key, (indexer_unit, index_unit) in units.items()
+            if (
+                None not in (indexer_unit, index_unit)
+                and not registry.is_compatible_with(indexer_unit, index_unit)
+            )
+        ]
+        if incompatible_units:
+            units1 = {key: indexer_units[key] for key in incompatible_units}
+            units2 = {key: index_units[key] for key in incompatible_units}
+            raise DimensionalityError(units1, units2)
+
+        converted = conversion.convert_units(self.da, indexer_units)
+        stripped = conversion.strip_units(converted)
+        interpolated = stripped.interp_like(
+            other,
+            method=method,
+            assume_sorted=assume_sorted,
+            kwargs=kwargs,
+        )
+        return conversion.attach_units(interpolated, indexer_units)
+
     def sel(
         self, indexers=None, method=None, tolerance=None, drop=False, **indexers_kwargs
     ):
@@ -1146,6 +1197,57 @@ class PintDatasetAccessor:
             method=method,
             assume_sorted=False,
             kwargs=None,
+        )
+        return conversion.attach_units(interpolated, indexer_units)
+
+    def interp_like(self, other, method="linear", assume_sorted=False, kwargs=None):
+        """unit-aware version of interp_like
+
+        Just like :py:meth:`xarray.Dataset.interp_like`, except the object's indexes are converted
+        to the units of the indexers first.
+
+        .. note::
+            ``tolerance`` and ``fill_value`` are not supported, yet. They will be passed through to
+            ``Dataset.interp_like`` unmodified.
+
+        See Also
+        --------
+        xarray.DataArray.pint.interp_like
+        xarray.Dataset.pint.interp
+        xarray.Dataset.interp_like
+        """
+        indexer_units = conversion.extract_unit_attributes(other)
+
+        # make sure we only have compatible units
+        dims = self.ds.dims
+        unit_attrs = conversion.extract_unit_attributes(self.ds)
+        index_units = {
+            name: units for name, units in unit_attrs.items() if name in dims
+        }
+
+        registry = get_registry(None, index_units, indexer_units)
+
+        units = zip_mappings(indexer_units, index_units)
+        incompatible_units = [
+            key
+            for key, (indexer_unit, index_unit) in units.items()
+            if (
+                None not in (indexer_unit, index_unit)
+                and not registry.is_compatible_with(indexer_unit, index_unit)
+            )
+        ]
+        if incompatible_units:
+            units1 = {key: indexer_units[key] for key in incompatible_units}
+            units2 = {key: index_units[key] for key in incompatible_units}
+            raise DimensionalityError(units1, units2)
+
+        converted = conversion.convert_units(self.ds, indexer_units)
+        stripped = conversion.strip_units(converted)
+        interpolated = stripped.interp_like(
+            other,
+            method=method,
+            assume_sorted=assume_sorted,
+            kwargs=kwargs,
         )
         return conversion.attach_units(interpolated, indexer_units)
 
