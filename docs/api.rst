@@ -17,6 +17,7 @@ Dataset
    xarray.Dataset.pint.dequantify
    xarray.Dataset.pint.reindex
    xarray.Dataset.pint.reindex_like
+   xarray.Dataset.pint.drop_sel
    xarray.Dataset.pint.sel
    xarray.Dataset.pint.to
 
@@ -39,6 +40,7 @@ DataArray
    xarray.DataArray.pint.dequantify
    xarray.DataArray.pint.reindex
    xarray.DataArray.pint.reindex_like
+   xarray.DataArray.pint.drop_sel
    xarray.DataArray.pint.sel
    xarray.DataArray.pint.to
 
