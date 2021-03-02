@@ -422,7 +422,7 @@ class PintDataArrayAccessor:
     ):
         """unit-aware version of reindex
 
-        Just like :py:meth:`xarray.DataArray.reindex`, except the dataset's indexes are converted
+        Just like :py:meth:`xarray.DataArray.reindex`, except the object's indexes are converted
         to the units of the indexers first.
 
         .. note::
@@ -490,7 +490,7 @@ class PintDataArrayAccessor:
     ):
         """unit-aware version of reindex_like
 
-        Just like :py:meth:`xarray.DataArray.reindex_like`, except the dataset's indexes are converted
+        Just like :py:meth:`xarray.DataArray.reindex_like`, except the object's indexes are converted
         to the units of the indexers first.
 
         .. note::
@@ -615,7 +615,7 @@ class PintDataArrayAccessor:
     ):
         """unit-aware version of sel
 
-        Just like :py:meth:`xarray.DataArray.sel`, except the dataset's indexes are converted
+        Just like :py:meth:`xarray.DataArray.sel`, except the object's indexes are converted
         to the units of the indexers first.
 
         .. note::
@@ -813,7 +813,7 @@ class PintDatasetAccessor:
         ----------
         units : unit-like or mapping of hashable to unit-like, optional
             The units to convert to. If a unit name or ``pint.Unit``
-            object, convert all the Dataset's data variables. If a dict-like, it
+            object, convert all the object's data variables. If a dict-like, it
             maps variable names to unit names or ``pint.Unit``
             objects.
         **unit_kwargs
@@ -961,7 +961,7 @@ class PintDatasetAccessor:
     ):
         """unit-aware version of reindex
 
-        Just like :py:meth:`xarray.Dataset.reindex`, except the dataset's indexes are converted
+        Just like :py:meth:`xarray.Dataset.reindex`, except the object's indexes are converted
         to the units of the indexers first.
 
         .. note::
@@ -1029,7 +1029,7 @@ class PintDatasetAccessor:
     ):
         """unit-aware version of reindex_like
 
-        Just like :py:meth:`xarray.Dataset.reindex_like`, except the dataset's indexes are converted
+        Just like :py:meth:`xarray.Dataset.reindex_like`, except the object's indexes are converted
         to the units of the indexers first.
 
         .. note::
@@ -1154,7 +1154,7 @@ class PintDatasetAccessor:
     ):
         """unit-aware version of sel
 
-        Just like :py:meth:`xarray.Dataset.sel`, except the dataset's indexes are converted to the units
+        Just like :py:meth:`xarray.Dataset.sel`, except the object's indexes are converted to the units
         of the indexers first.
 
         .. note::
