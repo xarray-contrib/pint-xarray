@@ -1,5 +1,6 @@
 pint
 numpy
+scipy
 xarray
 isort
 black
