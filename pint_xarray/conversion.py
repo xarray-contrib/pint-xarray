@@ -4,6 +4,7 @@ import pint
 from xarray import DataArray, Dataset, IndexVariable, Variable
 
 unit_attribute_name = "units"
+slice_attributes = ("start", "stop", "step")
 
 
 def array_attach_units(data, unit):
@@ -305,7 +306,7 @@ def strip_unit_attributes(obj, attr="units"):
 
 
 def slice_extract_units(indexer):
-    elements = {name: getattr(indexer, name) for name in ("start", "stop", "step")}
+    elements = {name: getattr(indexer, name) for name in slice_attributes}
     extracted_units = [
         array_extract_units(value)
         for name, value in elements.items()
@@ -330,6 +331,28 @@ def slice_extract_units(indexer):
         units_ = units[0]
         registry = units_._REGISTRY
         return registry.Quantity(1, units_).to_base_units().units
+
+
+def convert_units_slice(indexer, units):
+    attrs = {name: getattr(indexer, name) for name in slice_attributes}
+    converted = {
+        name: array_convert_units(value, units) if value is not None else None
+        for name, value in attrs.items()
+    }
+    args = [converted[name] for name in slice_attributes]
+
+    return slice(*args)
+
+
+def convert_indexer_units(indexer, units):
+    if isinstance(indexer, slice):
+        return convert_units_slice(indexer, units)
+    elif isinstance(indexer, DataArray):
+        return convert_units(indexer, {None: units})
+    elif isinstance(indexer, Variable):
+        return convert_units_variable(indexer, units)
+    else:
+        return array_convert_units(indexer, units)
 
 
 def extract_indexer_units(indexer):
