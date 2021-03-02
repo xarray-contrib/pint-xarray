@@ -75,7 +75,7 @@ jobs:
         python -m pip install -r ci/requirements.txt
 
     - name: install pint-xarray
-      run: python -m pip install .
+      run: python -m pip install --no-deps .
 
     - name: show versions
       run: python -m pip list
