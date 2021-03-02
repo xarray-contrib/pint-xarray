@@ -34,7 +34,7 @@ jobs:
       && github.repository == 'xarray-contrib/pint-xarray'
       && (
         github.event_name == 'workflow_dispatch'
-        || needs.detect-test-upstream-trigger.outputs.triggered == 'false'
+        || needs.detect-skip-ci-trigger.outputs.triggered == 'false'
       )
 
     strategy:
