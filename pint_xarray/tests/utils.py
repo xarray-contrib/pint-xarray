@@ -4,9 +4,16 @@ from contextlib import contextmanager
 import numpy as np
 import pytest
 from pint import Quantity
+from xarray import DataArray, Variable
 from xarray.testing import assert_equal, assert_identical  # noqa: F401
 
-from ..conversion import array_strip_units, extract_indexer_units, extract_units
+from ..conversion import (
+    array_strip_units,
+    extract_indexer_units,
+    extract_units,
+    strip_units,
+    strip_units_variable,
+)
 
 
 @contextmanager
@@ -57,6 +64,16 @@ def assert_indexer_equal(a, b):
     assert type(a) == type(b)
     if isinstance(a, slice):
         assert_slice_equal(a, b)
+    elif isinstance(a, DataArray):
+        stripped_a = strip_units(a)
+        stripped_b = strip_units(b)
+
+        assert_equal(stripped_a, stripped_b)
+    elif isinstance(a, Variable):
+        stripped_a = strip_units_variable(a)
+        stripped_b = strip_units_variable(b)
+
+        assert_equal(stripped_a, stripped_b)
     elif isinstance(a, (Quantity, np.ndarray)):
         assert_array_equal(a, b)
     else:
