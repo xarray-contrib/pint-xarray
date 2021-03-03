@@ -554,8 +554,7 @@ class PintDataArrayAccessor:
         converted to the units of the indexers first.
 
         .. note::
-            ``tolerance`` and ``fill_value`` are not supported, yet. They will be passed through to
-            ``DataArray.interp`` unmodified.
+            ``kwargs`` is passed unmodified to ``DataArray.interp``
 
         See Also
         --------
@@ -618,8 +617,7 @@ class PintDataArrayAccessor:
         to the units of the indexers first.
 
         .. note::
-            ``tolerance`` and ``fill_value`` are not supported, yet. They will be passed through to
-            ``DataArray.interp_like`` unmodified.
+            ``kwargs`` is passed unmodified to ``DataArray.interp``
 
         See Also
         --------
@@ -1146,8 +1144,7 @@ class PintDatasetAccessor:
         to the units of the indexers first.
 
         .. note::
-            ``tolerance`` and ``fill_value`` are not supported, yet. They will be passed through to
-            ``Dataset.interp`` unmodified.
+            ``kwargs`` is passed unmodified to ``Dataset.interp``
 
         See Also
         --------
@@ -1210,8 +1207,7 @@ class PintDatasetAccessor:
         converted to the units of the indexers first.
 
         .. note::
-            ``tolerance`` and ``fill_value`` are not supported, yet. They will be passed through to
-            ``Dataset.interp_like`` unmodified.
+            ``kwargs`` is passed unmodified to ``Dataset.interp``
 
         See Also
         --------
