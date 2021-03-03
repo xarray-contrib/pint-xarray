@@ -422,12 +422,12 @@ class PintDataArrayAccessor:
     ):
         """unit-aware version of reindex
 
-        Just like :py:meth:`xarray.DataArray.reindex`, except the object's indexes are converted
-        to the units of the indexers first.
+        Like :py:meth:`xarray.DataArray.reindex`, except the object's indexes are
+        converted to the units of the indexers first.
 
         .. note::
-            ``tolerance`` and ``fill_value`` are not supported, yet. They will be passed through to
-            ``DataArray.reindex`` unmodified.
+            ``tolerance`` and ``fill_value`` are not supported, yet. They will be passed
+            through to ``DataArray.reindex`` unmodified.
 
         See Also
         --------
@@ -490,12 +490,12 @@ class PintDataArrayAccessor:
     ):
         """unit-aware version of reindex_like
 
-        Just like :py:meth:`xarray.DataArray.reindex_like`, except the object's indexes are converted
-        to the units of the indexers first.
+        Like :py:meth:`xarray.DataArray.reindex_like`, except the object's indexes
+        are converted to the units of the indexers first.
 
         .. note::
-            ``tolerance`` and ``fill_value`` are not supported, yet. They will be passed through to
-            ``DataArray.reindex_like`` unmodified.
+            ``tolerance`` and ``fill_value`` are not supported, yet. They will be passed
+            through to ``DataArray.reindex_like`` unmodified.
 
         See Also
         --------
@@ -550,8 +550,8 @@ class PintDataArrayAccessor:
     ):
         """unit-aware version of interp
 
-        Just like :py:meth:`xarray.DataArray.interp`, except the object's indexes are converted
-        to the units of the indexers first.
+        Like :py:meth:`xarray.DataArray.interp`, except the object's indexes are
+        converted to the units of the indexers first.
 
         .. note::
             ``tolerance`` and ``fill_value`` are not supported, yet. They will be passed through to
@@ -614,7 +614,7 @@ class PintDataArrayAccessor:
     def interp_like(self, other, method="linear", assume_sorted=False, kwargs=None):
         """unit-aware version of interp_like
 
-        Just like :py:meth:`xarray.DataArray.interp_like`, except the object's indexes are converted
+        Like :py:meth:`xarray.DataArray.interp_like`, except the object's indexes are converted
         to the units of the indexers first.
 
         .. note::
@@ -668,7 +668,7 @@ class PintDataArrayAccessor:
     ):
         """unit-aware version of sel
 
-        Just like :py:meth:`xarray.DataArray.sel`, except the object's indexes are converted
+        Like :py:meth:`xarray.DataArray.sel`, except the object's indexes are converted
         to the units of the indexers first.
 
         .. note::
@@ -1014,7 +1014,7 @@ class PintDatasetAccessor:
     ):
         """unit-aware version of reindex
 
-        Just like :py:meth:`xarray.Dataset.reindex`, except the object's indexes are converted
+        Like :py:meth:`xarray.Dataset.reindex`, except the object's indexes are converted
         to the units of the indexers first.
 
         .. note::
@@ -1082,7 +1082,7 @@ class PintDatasetAccessor:
     ):
         """unit-aware version of reindex_like
 
-        Just like :py:meth:`xarray.Dataset.reindex_like`, except the object's indexes are converted
+        Like :py:meth:`xarray.Dataset.reindex_like`, except the object's indexes are converted
         to the units of the indexers first.
 
         .. note::
@@ -1142,7 +1142,7 @@ class PintDatasetAccessor:
     ):
         """unit-aware version of interp
 
-        Just like :py:meth:`xarray.Dataset.interp`, except the object's indexes are converted
+        Like :py:meth:`xarray.Dataset.interp`, except the object's indexes are converted
         to the units of the indexers first.
 
         .. note::
@@ -1206,8 +1206,8 @@ class PintDatasetAccessor:
     def interp_like(self, other, method="linear", assume_sorted=False, kwargs=None):
         """unit-aware version of interp_like
 
-        Just like :py:meth:`xarray.Dataset.interp_like`, except the object's indexes are converted
-        to the units of the indexers first.
+        Like :py:meth:`xarray.Dataset.interp_like`, except the object's indexes are
+        converted to the units of the indexers first.
 
         .. note::
             ``tolerance`` and ``fill_value`` are not supported, yet. They will be passed through to
@@ -1260,8 +1260,8 @@ class PintDatasetAccessor:
     ):
         """unit-aware version of sel
 
-        Just like :py:meth:`xarray.Dataset.sel`, except the object's indexes are converted to the units
-        of the indexers first.
+        Like :py:meth:`xarray.Dataset.sel`, except the object's indexes are converted to
+        the units of the indexers first.
 
         .. note::
             ``tolerance`` is not supported, yet. It will be passed through to
