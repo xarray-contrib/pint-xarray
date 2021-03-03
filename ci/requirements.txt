@@ -1,6 +1,7 @@
 pint
 numpy
 scipy
+bottleneck
 xarray
 isort
 black
