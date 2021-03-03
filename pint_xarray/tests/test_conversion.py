@@ -226,11 +226,16 @@ class TestXarrayFunctions:
         q_b = to_quantity(b, units.get("b"))
         q_u = to_quantity(u, units.get("u"))
 
+        units_x = units.get("x")
+
         obj = Dataset({"a": ("x", a), "b": ("x", b)}, coords={"u": ("x", u), "x": x})
         expected = Dataset(
             {"a": ("x", q_a), "b": ("x", q_b)},
-            coords={"u": ("x", q_u), "x": ("x", x, {"units": units.get("x")})},
+            coords={"u": ("x", q_u), "x": x},
         )
+        if units_x is not None:
+            expected.x.attrs["units"] = units_x
+
         if type == "DataArray":
             obj = obj["a"]
             expected = expected["a"]
