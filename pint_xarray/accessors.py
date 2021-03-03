@@ -734,6 +734,40 @@ class PintDataArrayAccessor:
     def loc(self):
         ...
 
+    def ffill(self, dim, limit=None):
+        """unit-aware version of ffill
+
+        Like :py:meth:`DataArray.ffill` but without stripping the data units.
+
+        See Also
+        --------
+        xarray.DataArray.ffill
+        xarray.DataArray.pint.bfill
+        """
+        units = conversion.extract_units(self.da)
+        stripped = conversion.strip_units(self.da)
+
+        filled = stripped.ffill(dim=dim, limit=limit)
+
+        return conversion.attach_units(filled, units)
+
+    def bfill(self, dim, limit=None):
+        """unit-aware version of bfill
+
+        Like :py:meth:`DataArray.bfill` but without stripping the data units.
+
+        See Also
+        --------
+        xarray.DataArray.bfill
+        xarray.DataArray.pint.ffill
+        """
+        units = conversion.extract_units(self.da)
+        stripped = conversion.strip_units(self.da)
+
+        filled = stripped.bfill(dim=dim, limit=limit)
+
+        return conversion.attach_units(filled, units)
+
 
 @register_dataset_accessor("pint")
 class PintDatasetAccessor:
@@ -1325,3 +1359,37 @@ class PintDatasetAccessor:
     @property
     def loc(self):
         ...
+
+    def ffill(self, dim, limit=None):
+        """unit-aware version of ffill
+
+        Like :py:meth:`Dataset.ffill` but without stripping the data units.
+
+        See Also
+        --------
+        xarray.Dataset.ffill
+        xarray.Dataset.pint.bfill
+        """
+        units = conversion.extract_units(self.ds)
+        stripped = conversion.strip_units(self.ds)
+
+        filled = stripped.ffill(dim=dim, limit=limit)
+
+        return conversion.attach_units(filled, units)
+
+    def bfill(self, dim, limit=None):
+        """unit-aware version of bfill
+
+        Like :py:meth:`Dataset.bfill` but without stripping the data units.
+
+        See Also
+        --------
+        xarray.Dataset.bfill
+        xarray.Dataset.pint.ffill
+        """
+        units = conversion.extract_units(self.ds)
+        stripped = conversion.strip_units(self.ds)
+
+        filled = stripped.bfill(dim=dim, limit=limit)
+
+        return conversion.attach_units(filled, units)
