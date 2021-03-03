@@ -5,7 +5,13 @@ from xarray import DataArray, Dataset, Variable
 
 from pint_xarray import conversion
 
-from .utils import assert_array_equal, assert_array_units_equal, assert_identical
+from .utils import (
+    assert_array_equal,
+    assert_array_units_equal,
+    assert_identical,
+    assert_indexer_equal,
+    assert_indexer_units_equal,
+)
 
 unit_registry = pint.UnitRegistry()
 Quantity = unit_registry.Quantity
@@ -534,6 +540,109 @@ class TestXarrayFunctions:
         assert (
             filter_none_values(conversion.extract_unit_attributes(actual)) == expected
         )
+
+
+class TestIndexerFunctions:
+    @pytest.mark.parametrize(
+        ["indexer", "units", "expected", "error"],
+        (
+            pytest.param(1, None, 1, None, id="scalar-no units"),
+            pytest.param(
+                1,
+                "dimensionless",
+                Quantity(1, "dimensionless"),
+                ValueError,
+                id="scalar-dimensionless",
+            ),
+            pytest.param(
+                Quantity(1, "m"),
+                Unit("dm"),
+                Quantity(10, "dm"),
+                None,
+                id="scalar-units",
+            ),
+            pytest.param(
+                np.array([1, 2]), None, np.array([1, 2]), None, id="array-no units"
+            ),
+            pytest.param(
+                Quantity([1, 2], "m"),
+                Unit("dm"),
+                Quantity([10, 20], "dm"),
+                None,
+                id="array-units",
+            ),
+            pytest.param(
+                Variable("x", [1, 2]),
+                None,
+                Variable("x", [1, 2]),
+                None,
+                id="Variable-no units",
+            ),
+            pytest.param(
+                Variable("x", Quantity([1, 2], "m")),
+                Unit("dm"),
+                Variable("x", Quantity([10, 20], "dm")),
+                None,
+                id="Variable-units",
+            ),
+            pytest.param(
+                DataArray([1, 2], dims="x"),
+                None,
+                DataArray([1, 2], dims="x"),
+                None,
+                id="DataArray-no units",
+            ),
+            pytest.param(
+                DataArray(Quantity([1, 2], "m"), dims="x"),
+                Unit("dm"),
+                DataArray(Quantity([10, 20], "dm"), dims="x"),
+                None,
+                id="DataArray-units",
+            ),
+            pytest.param(
+                slice(None), None, slice(None), None, id="empty slice-no units"
+            ),
+            pytest.param(
+                slice(1, None), None, slice(1, None), None, id="slice-no units"
+            ),
+            pytest.param(
+                slice(Quantity(1, "m"), Quantity(2, "m")),
+                Unit("m"),
+                slice(Quantity(1, "m"), Quantity(2, "m")),
+                None,
+                id="slice-identical units",
+            ),
+            pytest.param(
+                slice(Quantity(1, "m"), Quantity(2000, "mm")),
+                Unit("dm"),
+                slice(Quantity(10, "dm"), Quantity(20, "dm")),
+                None,
+                id="slice-compatible units",
+            ),
+            pytest.param(
+                slice(Quantity(1, "m"), Quantity(2, "m")),
+                Unit("ms"),
+                None,
+                pint.DimensionalityError,
+                id="slice-incompatible units",
+            ),
+            pytest.param(
+                slice(1000, Quantity(2000, "ms")),
+                Unit("s"),
+                None,
+                pint.DimensionalityError,
+                id="slice-incompatible units-mixed",
+            ),
+        ),
+    )
+    def test_convert_indexer_units(self, indexer, units, expected, error):
+        if error is not None:
+            with pytest.raises(error):
+                conversion.convert_indexer_units(indexer, units)
+        else:
+            actual = conversion.convert_indexer_units(indexer, units)
+            assert_indexer_equal(actual, expected)
+            assert_indexer_units_equal(actual, expected)
 
     @pytest.mark.parametrize(
         ["indexer", "expected"],
