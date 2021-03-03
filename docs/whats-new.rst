@@ -31,7 +31,7 @@ What's new
   :py:meth:`DataArray.pint.reindex` and :py:meth:`DataArray.pint.reindex_like` (:pull:`69`).
   By `Justus Magin <https://github.com/keewis>`_.
 - implement :py:meth:`Dataset.pint.interp`, :py:meth:`Dataset.pint.interp_like`,
-  :py:meth:`DataArray.pint.interp` and :py:meth:`DataArray.pint.interp_like` (:pull:`72`).
+  :py:meth:`DataArray.pint.interp` and :py:meth:`DataArray.pint.interp_like` (:pull:`72`, :pull:`76`).
   By `Justus Magin <https://github.com/keewis>`_.
 
 v0.1 (October 26 2020)

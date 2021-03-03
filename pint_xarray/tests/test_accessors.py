@@ -875,6 +875,28 @@ def test_reindex_like(obj, other, expected, error):
             id="Dataset-incompatible units",
         ),
         pytest.param(
+            xr.Dataset(
+                {
+                    "a": (("x", "y"), Quantity([[0, 1], [2, 3], [4, 5]], "kg")),
+                    "x": [10, 20, 30],
+                    "y": [60, 120],
+                }
+            ),
+            {
+                "x": [15, 25],
+                "y": [75, 105],
+            },
+            xr.Dataset(
+                {
+                    "a": (("x", "y"), Quantity([[1.25, 1.75], [3.25, 3.75]], "kg")),
+                    "x": [15, 25],
+                    "y": [75, 105],
+                }
+            ),
+            None,
+            id="Dataset-data units",
+        ),
+        pytest.param(
             xr.DataArray(
                 [[0, 1], [2, 3], [4, 5]],
                 dims=("x", "y"),
@@ -929,6 +951,30 @@ def test_reindex_like(obj, other, expected, error):
             None,
             DimensionalityError,
             id="DataArray-incompatible units",
+        ),
+        pytest.param(
+            xr.DataArray(
+                Quantity([[0, 1], [2, 3], [4, 5]], "kg"),
+                dims=("x", "y"),
+                coords={
+                    "x": [10, 20, 30],
+                    "y": [60, 120],
+                },
+            ),
+            {
+                "x": [15, 25],
+                "y": [75, 105],
+            },
+            xr.DataArray(
+                Quantity([[1.25, 1.75], [3.25, 3.75]], "kg"),
+                dims=("x", "y"),
+                coords={
+                    "x": [15, 25],
+                    "y": [75, 105],
+                },
+            ),
+            None,
+            id="DataArray-data units",
         ),
     ),
 )
@@ -1033,6 +1079,30 @@ def test_interp(obj, indexers, expected, error):
             id="DataArray-identical units",
         ),
         pytest.param(
+            xr.Dataset(
+                {
+                    "a": (("x", "y"), Quantity([[0, 1], [2, 3], [4, 5]], "kg")),
+                    "x": [10, 20, 30],
+                    "y": [60, 120],
+                }
+            ),
+            xr.Dataset(
+                {
+                    "x": [15, 25],
+                    "y": [75, 105],
+                }
+            ),
+            xr.Dataset(
+                {
+                    "a": (("x", "y"), Quantity([[1.25, 1.75], [3.25, 3.75]], "kg")),
+                    "x": [15, 25],
+                    "y": [75, 105],
+                }
+            ),
+            None,
+            id="Dataset-data units",
+        ),
+        pytest.param(
             xr.DataArray(
                 [[0, 1], [2, 3], [4, 5]],
                 dims=("x", "y"),
@@ -1076,6 +1146,32 @@ def test_interp(obj, indexers, expected, error):
             None,
             DimensionalityError,
             id="DataArray-incompatible units",
+        ),
+        pytest.param(
+            xr.DataArray(
+                Quantity([[0, 1], [2, 3], [4, 5]], "kg"),
+                dims=("x", "y"),
+                coords={
+                    "x": [10, 20, 30],
+                    "y": [60, 120],
+                },
+            ),
+            xr.Dataset(
+                {
+                    "x": [15, 25],
+                    "y": [75, 105],
+                }
+            ),
+            xr.DataArray(
+                Quantity([[1.25, 1.75], [3.25, 3.75]], "kg"),
+                dims=("x", "y"),
+                coords={
+                    "x": [15, 25],
+                    "y": [75, 105],
+                },
+            ),
+            None,
+            id="DataArray-data units",
         ),
     ),
 )

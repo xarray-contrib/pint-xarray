@@ -94,7 +94,8 @@ def array_strip_units(data):
 def attach_units_variable(variable, units):
     if isinstance(variable, IndexVariable):
         new_obj = variable.copy()
-        new_obj.attrs[unit_attribute_name] = units
+        if units is not None:
+            new_obj.attrs[unit_attribute_name] = units
     elif isinstance(variable, Variable):
         new_data = array_attach_units(variable.data, units)
         new_obj = variable.copy(data=new_data)

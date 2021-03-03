@@ -7,4 +7,3 @@ black
 flake8
 pytest
 pytest-cov
-pytest-azurepipelines
