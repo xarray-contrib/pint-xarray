@@ -595,6 +595,7 @@ class PintDataArrayAccessor:
 
         # convert the indexes to the indexer's units
         converted = conversion.convert_units(self.da, indexer_units)
+        units = conversion.extract_units(converted)
         stripped = conversion.strip_units(converted)
 
         # index
@@ -608,7 +609,7 @@ class PintDataArrayAccessor:
             assume_sorted=False,
             kwargs=None,
         )
-        return conversion.attach_units(interpolated, indexer_units)
+        return conversion.attach_units(interpolated, units)
 
     def interp_like(self, other, method="linear", assume_sorted=False, kwargs=None):
         """unit-aware version of interp_like
@@ -652,6 +653,7 @@ class PintDataArrayAccessor:
             raise DimensionalityError(units1, units2)
 
         converted = conversion.convert_units(self.da, indexer_units)
+        units = conversion.extract_units(converted)
         stripped = conversion.strip_units(converted)
         interpolated = stripped.interp_like(
             other,
@@ -659,7 +661,7 @@ class PintDataArrayAccessor:
             assume_sorted=assume_sorted,
             kwargs=kwargs,
         )
-        return conversion.attach_units(interpolated, indexer_units)
+        return conversion.attach_units(interpolated, units)
 
     def sel(
         self, indexers=None, method=None, tolerance=None, drop=False, **indexers_kwargs
@@ -1185,6 +1187,7 @@ class PintDatasetAccessor:
 
         # convert the indexes to the indexer's units
         converted = conversion.convert_units(self.ds, indexer_units)
+        units = conversion.extract_units(converted)
         stripped = conversion.strip_units(converted)
 
         # index
@@ -1198,7 +1201,7 @@ class PintDatasetAccessor:
             assume_sorted=False,
             kwargs=None,
         )
-        return conversion.attach_units(interpolated, indexer_units)
+        return conversion.attach_units(interpolated, units)
 
     def interp_like(self, other, method="linear", assume_sorted=False, kwargs=None):
         """unit-aware version of interp_like
@@ -1242,6 +1245,7 @@ class PintDatasetAccessor:
             raise DimensionalityError(units1, units2)
 
         converted = conversion.convert_units(self.ds, indexer_units)
+        units = conversion.extract_units(converted)
         stripped = conversion.strip_units(converted)
         interpolated = stripped.interp_like(
             other,
@@ -1249,7 +1253,7 @@ class PintDatasetAccessor:
             assume_sorted=assume_sorted,
             kwargs=kwargs,
         )
-        return conversion.attach_units(interpolated, indexer_units)
+        return conversion.attach_units(interpolated, units)
 
     def sel(
         self, indexers=None, method=None, tolerance=None, drop=False, **indexers_kwargs
