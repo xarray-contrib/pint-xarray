@@ -21,6 +21,8 @@ Dataset
    xarray.Dataset.pint.reindex_like
    xarray.Dataset.pint.sel
    xarray.Dataset.pint.to
+   xarray.Dataset.pint.ffill
+   xarray.Dataset.pint.bfill
 
 DataArray
 ---------
@@ -45,6 +47,8 @@ DataArray
    xarray.DataArray.pint.reindex_like
    xarray.DataArray.pint.sel
    xarray.DataArray.pint.to
+   xarray.DataArray.pint.ffill
+   xarray.DataArray.pint.bfill
 
 Testing
 -------
