@@ -737,12 +737,8 @@ class PintDataArrayAccessor:
     def drop_sel(self, labels=None, *, errors="raise", **labels_kwargs):
         """unit-aware version of drop_sel
 
-        Just like :py:meth:`xarray.DataArray.drop_sel`, except the object's indexes are converted
-        to the units of the indexers first.
-
-        .. note::
-            ``tolerance`` is not supported, yet. It will be passed through to
-            ``DataArray.drop_sel`` unmodified.
+        Just like :py:meth:`xarray.DataArray.drop_sel`, except the indexers are converted
+        to the units of the object's indexes first.
 
         See Also
         --------
@@ -1393,12 +1389,8 @@ class PintDatasetAccessor:
     def drop_sel(self, labels=None, *, errors="raise", **labels_kwargs):
         """unit-aware version of drop_sel
 
-        Just like :py:meth:`xarray.Dataset.drop_sel`, except the object's indexes are converted
-        to the units of the indexers first.
-
-        .. note::
-            ``tolerance`` is not supported, yet. It will be passed through to
-            ``Dataset.drop_sel`` unmodified.
+        Just like :py:meth:`xarray.Dataset.drop_sel`, except the indexers are converted
+        to the units of the object's indexes first.
 
         See Also
         --------
