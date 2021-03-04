@@ -893,6 +893,15 @@ class PintDataArrayAccessor:
 
     @property
     def loc(self):
+        """Unit-aware attribute for indexing
+
+        .. note::
+           Position based indexing (e.g. ``ds.loc[1, 2:]``) is not supported, yet
+
+        See Also
+        --------
+        xarray.DataArray.loc
+        """
         return DataArrayLocIndexer(self.da)
 
     def drop_sel(self, labels=None, *, errors="raise", **labels_kwargs):
@@ -1548,6 +1557,17 @@ class PintDatasetAccessor:
 
     @property
     def loc(self):
+        """Unit-aware attribute for indexing
+
+        Only supports ``__getitem__``.
+
+        .. note::
+           Position based indexing (e.g. ``ds.loc[1, 2:]``) is not supported, yet
+
+        See Also
+        --------
+        xarray.Dataset.loc
+        """
         return DatasetLocIndexer(self.ds)
 
     def drop_sel(self, labels=None, *, errors="raise", **labels_kwargs):
