@@ -277,7 +277,10 @@ class DataArrayLocIndexer:
             raise DimensionalityError(units1, units2)
 
         # convert the indexers to the index units
-        converted = conversion.convert_indexer_units(indexers, index_units)
+        converted = {
+            name: conversion.convert_indexer_units(indexer, index_units[name])
+            for name, indexer in indexers.items()
+        }
 
         # index
         stripped_indexers = {
