@@ -25,7 +25,7 @@ What's new
   By `Mika Pflüger <https://github.com/mikapfl>`_.
 - implement :py:meth:`Dataset.pint.sel` and :py:meth:`DataArray.pint.sel` (:pull:`60`).
   By `Justus Magin <https://github.com/keewis>`_.
-- implement :py:attr:`Dataset.pint.loc` and :py:meth:`DataArray.pint.loc` (:pull:`79`).
+- implement :py:attr:`Dataset.pint.loc` and :py:attr:`DataArray.pint.loc` (:pull:`79`).
   By `Justus Magin <https://github.com/keewis>`_.
 - implement :py:meth:`Dataset.pint.drop_sel` and :py:meth:`DataArray.pint.drop_sel` (:pull:`73`).
   By `Justus Magin <https://github.com/keewis>`_.
