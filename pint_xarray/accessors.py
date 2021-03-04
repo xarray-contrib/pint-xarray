@@ -181,9 +181,14 @@ class DatasetLocIndexer:
             )
         ]
         if incompatible_units:
-            units1 = {key: indexer_units[key] for key in incompatible_units}
-            units2 = {key: index_units[key] for key in incompatible_units}
-            raise DimensionalityError(units1, units2)
+            raise KeyError(
+                "not all values found in "
+                + (
+                    f"index {incompatible_units[0]!r}"
+                    if len(incompatible_units) == 1
+                    else f"indexes {', '.join(repr(_) for _ in incompatible_units)}"
+                )
+            )
 
         # convert the indexes to the indexer's units
         converted = conversion.convert_units(self.ds, indexer_units)
@@ -230,9 +235,14 @@ class DataArrayLocIndexer:
             )
         ]
         if incompatible_units:
-            units1 = {key: indexer_units[key] for key in incompatible_units}
-            units2 = {key: index_units[key] for key in incompatible_units}
-            raise DimensionalityError(units1, units2)
+            raise KeyError(
+                "not all values found in "
+                + (
+                    f"index {incompatible_units[0]!r}"
+                    if len(incompatible_units) == 1
+                    else f"indexes {', '.join(repr(_) for _ in incompatible_units)}"
+                )
+            )
 
         # convert the indexes to the indexer's units
         converted = conversion.convert_units(self.da, indexer_units)
@@ -855,9 +865,14 @@ class PintDataArrayAccessor:
             )
         ]
         if incompatible_units:
-            units1 = {key: indexer_units[key] for key in incompatible_units}
-            units2 = {key: index_units[key] for key in incompatible_units}
-            raise DimensionalityError(units1, units2)
+            raise KeyError(
+                "not all values found in "
+                + (
+                    f"index {incompatible_units[0]!r}"
+                    if len(incompatible_units) == 1
+                    else f"indexes {', '.join(repr(_) for _ in incompatible_units)}"
+                )
+            )
 
         # convert the indexes to the indexer's units
         converted = conversion.convert_units(self.da, indexer_units)
@@ -1505,9 +1520,14 @@ class PintDatasetAccessor:
             )
         ]
         if incompatible_units:
-            units1 = {key: indexer_units[key] for key in incompatible_units}
-            units2 = {key: index_units[key] for key in incompatible_units}
-            raise DimensionalityError(units1, units2)
+            raise KeyError(
+                "not all values found in "
+                + (
+                    f"index {incompatible_units[0]!r}"
+                    if len(incompatible_units) == 1
+                    else f"indexes {', '.join(repr(_) for _ in incompatible_units)}"
+                )
+            )
 
         # convert the indexes to the indexer's units
         converted = conversion.convert_units(self.ds, indexer_units)
