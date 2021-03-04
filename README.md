@@ -7,7 +7,7 @@
 
 # pint-xarray
 
-A convenience wrapper for using [pint](https://pint.readthedocs.io] with
+A convenience wrapper for using [pint](https://pint.readthedocs.io) with
 [xarray](https://xarray.pydata.org).
 
 ## Usage
