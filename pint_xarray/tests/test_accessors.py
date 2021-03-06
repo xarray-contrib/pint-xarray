@@ -19,6 +19,8 @@ pytestmark = [
 unit_registry = UnitRegistry(force_ndarray=True)
 Quantity = unit_registry.Quantity
 
+nan = np.nan
+
 
 def assert_all_str_or_none(mapping):
     __tracebackhide__ = True
@@ -1434,3 +1436,191 @@ def test_interp_like(obj, other, expected, error):
         actual = obj.pint.interp_like(other)
         assert_units_equal(actual, expected)
         assert_identical(actual, expected)
+
+
+@pytest.mark.parametrize(
+    ["obj", "expected"],
+    (
+        pytest.param(
+            xr.Dataset(
+                {"a": ("x", [nan, 0, nan, 1, nan, nan, 2, nan])},
+                coords={"u": ("x", [nan, 0, nan, 1, nan, nan, 2, nan])},
+            ),
+            xr.Dataset(
+                {"a": ("x", [nan, 0, 0, 1, 1, 1, 2, 2])},
+                coords={"u": ("x", [nan, 0, nan, 1, nan, nan, 2, nan])},
+            ),
+            id="Dataset-no units",
+        ),
+        pytest.param(
+            xr.Dataset(
+                {
+                    "a": (
+                        "x",
+                        Quantity([nan, 0, nan, 1, nan, nan, 2, nan], "m"),
+                    )
+                },
+                coords={
+                    "u": (
+                        "x",
+                        Quantity([nan, 0, nan, 1, nan, nan, 2, nan], "m"),
+                    )
+                },
+            ),
+            xr.Dataset(
+                {"a": ("x", Quantity([nan, 0, 0, 1, 1, 1, 2, 2], "m"))},
+                coords={
+                    "u": (
+                        "x",
+                        Quantity([nan, 0, nan, 1, nan, nan, 2, nan], "m"),
+                    )
+                },
+            ),
+            id="Dataset-units",
+        ),
+        pytest.param(
+            xr.DataArray(
+                [nan, 0, nan, 1, nan, nan, 2, nan],
+                coords={
+                    "u": (
+                        "x",
+                        Quantity([nan, 0, nan, 1, nan, nan, 2, nan], "m"),
+                    )
+                },
+                dims="x",
+            ),
+            xr.DataArray(
+                [nan, 0, 0, 1, 1, 1, 2, 2],
+                coords={
+                    "u": (
+                        "x",
+                        Quantity([nan, 0, nan, 1, nan, nan, 2, nan], "m"),
+                    )
+                },
+                dims="x",
+            ),
+            id="DataArray-units",
+        ),
+        pytest.param(
+            xr.DataArray(
+                Quantity([nan, 0, nan, 1, nan, nan, 2, nan], "m"),
+                coords={
+                    "u": (
+                        "x",
+                        Quantity([nan, 0, nan, 1, nan, nan, 2, nan], "m"),
+                    )
+                },
+                dims="x",
+            ),
+            xr.DataArray(
+                Quantity([nan, 0, 0, 1, 1, 1, 2, 2], "m"),
+                coords={
+                    "u": (
+                        "x",
+                        Quantity([nan, 0, nan, 1, nan, nan, 2, nan], "m"),
+                    )
+                },
+                dims="x",
+            ),
+            id="DataArray-units",
+        ),
+    ),
+)
+def test_ffill(obj, expected):
+    actual = obj.pint.ffill(dim="x")
+    assert_identical(actual, expected)
+    assert_units_equal(actual, expected)
+
+
+@pytest.mark.parametrize(
+    ["obj", "expected"],
+    (
+        pytest.param(
+            xr.Dataset(
+                {"a": ("x", [nan, 0, nan, 1, nan, nan, 2, nan])},
+                coords={"u": ("x", [nan, 0, nan, 1, nan, nan, 2, nan])},
+            ),
+            xr.Dataset(
+                {"a": ("x", [0, 0, 1, 1, 2, 2, 2, nan])},
+                coords={"u": ("x", [nan, 0, nan, 1, nan, nan, 2, nan])},
+            ),
+            id="Dataset-no units",
+        ),
+        pytest.param(
+            xr.Dataset(
+                {
+                    "a": (
+                        "x",
+                        Quantity([nan, 0, nan, 1, nan, nan, 2, nan], "m"),
+                    )
+                },
+                coords={
+                    "u": (
+                        "x",
+                        Quantity([nan, 0, nan, 1, nan, nan, 2, nan], "m"),
+                    )
+                },
+            ),
+            xr.Dataset(
+                {"a": ("x", Quantity([0, 0, 1, 1, 2, 2, 2, nan], "m"))},
+                coords={
+                    "u": (
+                        "x",
+                        Quantity([nan, 0, nan, 1, nan, nan, 2, nan], "m"),
+                    )
+                },
+            ),
+            id="Dataset-units",
+        ),
+        pytest.param(
+            xr.DataArray(
+                [nan, 0, nan, 1, nan, nan, 2, nan],
+                coords={
+                    "u": (
+                        "x",
+                        Quantity([nan, 0, nan, 1, nan, nan, 2, nan], "m"),
+                    )
+                },
+                dims="x",
+            ),
+            xr.DataArray(
+                [0, 0, 1, 1, 2, 2, 2, nan],
+                coords={
+                    "u": (
+                        "x",
+                        Quantity([nan, 0, nan, 1, nan, nan, 2, nan], "m"),
+                    )
+                },
+                dims="x",
+            ),
+            id="DataArray-units",
+        ),
+        pytest.param(
+            xr.DataArray(
+                Quantity([nan, 0, nan, 1, nan, nan, 2, nan], "m"),
+                coords={
+                    "u": (
+                        "x",
+                        Quantity([nan, 0, nan, 1, nan, nan, 2, nan], "m"),
+                    )
+                },
+                dims="x",
+            ),
+            xr.DataArray(
+                Quantity([0, 0, 1, 1, 2, 2, 2, nan], "m"),
+                coords={
+                    "u": (
+                        "x",
+                        Quantity([nan, 0, nan, 1, nan, nan, 2, nan], "m"),
+                    )
+                },
+                dims="x",
+            ),
+            id="DataArray-units",
+        ),
+    ),
+)
+def test_bfill(obj, expected):
+    actual = obj.pint.bfill(dim="x")
+    assert_identical(actual, expected)
+    assert_units_equal(actual, expected)
