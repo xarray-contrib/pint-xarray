@@ -22,6 +22,8 @@ Dataset
    xarray.Dataset.pint.drop_sel
    xarray.Dataset.pint.sel
    xarray.Dataset.pint.to
+   xarray.Dataset.pint.ffill
+   xarray.Dataset.pint.bfill
 
 DataArray
 ---------
@@ -47,6 +49,8 @@ DataArray
    xarray.DataArray.pint.drop_sel
    xarray.DataArray.pint.sel
    xarray.DataArray.pint.to
+   xarray.DataArray.pint.ffill
+   xarray.DataArray.pint.bfill
 
 Testing
 -------
