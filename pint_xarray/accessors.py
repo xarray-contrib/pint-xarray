@@ -422,12 +422,12 @@ class PintDataArrayAccessor:
     ):
         """unit-aware version of reindex
 
-        Just like :py:meth:`xarray.DataArray.reindex`, except the object's indexes are converted
-        to the units of the indexers first.
+        Like :py:meth:`xarray.DataArray.reindex`, except the object's indexes are
+        converted to the units of the indexers first.
 
         .. note::
-            ``tolerance`` and ``fill_value`` are not supported, yet. They will be passed through to
-            ``DataArray.reindex`` unmodified.
+            ``tolerance`` and ``fill_value`` are not supported, yet. They will be passed
+            through to ``DataArray.reindex`` unmodified.
 
         See Also
         --------
@@ -490,12 +490,12 @@ class PintDataArrayAccessor:
     ):
         """unit-aware version of reindex_like
 
-        Just like :py:meth:`xarray.DataArray.reindex_like`, except the object's indexes are converted
-        to the units of the indexers first.
+        Like :py:meth:`xarray.DataArray.reindex_like`, except the object's indexes
+        are converted to the units of the indexers first.
 
         .. note::
-            ``tolerance`` and ``fill_value`` are not supported, yet. They will be passed through to
-            ``DataArray.reindex_like`` unmodified.
+            ``tolerance`` and ``fill_value`` are not supported, yet. They will be passed
+            through to ``DataArray.reindex_like`` unmodified.
 
         See Also
         --------
@@ -550,12 +550,11 @@ class PintDataArrayAccessor:
     ):
         """unit-aware version of interp
 
-        Just like :py:meth:`xarray.DataArray.interp`, except the object's indexes are converted
-        to the units of the indexers first.
+        Like :py:meth:`xarray.DataArray.interp`, except the object's indexes are
+        converted to the units of the indexers first.
 
         .. note::
-            ``tolerance`` and ``fill_value`` are not supported, yet. They will be passed through to
-            ``DataArray.interp`` unmodified.
+            ``kwargs`` is passed unmodified to ``DataArray.interp``
 
         See Also
         --------
@@ -614,12 +613,11 @@ class PintDataArrayAccessor:
     def interp_like(self, other, method="linear", assume_sorted=False, kwargs=None):
         """unit-aware version of interp_like
 
-        Just like :py:meth:`xarray.DataArray.interp_like`, except the object's indexes are converted
+        Like :py:meth:`xarray.DataArray.interp_like`, except the object's indexes are converted
         to the units of the indexers first.
 
         .. note::
-            ``tolerance`` and ``fill_value`` are not supported, yet. They will be passed through to
-            ``DataArray.interp_like`` unmodified.
+            ``kwargs`` is passed unmodified to ``DataArray.interp``
 
         See Also
         --------
@@ -668,7 +666,7 @@ class PintDataArrayAccessor:
     ):
         """unit-aware version of sel
 
-        Just like :py:meth:`xarray.DataArray.sel`, except the object's indexes are converted
+        Like :py:meth:`xarray.DataArray.sel`, except the object's indexes are converted
         to the units of the indexers first.
 
         .. note::
@@ -733,6 +731,66 @@ class PintDataArrayAccessor:
     @property
     def loc(self):
         ...
+
+    def drop_sel(self, labels=None, *, errors="raise", **labels_kwargs):
+        """unit-aware version of drop_sel
+
+        Just like :py:meth:`xarray.DataArray.drop_sel`, except the indexers are converted
+        to the units of the object's indexes first.
+
+        See Also
+        --------
+        xarray.Dataset.pint.drop_sel
+        xarray.DataArray.drop_sel
+        xarray.Dataset.drop_sel
+        """
+        indexers = either_dict_or_kwargs(labels, labels_kwargs, "drop_sel")
+
+        indexer_units = {
+            name: conversion.extract_indexer_units(indexer)
+            for name, indexer in indexers.items()
+        }
+
+        # make sure we only have compatible units
+        dims = self.da.dims
+        unit_attrs = conversion.extract_unit_attributes(self.da)
+        index_units = {
+            name: units for name, units in unit_attrs.items() if name in dims
+        }
+
+        registry = get_registry(None, index_units, indexer_units)
+
+        units = zip_mappings(indexer_units, index_units)
+        incompatible_units = [
+            key
+            for key, (indexer_unit, index_unit) in units.items()
+            if (
+                None not in (indexer_unit, index_unit)
+                and not registry.is_compatible_with(indexer_unit, index_unit)
+            )
+        ]
+        if incompatible_units:
+            units1 = {key: indexer_units[key] for key in incompatible_units}
+            units2 = {key: index_units[key] for key in incompatible_units}
+            raise DimensionalityError(units1, units2)
+
+        # convert the indexers to the indexes units
+        converted_indexers = {
+            name: conversion.convert_indexer_units(indexer, index_units[name])
+            for name, indexer in indexers.items()
+        }
+
+        # index
+        stripped_indexers = {
+            name: conversion.strip_indexer_units(indexer)
+            for name, indexer in converted_indexers.items()
+        }
+        indexed = self.da.drop_sel(
+            stripped_indexers,
+            errors=errors,
+        )
+
+        return indexed
 
     def ffill(self, dim, limit=None):
         """unit-aware version of ffill
@@ -1048,7 +1106,7 @@ class PintDatasetAccessor:
     ):
         """unit-aware version of reindex
 
-        Just like :py:meth:`xarray.Dataset.reindex`, except the object's indexes are converted
+        Like :py:meth:`xarray.Dataset.reindex`, except the object's indexes are converted
         to the units of the indexers first.
 
         .. note::
@@ -1116,7 +1174,7 @@ class PintDatasetAccessor:
     ):
         """unit-aware version of reindex_like
 
-        Just like :py:meth:`xarray.Dataset.reindex_like`, except the object's indexes are converted
+        Like :py:meth:`xarray.Dataset.reindex_like`, except the object's indexes are converted
         to the units of the indexers first.
 
         .. note::
@@ -1176,12 +1234,11 @@ class PintDatasetAccessor:
     ):
         """unit-aware version of interp
 
-        Just like :py:meth:`xarray.Dataset.interp`, except the object's indexes are converted
+        Like :py:meth:`xarray.Dataset.interp`, except the object's indexes are converted
         to the units of the indexers first.
 
         .. note::
-            ``tolerance`` and ``fill_value`` are not supported, yet. They will be passed through to
-            ``Dataset.interp`` unmodified.
+            ``kwargs`` is passed unmodified to ``Dataset.interp``
 
         See Also
         --------
@@ -1240,12 +1297,11 @@ class PintDatasetAccessor:
     def interp_like(self, other, method="linear", assume_sorted=False, kwargs=None):
         """unit-aware version of interp_like
 
-        Just like :py:meth:`xarray.Dataset.interp_like`, except the object's indexes are converted
-        to the units of the indexers first.
+        Like :py:meth:`xarray.Dataset.interp_like`, except the object's indexes are
+        converted to the units of the indexers first.
 
         .. note::
-            ``tolerance`` and ``fill_value`` are not supported, yet. They will be passed through to
-            ``Dataset.interp_like`` unmodified.
+            ``kwargs`` is passed unmodified to ``Dataset.interp``
 
         See Also
         --------
@@ -1294,8 +1350,8 @@ class PintDatasetAccessor:
     ):
         """unit-aware version of sel
 
-        Just like :py:meth:`xarray.Dataset.sel`, except the object's indexes are converted to the units
-        of the indexers first.
+        Like :py:meth:`xarray.Dataset.sel`, except the object's indexes are converted to
+        the units of the indexers first.
 
         .. note::
             ``tolerance`` is not supported, yet. It will be passed through to
@@ -1359,6 +1415,66 @@ class PintDatasetAccessor:
     @property
     def loc(self):
         ...
+
+    def drop_sel(self, labels=None, *, errors="raise", **labels_kwargs):
+        """unit-aware version of drop_sel
+
+        Just like :py:meth:`xarray.Dataset.drop_sel`, except the indexers are converted
+        to the units of the object's indexes first.
+
+        See Also
+        --------
+        xarray.DataArray.pint.drop_sel
+        xarray.Dataset.drop_sel
+        xarray.DataArray.drop_sel
+        """
+        indexers = either_dict_or_kwargs(labels, labels_kwargs, "drop_sel")
+
+        indexer_units = {
+            name: conversion.extract_indexer_units(indexer)
+            for name, indexer in indexers.items()
+        }
+
+        # make sure we only have compatible units
+        dims = self.ds.dims
+        unit_attrs = conversion.extract_unit_attributes(self.ds)
+        index_units = {
+            name: units for name, units in unit_attrs.items() if name in dims
+        }
+
+        registry = get_registry(None, index_units, indexer_units)
+
+        units = zip_mappings(indexer_units, index_units)
+        incompatible_units = [
+            key
+            for key, (indexer_unit, index_unit) in units.items()
+            if (
+                None not in (indexer_unit, index_unit)
+                and not registry.is_compatible_with(indexer_unit, index_unit)
+            )
+        ]
+        if incompatible_units:
+            units1 = {key: indexer_units[key] for key in incompatible_units}
+            units2 = {key: index_units[key] for key in incompatible_units}
+            raise DimensionalityError(units1, units2)
+
+        # convert the indexers to the indexes units
+        converted_indexers = {
+            name: conversion.convert_indexer_units(indexer, index_units[name])
+            for name, indexer in indexers.items()
+        }
+
+        # index
+        stripped_indexers = {
+            name: conversion.strip_indexer_units(indexer)
+            for name, indexer in converted_indexers.items()
+        }
+        indexed = self.ds.drop_sel(
+            stripped_indexers,
+            errors=errors,
+        )
+
+        return indexed
 
     def ffill(self, dim, limit=None):
         """unit-aware version of ffill
