@@ -1,4 +1,5 @@
 import numpy as np
+import pint
 import pytest
 import xarray as xr
 from numpy.testing import assert_array_equal
@@ -349,7 +350,7 @@ def test_to_dataset(units_arg, units_kwargs):
             ),
             {"x": Quantity([1, 3], "s"), "y": Quantity([1], "m")},
             None,
-            DimensionalityError,
+            KeyError,
             id="Dataset-incompatible units",
         ),
         pytest.param(
@@ -405,7 +406,7 @@ def test_to_dataset(units_arg, units_kwargs):
             ),
             {"x": Quantity([10, 30], "s"), "y": Quantity([60], "m")},
             None,
-            DimensionalityError,
+            KeyError,
             id="DataArray-incompatible units",
         ),
     ),
@@ -418,6 +419,256 @@ def test_sel(obj, indexers, expected, error):
         actual = obj.pint.sel(indexers)
         assert_units_equal(actual, expected)
         assert_identical(actual, expected)
+
+
+@pytest.mark.parametrize(
+    ["obj", "indexers", "expected", "error"],
+    (
+        pytest.param(
+            xr.Dataset(
+                {
+                    "x": ("x", [10, 20, 30], {"units": unit_registry.Unit("dm")}),
+                    "y": ("y", [60, 120], {"units": unit_registry.Unit("s")}),
+                }
+            ),
+            {"x": Quantity([10, 30], "dm"), "y": Quantity([60], "s")},
+            xr.Dataset(
+                {
+                    "x": ("x", [10, 30], {"units": unit_registry.Unit("dm")}),
+                    "y": ("y", [60], {"units": unit_registry.Unit("s")}),
+                }
+            ),
+            None,
+            id="Dataset-identical units",
+        ),
+        pytest.param(
+            xr.Dataset(
+                {
+                    "x": ("x", [10, 20, 30], {"units": unit_registry.Unit("dm")}),
+                    "y": ("y", [60, 120], {"units": unit_registry.Unit("s")}),
+                }
+            ),
+            {"x": Quantity([1, 3], "m"), "y": Quantity([1], "min")},
+            xr.Dataset(
+                {
+                    "x": ("x", [1, 3], {"units": unit_registry.Unit("m")}),
+                    "y": ("y", [1], {"units": unit_registry.Unit("min")}),
+                }
+            ),
+            None,
+            id="Dataset-compatible units",
+        ),
+        pytest.param(
+            xr.Dataset(
+                {
+                    "x": ("x", [10, 20, 30], {"units": unit_registry.Unit("dm")}),
+                    "y": ("y", [60, 120], {"units": unit_registry.Unit("s")}),
+                }
+            ),
+            {"x": Quantity([1, 3], "s"), "y": Quantity([1], "m")},
+            None,
+            KeyError,
+            id="Dataset-incompatible units",
+        ),
+        pytest.param(
+            xr.DataArray(
+                [[0, 1], [2, 3], [4, 5]],
+                dims=("x", "y"),
+                coords={
+                    "x": ("x", [10, 20, 30], {"units": unit_registry.Unit("dm")}),
+                    "y": ("y", [60, 120], {"units": unit_registry.Unit("s")}),
+                },
+            ),
+            {"x": Quantity([10, 30], "dm"), "y": Quantity([60], "s")},
+            xr.DataArray(
+                [[0], [4]],
+                dims=("x", "y"),
+                coords={
+                    "x": ("x", [10, 30], {"units": unit_registry.Unit("dm")}),
+                    "y": ("y", [60], {"units": unit_registry.Unit("s")}),
+                },
+            ),
+            None,
+            id="DataArray-identical units",
+        ),
+        pytest.param(
+            xr.DataArray(
+                [[0, 1], [2, 3], [4, 5]],
+                dims=("x", "y"),
+                coords={
+                    "x": ("x", [10, 20, 30], {"units": unit_registry.Unit("dm")}),
+                    "y": ("y", [60, 120], {"units": unit_registry.Unit("s")}),
+                },
+            ),
+            {"x": Quantity([1, 3], "m"), "y": Quantity([1], "min")},
+            xr.DataArray(
+                [[0], [4]],
+                dims=("x", "y"),
+                coords={
+                    "x": ("x", [1, 3], {"units": unit_registry.Unit("m")}),
+                    "y": ("y", [1], {"units": unit_registry.Unit("min")}),
+                },
+            ),
+            None,
+            id="DataArray-compatible units",
+        ),
+        pytest.param(
+            xr.DataArray(
+                [[0, 1], [2, 3], [4, 5]],
+                dims=("x", "y"),
+                coords={
+                    "x": ("x", [10, 20, 30], {"units": unit_registry.Unit("dm")}),
+                    "y": ("y", [60, 120], {"units": unit_registry.Unit("s")}),
+                },
+            ),
+            {"x": Quantity([10, 30], "s"), "y": Quantity([60], "m")},
+            None,
+            KeyError,
+            id="DataArray-incompatible units",
+        ),
+    ),
+)
+def test_loc(obj, indexers, expected, error):
+    if error is not None:
+        with pytest.raises(error):
+            obj.pint.sel(indexers)
+    else:
+        actual = obj.pint.loc[indexers]
+        assert_units_equal(actual, expected)
+        assert_identical(actual, expected)
+
+
+@pytest.mark.parametrize(
+    ["obj", "indexers", "values", "expected", "error"],
+    (
+        pytest.param(
+            xr.DataArray(
+                [[0, 1], [2, 3], [4, 5]],
+                dims=("x", "y"),
+                coords={
+                    "x": ("x", [10, 20, 30], {"units": unit_registry.Unit("dm")}),
+                    "y": ("y", [60, 120], {"units": unit_registry.Unit("s")}),
+                },
+            ),
+            {"x": Quantity([10, 30], "dm"), "y": Quantity([60], "s")},
+            [[-1], [-2]],
+            xr.DataArray(
+                [[-1, 1], [2, 3], [-2, 5]],
+                dims=("x", "y"),
+                coords={
+                    "x": ("x", [10, 20, 30], {"units": unit_registry.Unit("dm")}),
+                    "y": ("y", [60, 120], {"units": unit_registry.Unit("s")}),
+                },
+            ),
+            None,
+            id="coords-identical units",
+        ),
+        pytest.param(
+            xr.DataArray(
+                [[0, 1], [2, 3], [4, 5]],
+                dims=("x", "y"),
+                coords={
+                    "x": ("x", [10, 20, 30], {"units": unit_registry.Unit("dm")}),
+                    "y": ("y", [60, 120], {"units": unit_registry.Unit("s")}),
+                },
+            ),
+            {"x": Quantity([1, 3], "m"), "y": Quantity([1], "min")},
+            [[-1], [-2]],
+            xr.DataArray(
+                [[-1, 1], [2, 3], [-2, 5]],
+                dims=("x", "y"),
+                coords={
+                    "x": ("x", [10, 20, 30], {"units": unit_registry.Unit("dm")}),
+                    "y": ("y", [60, 120], {"units": unit_registry.Unit("s")}),
+                },
+            ),
+            None,
+            id="coords-compatible units",
+        ),
+        pytest.param(
+            xr.DataArray(
+                [[0, 1], [2, 3], [4, 5]],
+                dims=("x", "y"),
+                coords={
+                    "x": ("x", [10, 20, 30], {"units": unit_registry.Unit("dm")}),
+                    "y": ("y", [60, 120], {"units": unit_registry.Unit("s")}),
+                },
+            ),
+            {"x": Quantity([1, 3], "s"), "y": Quantity([1], "m")},
+            [[-1], [-2]],
+            None,
+            KeyError,
+            id="coords-incompatible units",
+        ),
+        pytest.param(
+            xr.DataArray(
+                Quantity([[0, 1], [2, 3], [4, 5]], "m"),
+                dims=("x", "y"),
+                coords={
+                    "x": ("x", [10, 20, 30], {"units": unit_registry.Unit("dm")}),
+                    "y": ("y", [60, 120], {"units": unit_registry.Unit("s")}),
+                },
+            ),
+            {"x": Quantity([10, 30], "dm"), "y": Quantity([60], "s")},
+            Quantity([[-1], [-2]], "m"),
+            xr.DataArray(
+                Quantity([[-1, 1], [2, 3], [-2, 5]], "m"),
+                dims=("x", "y"),
+                coords={
+                    "x": ("x", [10, 20, 30], {"units": unit_registry.Unit("dm")}),
+                    "y": ("y", [60, 120], {"units": unit_registry.Unit("s")}),
+                },
+            ),
+            None,
+            id="data-identical units",
+        ),
+        pytest.param(
+            xr.DataArray(
+                Quantity([[0, 1], [2, 3], [4, 5]], "m"),
+                dims=("x", "y"),
+                coords={
+                    "x": ("x", [10, 20, 30], {"units": unit_registry.Unit("dm")}),
+                    "y": ("y", [60, 120], {"units": unit_registry.Unit("s")}),
+                },
+            ),
+            {"x": Quantity([10, 30], "dm"), "y": Quantity([60], "s")},
+            Quantity([[-1], [-2]], "km"),
+            xr.DataArray(
+                Quantity([[-1000, 1], [2, 3], [-2000, 5]], "m"),
+                dims=("x", "y"),
+                coords={
+                    "x": ("x", [10, 20, 30], {"units": unit_registry.Unit("dm")}),
+                    "y": ("y", [60, 120], {"units": unit_registry.Unit("s")}),
+                },
+            ),
+            None,
+            id="data-compatible units",
+        ),
+        pytest.param(
+            xr.DataArray(
+                Quantity([[0, 1], [2, 3], [4, 5]], "m"),
+                dims=("x", "y"),
+                coords={
+                    "x": ("x", [10, 20, 30], {"units": unit_registry.Unit("dm")}),
+                    "y": ("y", [60, 120], {"units": unit_registry.Unit("s")}),
+                },
+            ),
+            {"x": Quantity([10, 30], "dm"), "y": Quantity([60], "s")},
+            Quantity([[-1], [-2]], "s"),
+            None,
+            pint.DimensionalityError,
+            id="data-incompatible units",
+        ),
+    ),
+)
+def test_loc_setitem(obj, indexers, values, expected, error):
+    if error is not None:
+        with pytest.raises(error):
+            obj.pint.loc[indexers] = values
+    else:
+        obj.pint.loc[indexers] = values
+        assert_units_equal(obj, expected)
+        assert_identical(obj, expected)
 
 
 @pytest.mark.parametrize(

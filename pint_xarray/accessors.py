@@ -147,6 +147,164 @@ def _decide_units(units, registry, unit_attribute):
     return units
 
 
+class DatasetLocIndexer:
+    __slots__ = ("ds",)
+
+    def __init__(self, ds):
+        self.ds = ds
+
+    def __getitem__(self, indexers):
+        if not is_dict_like(indexers):
+            raise NotImplementedError("pandas-style indexing is not supported, yet")
+
+        indexer_units = {
+            name: conversion.extract_indexer_units(indexer)
+            for name, indexer in indexers.items()
+        }
+
+        # make sure we only have compatible units
+        dims = self.ds.dims
+        unit_attrs = conversion.extract_unit_attributes(self.ds)
+        index_units = {
+            name: units for name, units in unit_attrs.items() if name in dims
+        }
+
+        registry = get_registry(None, index_units, indexer_units)
+
+        units = zip_mappings(indexer_units, index_units)
+        incompatible_units = [
+            key
+            for key, (indexer_unit, index_unit) in units.items()
+            if (
+                None not in (indexer_unit, index_unit)
+                and not registry.is_compatible_with(indexer_unit, index_unit)
+            )
+        ]
+        if incompatible_units:
+            raise KeyError(
+                "not all values found in "
+                + (
+                    f"index {incompatible_units[0]!r}"
+                    if len(incompatible_units) == 1
+                    else f"indexes {', '.join(repr(_) for _ in incompatible_units)}"
+                )
+            )
+
+        # convert the indexes to the indexer's units
+        converted = conversion.convert_units(self.ds, indexer_units)
+
+        # index
+        stripped_indexers = {
+            name: conversion.strip_indexer_units(indexer)
+            for name, indexer in indexers.items()
+        }
+        return converted.loc[stripped_indexers]
+
+
+class DataArrayLocIndexer:
+    __slots__ = ("da",)
+
+    def __init__(self, da):
+        self.da = da
+
+    def __getitem__(self, indexers):
+        if not is_dict_like(indexers):
+            raise NotImplementedError("pandas-style indexing is not supported, yet")
+
+        indexer_units = {
+            name: conversion.extract_indexer_units(indexer)
+            for name, indexer in indexers.items()
+        }
+
+        # make sure we only have compatible units
+        dims = self.da.dims
+        unit_attrs = conversion.extract_unit_attributes(self.da)
+        index_units = {
+            name: units for name, units in unit_attrs.items() if name in dims
+        }
+
+        registry = get_registry(None, index_units, indexer_units)
+
+        units = zip_mappings(indexer_units, index_units)
+        incompatible_units = [
+            key
+            for key, (indexer_unit, index_unit) in units.items()
+            if (
+                None not in (indexer_unit, index_unit)
+                and not registry.is_compatible_with(indexer_unit, index_unit)
+            )
+        ]
+        if incompatible_units:
+            raise KeyError(
+                "not all values found in "
+                + (
+                    f"index {incompatible_units[0]!r}"
+                    if len(incompatible_units) == 1
+                    else f"indexes {', '.join(repr(_) for _ in incompatible_units)}"
+                )
+            )
+
+        # convert the indexes to the indexer's units
+        converted = conversion.convert_units(self.da, indexer_units)
+
+        # index
+        stripped_indexers = {
+            name: conversion.strip_indexer_units(indexer)
+            for name, indexer in indexers.items()
+        }
+        return converted.loc[stripped_indexers]
+
+    def __setitem__(self, indexers, values):
+        if not is_dict_like(indexers):
+            raise NotImplementedError("pandas-style indexing is not supported, yet")
+
+        indexer_units = {
+            name: conversion.extract_indexer_units(indexer)
+            for name, indexer in indexers.items()
+        }
+
+        # make sure we only have compatible units
+        dims = self.da.dims
+        unit_attrs = conversion.extract_unit_attributes(self.da)
+        index_units = {
+            name: units for name, units in unit_attrs.items() if name in dims
+        }
+
+        registry = get_registry(None, index_units, indexer_units)
+
+        units = zip_mappings(indexer_units, index_units)
+        incompatible_units = [
+            key
+            for key, (indexer_unit, index_unit) in units.items()
+            if (
+                None not in (indexer_unit, index_unit)
+                and not registry.is_compatible_with(indexer_unit, index_unit)
+            )
+        ]
+        if incompatible_units:
+            raise KeyError(
+                "not all values found in "
+                + (
+                    f"index {incompatible_units[0]!r}"
+                    if len(incompatible_units) == 1
+                    else f"indexes {', '.join(repr(_) for _ in incompatible_units)}"
+                )
+            )
+
+        # convert the indexers to the index units
+        converted = {
+            name: conversion.convert_indexer_units(indexer, index_units[name])
+            for name, indexer in indexers.items()
+        }
+
+        # index
+        stripped_indexers = {
+            name: conversion.strip_indexer_units(indexer)
+            for name, indexer in converted.items()
+        }
+        self.da.loc[stripped_indexers] = values
+
+
 @register_dataarray_accessor("pint")
 class PintDataArrayAccessor:
     """
@@ -707,9 +865,14 @@ class PintDataArrayAccessor:
             )
         ]
         if incompatible_units:
-            units1 = {key: indexer_units[key] for key in incompatible_units}
-            units2 = {key: index_units[key] for key in incompatible_units}
-            raise DimensionalityError(units1, units2)
+            raise KeyError(
+                "not all values found in "
+                + (
+                    f"index {incompatible_units[0]!r}"
+                    if len(incompatible_units) == 1
+                    else f"indexes {', '.join(repr(_) for _ in incompatible_units)}"
+                )
+            )
 
         # convert the indexes to the indexer's units
         converted = conversion.convert_units(self.da, indexer_units)
@@ -730,7 +893,16 @@ class PintDataArrayAccessor:
 
     @property
     def loc(self):
-        ...
+        """Unit-aware attribute for indexing
+
+        .. note::
+           Position based indexing (e.g. ``ds.loc[1, 2:]``) is not supported, yet
+
+        See Also
+        --------
+        xarray.DataArray.loc
+        """
+        return DataArrayLocIndexer(self.da)
 
     def drop_sel(self, labels=None, *, errors="raise", **labels_kwargs):
         """unit-aware version of drop_sel
@@ -1391,9 +1563,14 @@ class PintDatasetAccessor:
             )
         ]
         if incompatible_units:
-            units1 = {key: indexer_units[key] for key in incompatible_units}
-            units2 = {key: index_units[key] for key in incompatible_units}
-            raise DimensionalityError(units1, units2)
+            raise KeyError(
+                "not all values found in "
+                + (
+                    f"index {incompatible_units[0]!r}"
+                    if len(incompatible_units) == 1
+                    else f"indexes {', '.join(repr(_) for _ in incompatible_units)}"
+                )
+            )
 
         # convert the indexes to the indexer's units
         converted = conversion.convert_units(self.ds, indexer_units)
@@ -1414,7 +1591,18 @@ class PintDatasetAccessor:
 
     @property
     def loc(self):
-        ...
+        """Unit-aware attribute for indexing
+
+        Only supports ``__getitem__``.
+
+        .. note::
+           Position based indexing (e.g. ``ds.loc[1, 2:]``) is not supported, yet
+
+        See Also
+        --------
+        xarray.Dataset.loc
+        """
+        return DatasetLocIndexer(self.ds)
 
     def drop_sel(self, labels=None, *, errors="raise", **labels_kwargs):
         """unit-aware version of drop_sel

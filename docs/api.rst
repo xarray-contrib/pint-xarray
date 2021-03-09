@@ -11,6 +11,12 @@ Dataset
 -------
 .. autosummary::
    :toctree: generated/
+   :template: autosummary/accessor_attribute.rst
+
+   xarray.Dataset.pint.loc
+
+.. autosummary::
+   :toctree: generated/
    :template: autosummary/accessor_method.rst
 
    xarray.Dataset.pint.quantify
@@ -30,6 +36,8 @@ DataArray
 .. autosummary::
    :toctree: generated/
    :template: autosummary/accessor_attribute.rst
+
+   xarray.Dataset.pint.loc
 
    xarray.DataArray.pint.magnitude
    xarray.DataArray.pint.units
