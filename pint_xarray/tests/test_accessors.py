@@ -815,6 +815,69 @@ def test_drop_sel(obj, indexers, expected, error):
 
 
 @pytest.mark.parametrize(
+    "obj",
+    (
+        pytest.param(
+            xr.Dataset(
+                {"a": ("x", np.linspace(0, 1, 11))},
+                coords={"u": ("x", np.arange(11))},
+            ),
+            id="Dataset-no units",
+        ),
+        pytest.param(
+            xr.Dataset(
+                {
+                    "a": (
+                        "x",
+                        Quantity(np.linspace(0, 1, 11), "m"),
+                    )
+                },
+                coords={
+                    "u": (
+                        "x",
+                        Quantity(np.arange(11), "m"),
+                    )
+                },
+            ),
+            id="Dataset-units",
+        ),
+        pytest.param(
+            xr.DataArray(
+                np.linspace(0, 1, 11),
+                coords={
+                    "u": (
+                        "x",
+                        Quantity(np.arange(11), "m"),
+                    )
+                },
+                dims="x",
+            ),
+            id="DataArray-no units",
+        ),
+        pytest.param(
+            xr.DataArray(
+                Quantity(np.linspace(0, 1, 11), "m"),
+                coords={
+                    "u": (
+                        "x",
+                        Quantity(np.arange(11), "m"),
+                    )
+                },
+                dims="x",
+            ),
+            id="DataArray-units",
+        ),
+    ),
+)
+def test_chunk(obj):
+    actual = obj.pint.chunk({"x": 2})
+    expected = obj.pint.dequantify().chunk({"x": 2}).pint.quantify()
+
+    assert_units_equal(actual, expected)
+    assert_identical(actual, expected)
+
+
+@pytest.mark.parametrize(
     ["obj", "indexers", "expected", "error"],
     (
         pytest.param(
