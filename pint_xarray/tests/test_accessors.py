@@ -8,7 +8,15 @@ from pint.errors import UndefinedUnitError
 
 from .. import accessors, conversion
 from ..errors import DimensionalityError
-from .utils import assert_equal, assert_identical, assert_units_equal, raises_regex
+from .utils import (
+    assert_equal,
+    assert_identical,
+    assert_units_equal,
+    raises_regex,
+    requires_bottleneck,
+    requires_dask_array,
+    requires_scipy,
+)
 
 pytestmark = [
     pytest.mark.filterwarnings("error::pint.UnitStrippedWarning"),
@@ -814,6 +822,7 @@ def test_drop_sel(obj, indexers, expected, error):
         assert_identical(actual, expected)
 
 
+@requires_dask_array
 @pytest.mark.parametrize(
     "obj",
     (
@@ -1144,6 +1153,7 @@ def test_reindex_like(obj, other, expected, error):
         assert_identical(actual, expected)
 
 
+@requires_scipy
 @pytest.mark.parametrize(
     ["obj", "indexers", "expected", "error"],
     (
@@ -1307,6 +1317,7 @@ def test_interp(obj, indexers, expected, error):
         assert_identical(actual, expected)
 
 
+@requires_scipy
 @pytest.mark.parametrize(
     ["obj", "other", "expected", "error"],
     (
@@ -1504,6 +1515,7 @@ def test_interp_like(obj, other, expected, error):
         assert_identical(actual, expected)
 
 
+@requires_bottleneck
 @pytest.mark.parametrize(
     ["obj", "expected"],
     (
@@ -1598,6 +1610,7 @@ def test_ffill(obj, expected):
     assert_units_equal(actual, expected)
 
 
+@requires_bottleneck
 @pytest.mark.parametrize(
     ["obj", "expected"],
     (
