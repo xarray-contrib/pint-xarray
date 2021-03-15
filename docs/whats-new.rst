@@ -29,6 +29,8 @@ What's new
   By `Justus Magin <https://github.com/keewis>`_.
 - implement :py:meth:`Dataset.pint.drop_sel` and :py:meth:`DataArray.pint.drop_sel` (:pull:`73`).
   By `Justus Magin <https://github.com/keewis>`_.
+- implement :py:meth:`Dataset.pint.chunk` and :py:meth:`DataArray.pint.chunk` (:pull:`83`).
+  By `Justus Magin <https://github.com/keewis>`_.
 - implement :py:meth:`Dataset.pint.reindex`, :py:meth:`Dataset.pint.reindex_like`,
   :py:meth:`DataArray.pint.reindex` and :py:meth:`DataArray.pint.reindex_like` (:pull:`69`).
   By `Justus Magin <https://github.com/keewis>`_.
