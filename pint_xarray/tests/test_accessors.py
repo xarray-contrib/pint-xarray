@@ -1624,3 +1624,97 @@ def test_bfill(obj, expected):
     actual = obj.pint.bfill(dim="x")
     assert_identical(actual, expected)
     assert_units_equal(actual, expected)
+
+
+@pytest.mark.parametrize(
+    ["obj", "expected"],
+    (
+        pytest.param(
+            xr.Dataset(
+                {"a": ("x", [nan, 0, nan, 1, nan, nan, nan, 2, nan])},
+                coords={"u": ("x", [nan, 0, nan, 1, nan, nan, nan, 2, nan])},
+            ),
+            xr.Dataset(
+                {"a": ("x", [nan, 0, 0.5, 1, 1.25, 1.5, 1.75, 2, nan])},
+                coords={"u": ("x", [nan, 0, nan, 1, nan, nan, nan, 2, nan])},
+            ),
+            id="Dataset-no units",
+        ),
+        pytest.param(
+            xr.Dataset(
+                {
+                    "a": (
+                        "x",
+                        Quantity([nan, 0, nan, 1, nan, nan, nan, 2, nan], "m"),
+                    )
+                },
+                coords={
+                    "u": (
+                        "x",
+                        Quantity([nan, 0, nan, 1, nan, nan, nan, 2, nan], "m"),
+                    )
+                },
+            ),
+            xr.Dataset(
+                {"a": ("x", Quantity([nan, 0, 0.5, 1, 1.25, 1.5, 1.75, 2, nan], "m"))},
+                coords={
+                    "u": (
+                        "x",
+                        Quantity([nan, 0, nan, 1, nan, nan, nan, 2, nan], "m"),
+                    )
+                },
+            ),
+            id="Dataset-units",
+        ),
+        pytest.param(
+            xr.DataArray(
+                [nan, 0, nan, 1, nan, nan, nan, 2, nan],
+                coords={
+                    "u": (
+                        "x",
+                        Quantity([nan, 0, nan, 1, nan, nan, nan, 2, nan], "m"),
+                    )
+                },
+                dims="x",
+            ),
+            xr.DataArray(
+                [nan, 0, 0.5, 1, 1.25, 1.5, 1.75, 2, nan],
+                coords={
+                    "u": (
+                        "x",
+                        Quantity([nan, 0, nan, 1, nan, nan, nan, 2, nan], "m"),
+                    )
+                },
+                dims="x",
+            ),
+            id="DataArray-units",
+        ),
+        pytest.param(
+            xr.DataArray(
+                Quantity([nan, 0, nan, 1, nan, nan, nan, 2, nan], "m"),
+                coords={
+                    "u": (
+                        "x",
+                        Quantity([nan, 0, nan, 1, nan, nan, nan, 2, nan], "m"),
+                    )
+                },
+                dims="x",
+            ),
+            xr.DataArray(
+                Quantity([nan, 0, 0.5, 1, 1.25, 1.5, 1.75, 2, nan], "m"),
+                coords={
+                    "u": (
+                        "x",
+                        Quantity([nan, 0, nan, 1, nan, nan, nan, 2, nan], "m"),
+                    )
+                },
+                dims="x",
+            ),
+            id="DataArray-units",
+        ),
+    ),
+)
+def test_interpolate_na(obj, expected):
+    actual = obj.pint.interpolate_na(dim="x")
+    assert_identical(actual, expected)
+    assert_units_equal(actual, expected)
