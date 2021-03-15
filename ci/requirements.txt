@@ -1,6 +1,7 @@
 pint
 numpy
 scipy
+dask
 bottleneck
 xarray
 isort
