@@ -967,7 +967,7 @@ class PintDataArrayAccessor:
     def ffill(self, dim, limit=None):
         """unit-aware version of ffill
 
-        Like :py:meth:`DataArray.ffill` but without stripping the data units.
+        Like :py:meth:`xarray.DataArray.ffill` but without stripping the data units.
 
         See Also
         --------
@@ -984,7 +984,7 @@ class PintDataArrayAccessor:
     def bfill(self, dim, limit=None):
         """unit-aware version of bfill
 
-        Like :py:meth:`DataArray.bfill` but without stripping the data units.
+        Like :py:meth:`xarray.DataArray.bfill` but without stripping the data units.
 
         See Also
         --------
@@ -1667,7 +1667,7 @@ class PintDatasetAccessor:
     def ffill(self, dim, limit=None):
         """unit-aware version of ffill
 
-        Like :py:meth:`Dataset.ffill` but without stripping the data units.
+        Like :py:meth:`xarray.Dataset.ffill` but without stripping the data units.
 
         See Also
         --------
@@ -1684,7 +1684,7 @@ class PintDatasetAccessor:
     def bfill(self, dim, limit=None):
         """unit-aware version of bfill
 
-        Like :py:meth:`Dataset.bfill` but without stripping the data units.
+        Like :py:meth:`xarray.Dataset.bfill` but without stripping the data units.
 
         See Also
         --------
