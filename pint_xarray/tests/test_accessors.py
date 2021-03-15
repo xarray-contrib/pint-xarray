@@ -847,7 +847,7 @@ def test_drop_sel(obj, indexers, expected, error):
                 coords={
                     "u": (
                         "x",
-                        Quantity(np.arange(11), "m"),
+                        np.arange(11),
                     )
                 },
                 dims="x",
@@ -871,7 +871,10 @@ def test_drop_sel(obj, indexers, expected, error):
 )
 def test_chunk(obj):
     actual = obj.pint.chunk({"x": 2})
-    expected = obj.pint.dequantify().chunk({"x": 2}).pint.quantify()
+
+    expected = (
+        obj.pint.dequantify().chunk({"x": 2}).pint.quantify(unit_registry=unit_registry)
+    )
 
     assert_units_equal(actual, expected)
     assert_identical(actual, expected)
