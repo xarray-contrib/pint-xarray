@@ -998,6 +998,44 @@ class PintDataArrayAccessor:
 
         return conversion.attach_units(filled, units)
 
+    def interpolate_na(
+        self,
+        dim=None,
+        method="linear",
+        limit=None,
+        use_coordinate=True,
+        max_gap=None,
+        keep_attrs=None,
+        **kwargs,
+    ):
+        """unit-aware version of interpolate_na
+
+        Like :py:meth:`DataArray.interpolate_na` but without stripping the units on data or coordinates.
+
+        .. note::
+            ``max_gap`` is not supported, yet, and will be passed through to
+            ``DataArray.interpolate_na`` unmodified.
+
+        See Also
+        --------
+        xarray.Dataset.pint.interpolate_na
+        xarray.DataArray.interpolate_na
+        """
+        units = conversion.extract_units(self.da)
+        stripped = conversion.strip_units(self.da)
+
+        interpolated = stripped.interpolate_na(
+            dim=dim,
+            method=method,
+            limit=limit,
+            use_coordinate=use_coordinate,
+            max_gap=max_gap,
+            keep_attrs=keep_attrs,
+            **kwargs,
+        )
+
+        return conversion.attach_units(interpolated, units)
+
 
 @register_dataset_accessor("pint")
 class PintDatasetAccessor:
@@ -1697,3 +1735,41 @@ class PintDatasetAccessor:
         filled = stripped.bfill(dim=dim, limit=limit)
 
         return conversion.attach_units(filled, units)
+
+    def interpolate_na(
+        self,
+        dim=None,
+        method="linear",
+        limit=None,
+        use_coordinate=True,
+        max_gap=None,
+        keep_attrs=None,
+        **kwargs,
+    ):
+        """unit-aware version of interpolate_na
+
+        Like :py:meth:`Dataset.interpolate_na` but without stripping the units on data or coordinates.
+
+        .. note::
+            ``max_gap`` is not supported, yet, and will be passed through to
+            ``Dataset.interpolate_na`` unmodified.
+
+        See Also
+        --------
+        xarray.DataArray.pint.interpolate_na
+        xarray.Dataset.interpolate_na
+        """
+        units = conversion.extract_units(self.ds)
+        stripped = conversion.strip_units(self.ds)
+
+        interpolated = stripped.interpolate_na(
+            dim=dim,
+            method=method,
+            limit=limit,
+            use_coordinate=use_coordinate,
+            max_gap=max_gap,
+            keep_attrs=keep_attrs,
+            **kwargs,
+        )
+
+        return conversion.attach_units(interpolated, units)
