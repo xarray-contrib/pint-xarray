@@ -30,6 +30,7 @@ Dataset
    xarray.Dataset.pint.to
    xarray.Dataset.pint.ffill
    xarray.Dataset.pint.bfill
+   xarray.Dataset.pint.interpolate_na
 
 DataArray
 ---------
@@ -59,6 +60,7 @@ DataArray
    xarray.DataArray.pint.to
    xarray.DataArray.pint.ffill
    xarray.DataArray.pint.bfill
+   xarray.DataArray.pint.interpolate_na
 
 Testing
 -------
