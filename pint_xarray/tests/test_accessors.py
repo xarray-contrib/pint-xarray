@@ -14,7 +14,7 @@ from .utils import (
     assert_units_equal,
     raises_regex,
     requires_bottleneck,
-    requires_dask,
+    requires_dask_array,
     requires_scipy,
 )
 
@@ -822,7 +822,7 @@ def test_drop_sel(obj, indexers, expected, error):
         assert_identical(actual, expected)
 
 
-@requires_dask
+@requires_dask_array
 @pytest.mark.parametrize(
     "obj",
     (

@@ -26,7 +26,7 @@ def importorskip(name):
     return has_name, pytest.mark.skipif(not has_name, reason=f"{name} is not available")
 
 
-has_dask, requires_dask = importorskip("dask")
+has_dask_array, requires_dask_array = importorskip("dask.array")
 has_scipy, requires_scipy = importorskip("scipy")
 has_bottleneck, requires_bottleneck = importorskip("bottleneck")
 
