@@ -569,6 +569,29 @@ class PintDataArrayAccessor:
 
         return conversion.convert_units(self.da, units)
 
+    def chunk(self, chunks, name_prefix="xarray-", token=None, lock=False):
+        """unit-aware version of chunk
+
+        Like :py:meth:`xarray.DataArray.chunk`, but chunking a quantity will change the
+        wrapped type to ``dask``.
+
+        .. note::
+            It is recommended to only use this when chunking in-memory arrays. To
+            rechunk please use :py:meth:`xarray.DataArray.chunk`.
+
+        See Also
+        --------
+        xarray.DataArray.chunk
+        xarray.Dataset.pint.chunk
+        """
+        units = conversion.extract_units(self.da)
+        stripped = conversion.strip_units(self.da)
+
+        chunked = stripped.chunk(
+            chunks, name_prefix=name_prefix, token=token, lock=lock
+        )
+        return conversion.attach_units(chunked, units)
+
     def reindex(
         self,
         indexers=None,
@@ -1304,6 +1327,29 @@ class PintDatasetAccessor:
         units = either_dict_or_kwargs(units, unit_kwargs, "to")
 
         return conversion.convert_units(self.ds, units)
+
+    def chunk(self, chunks, name_prefix="xarray-", token=None, lock=False):
+        """unit-aware version of chunk
+
+        Like :py:meth:`xarray.Dataset.chunk`, but chunking a quantity will change the
+        wrapped type to ``dask``.
+
+        .. note::
+            It is recommended to only use this when chunking in-memory arrays. To
+            rechunk please use :py:meth:`xarray.Dataset.chunk`.
+
+        See Also
+        --------
+        xarray.Dataset.chunk
+        xarray.DataArray.pint.chunk
+        """
+        units = conversion.extract_units(self.ds)
+        stripped = conversion.strip_units(self.ds)
+
+        chunked = stripped.chunk(
+            chunks, name_prefix=name_prefix, token=token, lock=lock
+        )
+        return conversion.attach_units(chunked, units)
 
     def reindex(
         self,
