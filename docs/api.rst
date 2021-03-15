@@ -28,6 +28,7 @@ Dataset
    xarray.Dataset.pint.drop_sel
    xarray.Dataset.pint.sel
    xarray.Dataset.pint.to
+   xarray.Dataset.pint.chunk
    xarray.Dataset.pint.ffill
    xarray.Dataset.pint.bfill
 
@@ -57,6 +58,7 @@ DataArray
    xarray.DataArray.pint.drop_sel
    xarray.DataArray.pint.sel
    xarray.DataArray.pint.to
+   xarray.DataArray.pint.chunk
    xarray.DataArray.pint.ffill
    xarray.DataArray.pint.bfill
 
