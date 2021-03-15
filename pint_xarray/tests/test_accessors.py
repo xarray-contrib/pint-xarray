@@ -1494,12 +1494,12 @@ def test_interp_like(obj, other, expected, error):
                 coords={
                     "u": (
                         "x",
-                        Quantity([nan, 0, nan, 1, nan, nan, 2, nan], "m"),
+                        [nan, 0, nan, 1, nan, nan, 2, nan],
                     )
                 },
                 dims="x",
             ),
-            id="DataArray-units",
+            id="DataArray-no units",
         ),
         pytest.param(
             xr.DataArray(
@@ -1588,12 +1588,12 @@ def test_ffill(obj, expected):
                 coords={
                     "u": (
                         "x",
-                        Quantity([nan, 0, nan, 1, nan, nan, 2, nan], "m"),
+                        [nan, 0, nan, 1, nan, nan, 2, nan],
                     )
                 },
                 dims="x",
             ),
-            id="DataArray-units",
+            id="DataArray-no units",
         ),
         pytest.param(
             xr.DataArray(
