@@ -37,7 +37,7 @@ DataArray
    :toctree: generated/
    :template: autosummary/accessor_attribute.rst
 
-   xarray.Dataset.pint.loc
+   xarray.DataArray.pint.loc
 
    xarray.DataArray.pint.magnitude
    xarray.DataArray.pint.units
