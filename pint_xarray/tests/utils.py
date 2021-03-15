@@ -16,6 +16,21 @@ from ..conversion import (
 )
 
 
+def importorskip(name):
+    try:
+        __import__(name)
+        has_name = True
+    except ImportError:
+        has_name = False
+
+    return has_name, pytest.mark.skipif(not has_name, reason=f"{name} is not available")
+
+
+has_dask, requires_dask = importorskip("dask")
+has_scipy, requires_scipy = importorskip("scipy")
+has_bottleneck, requires_bottleneck = importorskip("bottleneck")
+
+
 @contextmanager
 def raises_regex(error, pattern):
     __tracebackhide__ = True
