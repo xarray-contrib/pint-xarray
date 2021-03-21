@@ -36,6 +36,8 @@ jobs:
           EXECUTE_COMMANDS: |
             python -m pre_commit autoupdate
           COMMIT_MESSAGE: 'pre-commit: autoupdate hook versions'
+          COMMIT_NAME: 'github-actions[bot]'
+          COMMIT_EMAIL: 'github-actions[bot]@users.noreply.github.com'
           PR_TITLE: 'pre-commit: autoupdate hook versions'
           PR_BRANCH_PREFIX: 'pre-commit/'
           PR_BRANCH_NAME: 'autoupdate-${PR_ID}'
