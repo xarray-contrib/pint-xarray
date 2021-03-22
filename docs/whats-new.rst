@@ -42,6 +42,8 @@ What's new
   By `Justus Magin <https://github.com/keewis>`_.
 - implement :py:meth:`Dataset.pint.interpolate_na` and :py:meth:`DataArray.pint.interpolate_na` (:pull:`82`).
   By `Justus Magin <https://github.com/keewis>`_.
+- expose :py:func:`pint_xarray.accessors.setup_registry` as public API (:pull:`89`)
+  By `Justus Magin <https://github.com/keewis>`_.
 
 v0.1 (October 26 2020)
 ----------------------

@@ -6,6 +6,7 @@ This page contains a auto-generated summary of ``pint-xarray``'s API.
    :toctree: generated/
 
    pint_xarray.unit_registry
+   pint_xarray.setup_registry
 
 Dataset
 -------
