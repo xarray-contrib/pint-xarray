@@ -19,3 +19,9 @@ except Exception:
 
 
 pint.Quantity._repr_inline_ = formatting.inline_repr
+
+
+__all__ = [
+    "testing",
+    "unit_registry",
+]
