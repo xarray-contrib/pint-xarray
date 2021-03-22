@@ -1033,7 +1033,8 @@ class PintDataArrayAccessor:
     ):
         """unit-aware version of interpolate_na
 
-        Like :py:meth:`DataArray.interpolate_na` but without stripping the units on data or coordinates.
+        Like :py:meth:`xarray.DataArray.interpolate_na` but without stripping the units
+        on data or coordinates.
 
         .. note::
             ``max_gap`` is not supported, yet, and will be passed through to
@@ -1794,7 +1795,8 @@ class PintDatasetAccessor:
     ):
         """unit-aware version of interpolate_na
 
-        Like :py:meth:`Dataset.interpolate_na` but without stripping the units on data or coordinates.
+        Like :py:meth:`xarray.Dataset.interpolate_na` but without stripping the units on
+        data or coordinates.
 
         .. note::
             ``max_gap`` is not supported, yet, and will be passed through to
