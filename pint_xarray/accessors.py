@@ -393,11 +393,25 @@ class PintDataArrayAccessor:
 
         unit_attrs = conversion.extract_unit_attributes(self.da)
 
-        units = {
-            name: _decide_units(unit, registry, unit_attribute)
-            for name, (unit, unit_attribute) in zip_mappings(units, unit_attrs).items()
-            if unit is not None or unit_attribute is not None
-        }
+        possible_new_units = zip_mappings(units, unit_attrs)
+        new_units = {}
+        invalid_units = {}
+        for name, (unit, attr) in possible_new_units.items():
+            if unit is not None or attr is not None:
+                try:
+                    new_units[name] = _decide_units(unit, registry, attr)
+                except Exception as e:
+                    if unit is not None:
+                        type = "parameter"
+                        reported_unit = unit
+                    else:
+                        type = "attribute"
+                        reported_unit = attr
+
+                    invalid_units[name] = (reported_unit, type, e)
+
+        if invalid_units:
+            raise ValueError(format_error_message(invalid_units, "parse"))
 
         return self.da.pipe(conversion.strip_unit_attributes).pipe(
             conversion.attach_units, units
