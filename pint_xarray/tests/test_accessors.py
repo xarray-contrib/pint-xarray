@@ -7,7 +7,7 @@ from pint import Unit, UnitRegistry
 from pint.errors import UndefinedUnitError
 
 from .. import accessors, conversion
-from ..errors import DimensionalityError
+from ..errors import DimensionalityError, UnitParsingError
 from .utils import (
     assert_equal,
     assert_identical,
@@ -247,12 +247,12 @@ class TestQuantifyDataSet:
 
     def test_error_on_nonsense_units(self, example_unitless_ds):
         ds = example_unitless_ds
-        with pytest.raises(ValueError):
+        with pytest.raises(UnitParsingError):
             ds.pint.quantify(units={"users": "aecjhbav"})
 
     def test_error_indicates_problematic_variable(self, example_unitless_ds):
         ds = example_unitless_ds
-        with pytest.raises(ValueError, match="users"):
+        with pytest.raises(UnitParsingError, match="'users'"):
             ds.pint.quantify(units={"users": "aecjhbav"})
 
 
