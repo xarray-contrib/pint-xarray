@@ -8,7 +8,7 @@ from xarray import register_dataarray_accessor, register_dataset_accessor
 from xarray.core.dtypes import NA
 
 from . import conversion
-from .errors import DimensionalityError, UnitParsingError
+from .errors import DimensionalityError, format_error_message
 
 
 def setup_registry(registry):
@@ -1153,11 +1153,17 @@ class PintDatasetAccessor:
                 try:
                     new_units[name] = _decide_units(unit, registry, attr)
                 except Exception as e:
-                    type = "parameter" if unit is not None else attr
-                    invalid_units[name] = (unit, type, e)
+                    if unit is not None:
+                        type = "parameter"
+                        reported_unit = unit
+                    else:
+                        type = "attribute"
+                        reported_unit = attr
+
+                    invalid_units[name] = (reported_unit, type, e)
 
         if invalid_units:
-            raise UnitParsingError(invalid_units)
+            raise ValueError(format_error_message(invalid_units, "parse"))
 
         return self.ds.pipe(conversion.strip_unit_attributes).pipe(
             conversion.attach_units, new_units
