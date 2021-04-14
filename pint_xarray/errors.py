@@ -14,10 +14,10 @@ class DimensionalityError(pint.DimensionalityError):
     """
 
     def __init__(self, units1, units2):
-        if units1.keys() != units2.keys():
-            raise ValueError("units1 and units2 must have the same keys")
-        elif not units1:
+        if not units1:
             raise ValueError("no units given")
+        elif units1.keys() != units2.keys():
+            raise ValueError("units1 and units2 must have the same keys")
 
         self.incompatible_units = {
             key: (units1[key], units2[key]) for key in units1.keys()
