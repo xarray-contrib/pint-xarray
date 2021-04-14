@@ -1152,7 +1152,7 @@ class PintDatasetAccessor:
                 try:
                     new_units[name] = _decide_units(unit, registry, attr)
                 except Exception as e:
-                    raise type(e)(f"Failed to assign units to variable {name}") from e
+                    raise ValueError(f"Failed to assign units to variable {name}") from e
         return self.ds.pipe(conversion.strip_unit_attributes).pipe(
             conversion.attach_units, new_units
         )
