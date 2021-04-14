@@ -1145,14 +1145,18 @@ class PintDatasetAccessor:
 
         unit_attrs = conversion.extract_unit_attributes(self.ds)
 
-        units = {
-            name: _decide_units(unit, registry, attr)
-            for name, (unit, attr) in zip_mappings(units, unit_attrs).items()
-            if unit is not None or attr is not None
-        }
-
+        possible_new_units = zip_mappings(units, unit_attrs)
+        new_units = {}
+        for name, (unit, attr) in possible_new_units.items():
+            if unit is not None or attr is not None:
+                try:
+                    new_units[name] = _decide_units(unit, registry, attr)
+                except Exception as e:
+                    raise ValueError(
+                        f"Failed to assign units to variable {name}"
+                    ) from e
         return self.ds.pipe(conversion.strip_unit_attributes).pipe(
-            conversion.attach_units, units
+            conversion.attach_units, new_units
         )
 
     def dequantify(self, format=None):

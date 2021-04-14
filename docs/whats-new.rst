@@ -8,6 +8,9 @@ What's new
 - rewrite :py:meth:`Dataset.pint.quantify` and :py:meth:`DataArray.pint.quantify`,
   to use pint's `parse_units` instead of `parse_expression` (:pull:`40`)
   By `Tom Nicholas <https://github.com/TomNicholas>`_.
+- ensure the variable which causes the error is explicit if an error occurs in
+  :py:meth:`Dataset.pint.quantify` (:pull:`43`)
+  By `Tom Nicholas <https://github.com/TomNicholas>`_.
 - refactor the internal conversion functions (:pull:`56`)
   By `Justus Magin <https://github.com/keewis>`_.
 - allow converting indexes (except :py:class:`pandas.MultiIndex`) (:pull:`56`)
