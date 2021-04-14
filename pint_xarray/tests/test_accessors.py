@@ -247,12 +247,12 @@ class TestQuantifyDataSet:
 
     def test_error_on_nonsense_units(self, example_unitless_ds):
         ds = example_unitless_ds
-        with pytest.raises(UndefinedUnitError):
+        with pytest.raises(ValueError):
             ds.pint.quantify(units={"users": "aecjhbav"})
 
     def test_error_indicates_problematic_variable(self, example_unitless_ds):
         ds = example_unitless_ds
-        with raises_regex(UndefinedUnitError, "users"):
+        with raises_regex(ValueError, "users"):
             ds.pint.quantify(units={"users": "aecjhbav"})
 
 
