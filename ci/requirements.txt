@@ -1,9 +1,11 @@
 pint
 numpy
+scipy
+dask[array]
+bottleneck
 xarray
 isort
 black
 flake8
 pytest
 pytest-cov
-pytest-azurepipelines

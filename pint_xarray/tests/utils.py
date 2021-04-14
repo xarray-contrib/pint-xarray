@@ -3,9 +3,32 @@ from contextlib import contextmanager
 
 import numpy as np
 import pytest
-import xarray as xr
-from pint.quantity import Quantity
-from xarray.testing import assert_equal  # noqa: F401
+from pint import Quantity
+from xarray import DataArray, Variable
+from xarray.testing import assert_equal, assert_identical  # noqa: F401
+
+from ..conversion import (
+    array_strip_units,
+    extract_indexer_units,
+    extract_units,
+    strip_units,
+    strip_units_variable,
+)
+
+
+def importorskip(name):
+    try:
+        __import__(name)
+        has_name = True
+    except ImportError:
+        has_name = False
+
+    return has_name, pytest.mark.skipif(not has_name, reason=f"{name} is not available")
+
+
+has_dask_array, requires_dask_array = importorskip("dask.array")
+has_scipy, requires_scipy = importorskip("scipy")
+has_bottleneck, requires_bottleneck = importorskip("bottleneck")
 
 
 @contextmanager
@@ -18,79 +41,6 @@ def raises_regex(error, pattern):
         raise AssertionError(
             f"exception {excinfo.value!r} did not match pattern {pattern!r}"
         )
-
-
-def array_extract_units(obj):
-    if isinstance(obj, (xr.Variable, xr.DataArray, xr.Dataset)):
-        obj = obj.data
-
-    try:
-        return obj.units
-    except AttributeError:
-        return None
-
-
-def extract_units(obj):
-    if isinstance(obj, xr.Dataset):
-        vars_units = {
-            name: array_extract_units(value) for name, value in obj.data_vars.items()
-        }
-        coords_units = {
-            name: array_extract_units(value) for name, value in obj.coords.items()
-        }
-
-        units = {**vars_units, **coords_units}
-    elif isinstance(obj, xr.DataArray):
-        vars_units = {obj.name: array_extract_units(obj)}
-        coords_units = {
-            name: array_extract_units(value) for name, value in obj.coords.items()
-        }
-
-        units = {**vars_units, **coords_units}
-    elif isinstance(obj, xr.Variable):
-        vars_units = {None: array_extract_units(obj.data)}
-
-        units = {**vars_units}
-    elif isinstance(obj, Quantity):
-        vars_units = {None: array_extract_units(obj)}
-
-        units = {**vars_units}
-    else:
-        units = {}
-
-    return units
-
-
-def attach_units(obj, units):
-    if isinstance(obj, xr.DataArray):
-        ds = obj._to_temp_dataset()
-        new_name = list(ds.data_vars.keys())[0]
-        units[new_name] = units.get(obj.name)
-        new_ds = attach_units(ds, units)
-        new_obj = obj._from_temp_dataset(new_ds)
-    elif isinstance(obj, xr.Dataset):
-        data_vars = {
-            name: attach_units(array.variable, {None: units.get(name)})
-            for name, array in obj.data_vars.items()
-        }
-
-        coords = {
-            name: attach_units(array.variable, {None: units.get(name)})
-            for name, array in obj.coords.items()
-        }
-
-        new_obj = xr.Dataset(data_vars=data_vars, coords=coords, attrs=obj.attrs)
-    elif isinstance(obj, xr.Variable):
-        new_data = attach_units(obj.data, units)
-        new_obj = obj.copy(data=new_data)
-    elif isinstance(obj, Quantity):
-        raise ValueError(
-            f"cannot attach {units.get(None)} to {obj}: already a quantity"
-        )
-    else:
-        new_obj = Quantity(obj, units.get(None))
-
-    return new_obj
 
 
 def assert_array_units_equal(a, b):
@@ -109,6 +59,51 @@ def assert_array_equal(a, b):
     b_ = getattr(b, "magnitude", b)
 
     np.testing.assert_array_equal(a_, b_)
+
+
+def assert_slice_equal(a, b):
+    attrs = ("start", "stop", "step")
+    values_a = tuple(getattr(a, name) for name in attrs)
+    values_b = tuple(getattr(b, name) for name in attrs)
+    stripped_a = tuple(array_strip_units(v) for v in values_a)
+    stripped_b = tuple(array_strip_units(v) for v in values_b)
+
+    assert (
+        stripped_a == stripped_b
+    ), f"different values: {stripped_a!r} ←→ {stripped_b!r}"
+
+
+def assert_indexer_equal(a, b):
+    __tracebackhide__ = True
+
+    assert type(a) == type(b)
+    if isinstance(a, slice):
+        assert_slice_equal(a, b)
+    elif isinstance(a, DataArray):
+        stripped_a = strip_units(a)
+        stripped_b = strip_units(b)
+
+        assert_equal(stripped_a, stripped_b)
+    elif isinstance(a, Variable):
+        stripped_a = strip_units_variable(a)
+        stripped_b = strip_units_variable(b)
+
+        assert_equal(stripped_a, stripped_b)
+    elif isinstance(a, (Quantity, np.ndarray)):
+        assert_array_equal(a, b)
+    else:
+        a_ = array_strip_units(a)
+        b_ = array_strip_units(b)
+        assert a_ == b_, f"different values: {a_!r} ←→ {b_!r}"
+
+
+def assert_indexer_units_equal(a, b):
+    __tracebackhide__ = True
+
+    units_a = extract_indexer_units(a)
+    units_b = extract_indexer_units(b)
+
+    assert units_a == units_b, f"different units: {units_a!r} ←→ {units_b!r}"
 
 
 def assert_units_equal(a, b):

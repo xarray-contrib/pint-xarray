@@ -5,10 +5,9 @@ except ImportError:
 
 import pint
 
-from . import testing  # noqa: F401
-from . import formatting
-from .accessors import PintDataArrayAccessor, PintDatasetAccessor  # noqa: F401
-from .accessors import default_registry as unit_registry  # noqa: F401
+from . import accessors, formatting, testing  # noqa: F401
+from .accessors import default_registry as unit_registry
+from .accessors import setup_registry
 
 try:
     __version__ = version("pint-xarray")
@@ -19,3 +18,10 @@ except Exception:
 
 
 pint.Quantity._repr_inline_ = formatting.inline_repr
+
+
+__all__ = [
+    "testing",
+    "unit_registry",
+    "setup_registry",
+]

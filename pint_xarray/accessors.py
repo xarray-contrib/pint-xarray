@@ -5,8 +5,10 @@ import pint
 from pint.quantity import Quantity
 from pint.unit import Unit
 from xarray import register_dataarray_accessor, register_dataset_accessor
+from xarray.core.dtypes import NA
 
 from . import conversion
+from .errors import DimensionalityError
 
 
 def setup_registry(registry):
@@ -77,9 +79,11 @@ def merge_mappings(first, *mappings):
     return result
 
 
-def units_to_str_or_none(mapping):
+def units_to_str_or_none(mapping, unit_format):
+    formatter = str if not unit_format else lambda v: unit_format.format(v)
+
     return {
-        key: str(value) if isinstance(value, Unit) else value
+        key: formatter(value) if isinstance(value, Unit) else value
         for key, value in mapping.items()
     }
 
@@ -143,6 +147,164 @@ def _decide_units(units, registry, unit_attribute):
     return units
 
 
+class DatasetLocIndexer:
+    __slots__ = ("ds",)
+
+    def __init__(self, ds):
+        self.ds = ds
+
+    def __getitem__(self, indexers):
+        if not is_dict_like(indexers):
+            raise NotImplementedError("pandas-style indexing is not supported, yet")
+
+        indexer_units = {
+            name: conversion.extract_indexer_units(indexer)
+            for name, indexer in indexers.items()
+        }
+
+        # make sure we only have compatible units
+        dims = self.ds.dims
+        unit_attrs = conversion.extract_unit_attributes(self.ds)
+        index_units = {
+            name: units for name, units in unit_attrs.items() if name in dims
+        }
+
+        registry = get_registry(None, index_units, indexer_units)
+
+        units = zip_mappings(indexer_units, index_units)
+        incompatible_units = [
+            key
+            for key, (indexer_unit, index_unit) in units.items()
+            if (
+                None not in (indexer_unit, index_unit)
+                and not registry.is_compatible_with(indexer_unit, index_unit)
+            )
+        ]
+        if incompatible_units:
+            raise KeyError(
+                "not all values found in "
+                + (
+                    f"index {incompatible_units[0]!r}"
+                    if len(incompatible_units) == 1
+                    else f"indexes {', '.join(repr(_) for _ in incompatible_units)}"
+                )
+            )
+
+        # convert the indexes to the indexer's units
+        converted = conversion.convert_units(self.ds, indexer_units)
+
+        # index
+        stripped_indexers = {
+            name: conversion.strip_indexer_units(indexer)
+            for name, indexer in indexers.items()
+        }
+        return converted.loc[stripped_indexers]
+
+
+class DataArrayLocIndexer:
+    __slots__ = ("da",)
+
+    def __init__(self, da):
+        self.da = da
+
+    def __getitem__(self, indexers):
+        if not is_dict_like(indexers):
+            raise NotImplementedError("pandas-style indexing is not supported, yet")
+
+        indexer_units = {
+            name: conversion.extract_indexer_units(indexer)
+            for name, indexer in indexers.items()
+        }
+
+        # make sure we only have compatible units
+        dims = self.da.dims
+        unit_attrs = conversion.extract_unit_attributes(self.da)
+        index_units = {
+            name: units for name, units in unit_attrs.items() if name in dims
+        }
+
+        registry = get_registry(None, index_units, indexer_units)
+
+        units = zip_mappings(indexer_units, index_units)
+        incompatible_units = [
+            key
+            for key, (indexer_unit, index_unit) in units.items()
+            if (
+                None not in (indexer_unit, index_unit)
+                and not registry.is_compatible_with(indexer_unit, index_unit)
+            )
+        ]
+        if incompatible_units:
+            raise KeyError(
+                "not all values found in "
+                + (
+                    f"index {incompatible_units[0]!r}"
+                    if len(incompatible_units) == 1
+                    else f"indexes {', '.join(repr(_) for _ in incompatible_units)}"
+                )
+            )
+
+        # convert the indexes to the indexer's units
+        converted = conversion.convert_units(self.da, indexer_units)
+
+        # index
+        stripped_indexers = {
+            name: conversion.strip_indexer_units(indexer)
+            for name, indexer in indexers.items()
+        }
+        return converted.loc[stripped_indexers]
+
+    def __setitem__(self, indexers, values):
+        if not is_dict_like(indexers):
+            raise NotImplementedError("pandas-style indexing is not supported, yet")
+
+        indexer_units = {
+            name: conversion.extract_indexer_units(indexer)
+            for name, indexer in indexers.items()
+        }
+
+        # make sure we only have compatible units
+        dims = self.da.dims
+        unit_attrs = conversion.extract_unit_attributes(self.da)
+        index_units = {
+            name: units for name, units in unit_attrs.items() if name in dims
+        }
+
+        registry = get_registry(None, index_units, indexer_units)
+
+        units = zip_mappings(indexer_units, index_units)
+        incompatible_units = [
+            key
+            for key, (indexer_unit, index_unit) in units.items()
+            if (
+                None not in (indexer_unit, index_unit)
+                and not registry.is_compatible_with(indexer_unit, index_unit)
+            )
+        ]
+        if incompatible_units:
+            raise KeyError(
+                "not all values found in "
+                + (
+                    f"index {incompatible_units[0]!r}"
+                    if len(incompatible_units) == 1
+                    else f"indexes {', '.join(repr(_) for _ in incompatible_units)}"
+                )
+            )
+
+        # convert the indexers to the index units
+        converted = {
+            name: conversion.convert_indexer_units(indexer, index_units[name])
+            for name, indexer in indexers.items()
+        }
+
+        # index
+        stripped_indexers = {
+            name: conversion.strip_indexer_units(indexer)
+            for name, indexer in converted.items()
+        }
+        self.da.loc[stripped_indexers] = values
+
+
 @register_dataarray_accessor("pint")
 class PintDataArrayAccessor:
     """
@@ -156,7 +318,7 @@ class PintDataArrayAccessor:
 
     def quantify(self, units=None, unit_registry=None, **unit_kwargs):
         """
-        Attaches units to the DataArray.
+        Attach units to the DataArray.
 
         Units can be specified as a pint.Unit or as a string, which will be
         parsed by the given unit registry. If no units are specified then the
@@ -200,14 +362,14 @@ class PintDataArrayAccessor:
         --------
         >>> da = xr.DataArray(
         ...     data=[0.4, 0.9, 1.7, 4.8, 3.2, 9.1],
-        ...     dims="frequency",
+        ...     dims=["wavelength"],
         ...     coords={"wavelength": [1e-4, 2e-4, 4e-4, 6e-4, 1e-3, 2e-3]},
         ... )
         >>> da.pint.quantify(units="Hz")
-        <xarray.DataArray (frequency: 6)>
-        Quantity([ 0.4,  0.9,  1.7,  4.8,  3.2,  9.1], 'Hz')
+        <xarray.DataArray (wavelength: 6)>
+        <Quantity([0.4 0.9 1.7 4.8 3.2 9.1], 'hertz')>
         Coordinates:
-        * wavelength  (wavelength) np.array 1e-4, 2e-4, 4e-4, 6e-4, 1e-3, 2e-3
+          * wavelength  (wavelength) float64 0.0001 0.0002 0.0004 0.0006 0.001 0.002
         """
 
         if isinstance(self.da.data, Quantity):
@@ -225,12 +387,11 @@ class PintDataArrayAccessor:
             unit_kwargs[self.da.name] = units
             units = None
 
-        units = either_dict_or_kwargs(units, unit_kwargs, ".quantify")
+        units = either_dict_or_kwargs(units, unit_kwargs, "quantify")
 
         registry = get_registry(unit_registry, units, conversion.extract_units(self.da))
 
         unit_attrs = conversion.extract_unit_attributes(self.da)
-        new_obj = conversion.strip_unit_attributes(self.da)
 
         units = {
             name: _decide_units(unit, registry, unit_attribute)
@@ -238,20 +399,21 @@ class PintDataArrayAccessor:
             if unit is not None or unit_attribute is not None
         }
 
-        # TODO: remove once indexes support units
-        dim_units = {name: unit for name, unit in units.items() if name in self.da.dims}
-        for name in dim_units.keys():
-            units.pop(name)
-        new_obj = conversion.attach_unit_attributes(new_obj, dim_units)
+        return self.da.pipe(conversion.strip_unit_attributes).pipe(
+            conversion.attach_units, units
+        )
 
-        return conversion.attach_units(new_obj, units)
-
-    def dequantify(self):
+    def dequantify(self, format=None):
         """
-        Removes units from the DataArray and its coordinates.
+        Convert the units of the DataArray to string attributes.
 
         Will replace ``.attrs['units']`` on each variable with a string
         representation of the ``pint.Unit`` instance.
+
+        Parameters
+        ----------
+        format : str, optional
+            The format used for the string representations.
 
         Returns
         -------
@@ -259,13 +421,17 @@ class PintDataArrayAccessor:
             DataArray whose array data is unitless, and of the type
             that was previously wrapped by `pint.Quantity`.
         """
+        units = conversion.extract_unit_attributes(self.da)
+        units.update(conversion.extract_units(self.da))
 
-        units = units_to_str_or_none(conversion.extract_units(self.da))
-        new_obj = conversion.attach_unit_attributes(
-            conversion.strip_units(self.da), units
+        unit_format = f"{{:{format}}}" if isinstance(format, str) else format
+
+        units = units_to_str_or_none(units, unit_format)
+        return (
+            self.da.pipe(conversion.strip_units)
+            .pipe(conversion.strip_unit_attributes)
+            .pipe(conversion.attach_unit_attributes, units)
         )
-
-        return new_obj
 
     @property
     def magnitude(self):
@@ -330,7 +496,7 @@ class PintDataArrayAccessor:
         <xarray.DataArray 'arr' (x: 5)>
         <Quantity([0.   0.25 0.5  0.75 1.  ], 'meter')>
         Coordinates:
-            u        (x) int64 <Quantity([0 1 2 3 4], 'second')>
+            u        (x) int64 [s] 0 1 2 3 4
         Dimensions without coordinates: x
 
         Convert the data
@@ -339,19 +505,19 @@ class PintDataArrayAccessor:
         <xarray.DataArray 'arr' (x: 5)>
         <Quantity([   0.  250.  500.  750. 1000.], 'millimeter')>
         Coordinates:
-            u        (x) int64 <Quantity([0 1 2 3 4], 'second')>
+            u        (x) int64 [s] 0 1 2 3 4
         Dimensions without coordinates: x
         >>> da.pint.to(ureg.mm)
         <xarray.DataArray 'arr' (x: 5)>
         <Quantity([   0.  250.  500.  750. 1000.], 'millimeter')>
         Coordinates:
-            u        (x) int64 <Quantity([0 1 2 3 4], 'second')>
+            u        (x) int64 [s] 0 1 2 3 4
         Dimensions without coordinates: x
         >>> da.pint.to({da.name: "mm"})
         <xarray.DataArray 'arr' (x: 5)>
         <Quantity([   0.  250.  500.  750. 1000.], 'millimeter')>
         Coordinates:
-            u        (x) int64 <Quantity([0 1 2 3 4], 'second')>
+            u        (x) int64 [s] 0 1 2 3 4
         Dimensions without coordinates: x
 
         Convert coordinates
@@ -360,13 +526,13 @@ class PintDataArrayAccessor:
         <xarray.DataArray 'arr' (x: 5)>
         <Quantity([0.   0.25 0.5  0.75 1.  ], 'meter')>
         Coordinates:
-            u        (x) float64 <Quantity([   0. 1000. 2000. 3000. 4000.], 'millisec...
+            u        (x) float64 [ms] 0.0 1e+03 2e+03 3e+03 4e+03
         Dimensions without coordinates: x
         >>> da.pint.to(u="ms")
         <xarray.DataArray 'arr' (x: 5)>
         <Quantity([0.   0.25 0.5  0.75 1.  ], 'meter')>
         Coordinates:
-            u        (x) float64 <Quantity([   0. 1000. 2000. 3000. 4000.], 'millisec...
+            u        (x) float64 [ms] 0.0 1e+03 2e+03 3e+03 4e+03
         Dimensions without coordinates: x
 
         Convert both simultaneously
@@ -375,19 +541,19 @@ class PintDataArrayAccessor:
         <xarray.DataArray 'arr' (x: 5)>
         <Quantity([   0.  250.  500.  750. 1000.], 'millimeter')>
         Coordinates:
-            u        (x) float64 <Quantity([   0. 1000. 2000. 3000. 4000.], 'millisec...
+            u        (x) float64 [ms] 0.0 1e+03 2e+03 3e+03 4e+03
         Dimensions without coordinates: x
         >>> da.pint.to({"arr": ureg.mm, "u": ureg.ms})
         <xarray.DataArray 'arr' (x: 5)>
         <Quantity([   0.  250.  500.  750. 1000.], 'millimeter')>
         Coordinates:
-            u        (x) float64 <Quantity([   0. 1000. 2000. 3000. 4000.], 'millisec...
+            u        (x) float64 [ms] 0.0 1e+03 2e+03 3e+03 4e+03
         Dimensions without coordinates: x
         >>> da.pint.to(arr="mm", u="ms")
         <xarray.DataArray 'arr' (x: 5)>
         <Quantity([   0.  250.  500.  750. 1000.], 'millimeter')>
         Coordinates:
-            u        (x) float64 <Quantity([   0. 1000. 2000. 3000. 4000.], 'millisec...
+            u        (x) float64 [ms] 0.0 1e+03 2e+03 3e+03 4e+03
         Dimensions without coordinates: x
         """
         if isinstance(units, (str, pint.Unit)):
@@ -403,14 +569,496 @@ class PintDataArrayAccessor:
 
         return conversion.convert_units(self.da, units)
 
+    def chunk(self, chunks, name_prefix="xarray-", token=None, lock=False):
+        """unit-aware version of chunk
+
+        Like :py:meth:`xarray.DataArray.chunk`, but chunking a quantity will change the
+        wrapped type to ``dask``.
+
+        .. note::
+            It is recommended to only use this when chunking in-memory arrays. To
+            rechunk please use :py:meth:`xarray.DataArray.chunk`.
+
+        See Also
+        --------
+        xarray.DataArray.chunk
+        xarray.Dataset.pint.chunk
+        """
+        units = conversion.extract_units(self.da)
+        stripped = conversion.strip_units(self.da)
+
+        chunked = stripped.chunk(
+            chunks, name_prefix=name_prefix, token=token, lock=lock
+        )
+        return conversion.attach_units(chunked, units)
+
+    def reindex(
+        self,
+        indexers=None,
+        method=None,
+        tolerance=None,
+        copy=True,
+        fill_value=NA,
+        **indexers_kwargs,
+    ):
+        """unit-aware version of reindex
+
+        Like :py:meth:`xarray.DataArray.reindex`, except the object's indexes are
+        converted to the units of the indexers first.
+
+        .. note::
+            ``tolerance`` and ``fill_value`` are not supported, yet. They will be passed
+            through to ``DataArray.reindex`` unmodified.
+
+        See Also
+        --------
+        xarray.Dataset.pint.reindex
+        xarray.DataArray.pint.reindex_like
+        xarray.DataArray.reindex
+        """
+        indexers = either_dict_or_kwargs(indexers, indexers_kwargs, "reindex")
+
+        indexer_units = {
+            name: conversion.extract_indexer_units(indexer)
+            for name, indexer in indexers.items()
+        }
+
+        # TODO: handle tolerance
+        # TODO: handle fill_value
+
+        # make sure we only have compatible units
+        dims = self.da.dims
+        unit_attrs = conversion.extract_unit_attributes(self.da)
+        index_units = {
+            name: units for name, units in unit_attrs.items() if name in dims
+        }
+
+        registry = get_registry(None, index_units, indexer_units)
+
+        units = zip_mappings(indexer_units, index_units)
+        incompatible_units = [
+            key
+            for key, (indexer_unit, index_unit) in units.items()
+            if (
+                None not in (indexer_unit, index_unit)
+                and not registry.is_compatible_with(indexer_unit, index_unit)
+            )
+        ]
+        if incompatible_units:
+            units1 = {key: indexer_units[key] for key in incompatible_units}
+            units2 = {key: index_units[key] for key in incompatible_units}
+            raise DimensionalityError(units1, units2)
+
+        # convert the indexes to the indexer's units
+        converted = conversion.convert_units(self.da, indexer_units)
+
+        # index
+        stripped_indexers = {
+            name: conversion.strip_indexer_units(indexer)
+            for name, indexer in indexers.items()
+        }
+        indexed = converted.reindex(
+            stripped_indexers,
+            method=method,
+            tolerance=tolerance,
+            copy=copy,
+            fill_value=fill_value,
+        )
+        return indexed
+
+    def reindex_like(
+        self, other, method=None, tolerance=None, copy=True, fill_value=NA
+    ):
+        """unit-aware version of reindex_like
+
+        Like :py:meth:`xarray.DataArray.reindex_like`, except the object's indexes
+        are converted to the units of the indexers first.
+
+        .. note::
+            ``tolerance`` and ``fill_value`` are not supported, yet. They will be passed
+            through to ``DataArray.reindex_like`` unmodified.
+
+        See Also
+        --------
+        xarray.Dataset.pint.reindex_like
+        xarray.DataArray.pint.reindex
+        xarray.DataArray.reindex_like
+        """
+        indexer_units = conversion.extract_unit_attributes(other)
+
+        # TODO: handle tolerance
+        # TODO: handle fill_value
+
+        # make sure we only have compatible units
+        dims = self.da.dims
+        unit_attrs = conversion.extract_unit_attributes(self.da)
+        index_units = {
+            name: units for name, units in unit_attrs.items() if name in dims
+        }
+
+        registry = get_registry(None, index_units, indexer_units)
+
+        units = zip_mappings(indexer_units, index_units)
+        incompatible_units = [
+            key
+            for key, (indexer_unit, index_unit) in units.items()
+            if (
+                None not in (indexer_unit, index_unit)
+                and not registry.is_compatible_with(indexer_unit, index_unit)
+            )
+        ]
+        if incompatible_units:
+            units1 = {key: indexer_units[key] for key in incompatible_units}
+            units2 = {key: index_units[key] for key in incompatible_units}
+            raise DimensionalityError(units1, units2)
+
+        converted = conversion.convert_units(self.da, indexer_units)
+        return converted.reindex_like(
+            other,
+            method=method,
+            tolerance=tolerance,
+            copy=copy,
+            fill_value=fill_value,
+        )
+
+    def interp(
+        self,
+        coords=None,
+        method="linear",
+        assume_sorted=False,
+        kwargs=None,
+        **coords_kwargs,
+    ):
+        """unit-aware version of interp
+
+        Like :py:meth:`xarray.DataArray.interp`, except the object's indexes are
+        converted to the units of the indexers first.
+
+        .. note::
+            ``kwargs`` is passed unmodified to ``DataArray.interp``
+
+        See Also
+        --------
+        xarray.Dataset.pint.interp
+        xarray.DataArray.pint.interp_like
+        xarray.DataArray.interp
+        """
+        indexers = either_dict_or_kwargs(coords, coords_kwargs, "interp")
+
+        indexer_units = {
+            name: conversion.extract_indexer_units(indexer)
+            for name, indexer in indexers.items()
+        }
+
+        # make sure we only have compatible units
+        dims = self.da.dims
+        unit_attrs = conversion.extract_unit_attributes(self.da)
+        index_units = {
+            name: units for name, units in unit_attrs.items() if name in dims
+        }
+
+        registry = get_registry(None, index_units, indexer_units)
+
+        units = zip_mappings(indexer_units, index_units)
+        incompatible_units = [
+            key
+            for key, (indexer_unit, index_unit) in units.items()
+            if (
+                None not in (indexer_unit, index_unit)
+                and not registry.is_compatible_with(indexer_unit, index_unit)
+            )
+        ]
+        if incompatible_units:
+            units1 = {key: indexer_units[key] for key in incompatible_units}
+            units2 = {key: index_units[key] for key in incompatible_units}
+            raise DimensionalityError(units1, units2)
+
+        # convert the indexes to the indexer's units
+        converted = conversion.convert_units(self.da, indexer_units)
+        units = conversion.extract_units(converted)
+        stripped = conversion.strip_units(converted)
+
+        # index
+        stripped_indexers = {
+            name: conversion.strip_indexer_units(indexer)
+            for name, indexer in indexers.items()
+        }
+        interpolated = stripped.interp(
+            stripped_indexers,
+            method=method,
+            assume_sorted=False,
+            kwargs=None,
+        )
+        return conversion.attach_units(interpolated, units)
+
+    def interp_like(self, other, method="linear", assume_sorted=False, kwargs=None):
+        """unit-aware version of interp_like
+
+        Like :py:meth:`xarray.DataArray.interp_like`, except the object's indexes are converted
+        to the units of the indexers first.
+
+        .. note::
+            ``kwargs`` is passed unmodified to ``DataArray.interp``
+
+        See Also
+        --------
+        xarray.Dataset.pint.interp_like
+        xarray.DataArray.pint.interp
+        xarray.DataArray.interp_like
+        """
+        indexer_units = conversion.extract_unit_attributes(other)
+
+        # make sure we only have compatible units
+        dims = self.da.dims
+        unit_attrs = conversion.extract_unit_attributes(self.da)
+        index_units = {
+            name: units for name, units in unit_attrs.items() if name in dims
+        }
+
+        registry = get_registry(None, index_units, indexer_units)
+
+        units = zip_mappings(indexer_units, index_units)
+        incompatible_units = [
+            key
+            for key, (indexer_unit, index_unit) in units.items()
+            if (
+                None not in (indexer_unit, index_unit)
+                and not registry.is_compatible_with(indexer_unit, index_unit)
+            )
+        ]
+        if incompatible_units:
+            units1 = {key: indexer_units[key] for key in incompatible_units}
+            units2 = {key: index_units[key] for key in incompatible_units}
+            raise DimensionalityError(units1, units2)
+
+        converted = conversion.convert_units(self.da, indexer_units)
+        units = conversion.extract_units(converted)
+        stripped = conversion.strip_units(converted)
+        interpolated = stripped.interp_like(
+            other,
+            method=method,
+            assume_sorted=assume_sorted,
+            kwargs=kwargs,
+        )
+        return conversion.attach_units(interpolated, units)
+
     def sel(
         self, indexers=None, method=None, tolerance=None, drop=False, **indexers_kwargs
     ):
-        ...
+        """unit-aware version of sel
+
+        Like :py:meth:`xarray.DataArray.sel`, except the object's indexes are converted
+        to the units of the indexers first.
+
+        .. note::
+            ``tolerance`` is not supported, yet. It will be passed through to
+            ``DataArray.sel`` unmodified.
+
+        See Also
+        --------
+        xarray.Dataset.pint.sel
+        xarray.DataArray.sel
+        xarray.Dataset.sel
+        """
+        indexers = either_dict_or_kwargs(indexers, indexers_kwargs, "sel")
+
+        indexer_units = {
+            name: conversion.extract_indexer_units(indexer)
+            for name, indexer in indexers.items()
+        }
+
+        # TODO: handle tolerance
+
+        # make sure we only have compatible units
+        dims = self.da.dims
+        unit_attrs = conversion.extract_unit_attributes(self.da)
+        index_units = {
+            name: units for name, units in unit_attrs.items() if name in dims
+        }
+
+        registry = get_registry(None, index_units, indexer_units)
+
+        units = zip_mappings(indexer_units, index_units)
+        incompatible_units = [
+            key
+            for key, (indexer_unit, index_unit) in units.items()
+            if (
+                None not in (indexer_unit, index_unit)
+                and not registry.is_compatible_with(indexer_unit, index_unit)
+            )
+        ]
+        if incompatible_units:
+            raise KeyError(
+                "not all values found in "
+                + (
+                    f"index {incompatible_units[0]!r}"
+                    if len(incompatible_units) == 1
+                    else f"indexes {', '.join(repr(_) for _ in incompatible_units)}"
+                )
+            )
+
+        # convert the indexes to the indexer's units
+        converted = conversion.convert_units(self.da, indexer_units)
+
+        # index
+        stripped_indexers = {
+            name: conversion.strip_indexer_units(indexer)
+            for name, indexer in indexers.items()
+        }
+        indexed = converted.sel(
+            stripped_indexers,
+            method=method,
+            tolerance=tolerance,
+            drop=drop,
+        )
+
+        return indexed
 
     @property
     def loc(self):
-        ...
+        """Unit-aware attribute for indexing
+
+        .. note::
+           Position based indexing (e.g. ``ds.loc[1, 2:]``) is not supported, yet
+
+        See Also
+        --------
+        xarray.DataArray.loc
+        """
+        return DataArrayLocIndexer(self.da)
+
+    def drop_sel(self, labels=None, *, errors="raise", **labels_kwargs):
+        """unit-aware version of drop_sel
+
+        Just like :py:meth:`xarray.DataArray.drop_sel`, except the indexers are converted
+        to the units of the object's indexes first.
+
+        See Also
+        --------
+        xarray.Dataset.pint.drop_sel
+        xarray.DataArray.drop_sel
+        xarray.Dataset.drop_sel
+        """
+        indexers = either_dict_or_kwargs(labels, labels_kwargs, "drop_sel")
+
+        indexer_units = {
+            name: conversion.extract_indexer_units(indexer)
+            for name, indexer in indexers.items()
+        }
+
+        # make sure we only have compatible units
+        dims = self.da.dims
+        unit_attrs = conversion.extract_unit_attributes(self.da)
+        index_units = {
+            name: units for name, units in unit_attrs.items() if name in dims
+        }
+
+        registry = get_registry(None, index_units, indexer_units)
+
+        units = zip_mappings(indexer_units, index_units)
+        incompatible_units = [
+            key
+            for key, (indexer_unit, index_unit) in units.items()
+            if (
+                None not in (indexer_unit, index_unit)
+                and not registry.is_compatible_with(indexer_unit, index_unit)
+            )
+        ]
+        if incompatible_units:
+            units1 = {key: indexer_units[key] for key in incompatible_units}
+            units2 = {key: index_units[key] for key in incompatible_units}
+            raise DimensionalityError(units1, units2)
+
+        # convert the indexers to the indexes units
+        converted_indexers = {
+            name: conversion.convert_indexer_units(indexer, index_units[name])
+            for name, indexer in indexers.items()
+        }
+
+        # index
+        stripped_indexers = {
+            name: conversion.strip_indexer_units(indexer)
+            for name, indexer in converted_indexers.items()
+        }
+        indexed = self.da.drop_sel(
+            stripped_indexers,
+            errors=errors,
+        )
+
+        return indexed
+
+    def ffill(self, dim, limit=None):
+        """unit-aware version of ffill
+
+        Like :py:meth:`xarray.DataArray.ffill` but without stripping the data units.
+
+        See Also
+        --------
+        xarray.DataArray.ffill
+        xarray.DataArray.pint.bfill
+        """
+        units = conversion.extract_units(self.da)
+        stripped = conversion.strip_units(self.da)
+
+        filled = stripped.ffill(dim=dim, limit=limit)
+
+        return conversion.attach_units(filled, units)
+
+    def bfill(self, dim, limit=None):
+        """unit-aware version of bfill
+
+        Like :py:meth:`xarray.DataArray.bfill` but without stripping the data units.
+
+        See Also
+        --------
+        xarray.DataArray.bfill
+        xarray.DataArray.pint.ffill
+        """
+        units = conversion.extract_units(self.da)
+        stripped = conversion.strip_units(self.da)
+
+        filled = stripped.bfill(dim=dim, limit=limit)
+
+        return conversion.attach_units(filled, units)
+
+    def interpolate_na(
+        self,
+        dim=None,
+        method="linear",
+        limit=None,
+        use_coordinate=True,
+        max_gap=None,
+        keep_attrs=None,
+        **kwargs,
+    ):
+        """unit-aware version of interpolate_na
+
+        Like :py:meth:`xarray.DataArray.interpolate_na` but without stripping the units
+        on data or coordinates.
+
+        .. note::
+            ``max_gap`` is not supported, yet, and will be passed through to
+            ``DataArray.interpolate_na`` unmodified.
+
+        See Also
+        --------
+        xarray.Dataset.pint.interpolate_na
+        xarray.DataArray.interpolate_na
+        """
+        units = conversion.extract_units(self.da)
+        stripped = conversion.strip_units(self.da)
+
+        interpolated = stripped.interpolate_na(
+            dim=dim,
+            method=method,
+            limit=limit,
+            use_coordinate=use_coordinate,
+            max_gap=max_gap,
+            keep_attrs=keep_attrs,
+            **kwargs,
+        )
+
+        return conversion.attach_units(interpolated, units)
 
 
 @register_dataset_accessor("pint")
@@ -426,7 +1074,7 @@ class PintDatasetAccessor:
 
     def quantify(self, units=None, unit_registry=None, **unit_kwargs):
         """
-        Attaches units to each variable in the Dataset.
+        Attach units to the variables of the Dataset.
 
         Units can be specified as a ``pint.Unit`` or as a
         string, which will be parsed by the given unit registry. If no
@@ -469,7 +1117,7 @@ class PintDatasetAccessor:
         Examples
         --------
         >>> ds = xr.Dataset(
-        ...     {"a": ("x", [0, 3, 2], {"units": "m"}), "b": ("x", 5, -2, 1)},
+        ...     {"a": ("x", [0, 3, 2], {"units": "m"}), "b": ("x", [5, -2, 1])},
         ...     coords={"x": [0, 1, 2], "u": ("x", [-1, 0, 1], {"units": "s"})},
         ... )
 
@@ -478,25 +1126,24 @@ class PintDatasetAccessor:
         Dimensions:  (x: 3)
         Coordinates:
           * x        (x) int64 0 1 2
-            u        (x) int64 <Quantity([-1  0  1], 'second')>
+            u        (x) int64 [s] -1 0 1
         Data variables:
-            a        (x) int64 <Quantity([0 3 2], 'meter')>
+            a        (x) int64 [m] 0 3 2
             b        (x) int64 5 -2 1
         >>> ds.pint.quantify({"b": "dm"})
         <xarray.Dataset>
         Dimensions:  (x: 3)
         Coordinates:
           * x        (x) int64 0 1 2
-            u        (x) int64 <Quantity([-1  0  1], 'second')>
+            u        (x) int64 [s] -1 0 1
         Data variables:
-            a        (x) int64 <Quantity([0 3 2], 'meter')>
-            b        (x) int64 <Quantity([ 5 -2  1], 'decimeter')>
+            a        (x) int64 [m] 0 3 2
+            b        (x) int64 [dm] 5 -2 1
         """
-        units = either_dict_or_kwargs(units, unit_kwargs, ".quantify")
+        units = either_dict_or_kwargs(units, unit_kwargs, "quantify")
         registry = get_registry(unit_registry, units, conversion.extract_units(self.ds))
 
         unit_attrs = conversion.extract_unit_attributes(self.ds)
-        new_obj = conversion.strip_unit_attributes(self.ds)
 
         possible_new_units = zip_mappings(units, unit_attrs)
         new_units = {}
@@ -506,23 +1153,22 @@ class PintDatasetAccessor:
                     new_units[name] = _decide_units(unit, registry, attr)
                 except Exception as e:
                     raise type(e)(f"Failed to assign units to variable {name}") from e
+        return self.ds.pipe(conversion.strip_unit_attributes).pipe(
+            conversion.attach_units, new_units
+        )
 
-        # TODO: remove once indexes support units
-        dim_units = {
-            name: unit for name, unit in new_units.items() if name in new_obj.dims
-        }
-        for name in dim_units.keys():
-            new_units.pop(name)
-        new_obj = conversion.attach_unit_attributes(new_obj, dim_units)
 
-        return conversion.attach_units(new_obj, new_units)
-
-    def dequantify(self):
+    def dequantify(self, format=None):
         """
-        Removes units from the Dataset and its coordinates.
+        Convert units from the Dataset to string attributes.
 
         Will replace ``.attrs['units']`` on each variable with a string
         representation of the ``pint.Unit`` instance.
+
+        Parameters
+        ----------
+        format : str, optional
+            The format used for the string representations.
 
         Returns
         -------
@@ -530,26 +1176,35 @@ class PintDatasetAccessor:
             Dataset whose data variables are unitless, and of the type
             that was previously wrapped by ``pint.Quantity``.
         """
-        units = units_to_str_or_none(conversion.extract_units(self.ds))
-        new_obj = conversion.attach_unit_attributes(
-            conversion.strip_units(self.ds), units
+        units = conversion.extract_unit_attributes(self.ds)
+        units.update(conversion.extract_units(self.ds))
+
+        unit_format = f"{{:{format}}}" if isinstance(format, str) else format
+
+        units = units_to_str_or_none(units, unit_format)
+        return (
+            self.ds.pipe(conversion.strip_units)
+            .pipe(conversion.strip_unit_attributes)
+            .pipe(conversion.attach_unit_attributes, units)
         )
-        return new_obj
 
     def to(self, units=None, **unit_kwargs):
-        """convert the quantities in a DataArray
+        """convert the quantities in a Dataset
 
         Parameters
         ----------
-        units : mapping of hashable to unit-like, optional
-            Maps variable names to the unit to convert to.
+        units : unit-like or mapping of hashable to unit-like, optional
+            The units to convert to. If a unit name or ``pint.Unit``
+            object, convert all the object's data variables. If a dict-like, it
+            maps variable names to unit names or ``pint.Unit``
+            objects.
         **unit_kwargs
             The kwargs form of ``units``. Can only be used for
             variable names that are strings and valid python identifiers.
 
         Returns
         -------
-        object : DataArray
+        object : Dataset
             A new object with converted units.
 
         Examples
@@ -565,11 +1220,11 @@ class PintDatasetAccessor:
         <xarray.Dataset>
         Dimensions:  (x: 5)
         Coordinates:
-            u        (x) int64 <Quantity([0 1 2 3 4], 'second')>
+            u        (x) int64 [s] 0 1 2 3 4
         Dimensions without coordinates: x
         Data variables:
-            a        (x) float64 <Quantity([0.   0.25 0.5  0.75 1.  ], 'meter')>
-            b        (x) float64 <Quantity([-1.   -0.75 -0.5  -0.25  0.  ], 'kilogram')>
+            a        (x) float64 [m] 0.0 0.25 0.5 0.75 1.0
+            b        (x) float64 [kg] -1.0 -0.75 -0.5 -0.25 0.0
 
         Convert the data
 
@@ -577,20 +1232,20 @@ class PintDatasetAccessor:
         <xarray.Dataset>
         Dimensions:  (x: 5)
         Coordinates:
-            u        (x) int64 <Quantity([0 1 2 3 4], 'second')>
+            u        (x) int64 [s] 0 1 2 3 4
         Dimensions without coordinates: x
         Data variables:
-            a        (x) float64 <Quantity([   0.  250.  500.  750. 1000.], 'millimet...
-            b        (x) float64 <Quantity([-1000.  -750.  -500.  -250.     0.], 'gra...
+            a        (x) float64 [mm] 0.0 250.0 500.0 750.0 1e+03
+            b        (x) float64 [g] -1e+03 -750.0 -500.0 -250.0 0.0
         >>> ds.pint.to(a=ureg.mm, b="g")
         <xarray.Dataset>
         Dimensions:  (x: 5)
         Coordinates:
-            u        (x) int64 <Quantity([0 1 2 3 4], 'second')>
+            u        (x) int64 [s] 0 1 2 3 4
         Dimensions without coordinates: x
         Data variables:
-            a        (x) float64 <Quantity([   0.  250.  500.  750. 1000.], 'millimet...
-            b        (x) float64 <Quantity([-1000.  -750.  -500.  -250.     0.], 'gra...
+            a        (x) float64 [mm] 0.0 250.0 500.0 750.0 1e+03
+            b        (x) float64 [g] -1e+03 -750.0 -500.0 -250.0 0.0
 
         Convert coordinates
 
@@ -598,20 +1253,20 @@ class PintDatasetAccessor:
         <xarray.Dataset>
         Dimensions:  (x: 5)
         Coordinates:
-            u        (x) float64 <Quantity([   0. 1000. 2000. 3000. 4000.], 'millisec...
+            u        (x) float64 [ms] 0.0 1e+03 2e+03 3e+03 4e+03
         Dimensions without coordinates: x
         Data variables:
-            a        (x) float64 <Quantity([0.   0.25 0.5  0.75 1.  ], 'meter')>
-            b        (x) float64 <Quantity([-1.   -0.75 -0.5  -0.25  0.  ], 'kilogram')>
+            a        (x) float64 [m] 0.0 0.25 0.5 0.75 1.0
+            b        (x) float64 [kg] -1.0 -0.75 -0.5 -0.25 0.0
         >>> ds.pint.to(u="ms")
         <xarray.Dataset>
         Dimensions:  (x: 5)
         Coordinates:
-            u        (x) float64 <Quantity([   0. 1000. 2000. 3000. 4000.], 'millisec...
+            u        (x) float64 [ms] 0.0 1e+03 2e+03 3e+03 4e+03
         Dimensions without coordinates: x
         Data variables:
-            a        (x) float64 <Quantity([0.   0.25 0.5  0.75 1.  ], 'meter')>
-            b        (x) float64 <Quantity([-1.   -0.75 -0.5  -0.25  0.  ], 'kilogram')>
+            a        (x) float64 [m] 0.0 0.25 0.5 0.75 1.0
+            b        (x) float64 [kg] -1.0 -0.75 -0.5 -0.25 0.0
 
         Convert both simultaneously
 
@@ -619,30 +1274,553 @@ class PintDatasetAccessor:
         <xarray.Dataset>
         Dimensions:  (x: 5)
         Coordinates:
-            u        (x) float64 <Quantity([   0. 1000. 2000. 3000. 4000.], 'millisec...
+            u        (x) float64 [ms] 0.0 1e+03 2e+03 3e+03 4e+03
         Dimensions without coordinates: x
         Data variables:
-            a        (x) float64 <Quantity([   0.  250.  500.  750. 1000.], 'millimet...
-            b        (x) float64 <Quantity([-1000.  -750.  -500.  -250.     0.], 'gra...
+            a        (x) float64 [mm] 0.0 250.0 500.0 750.0 1e+03
+            b        (x) float64 [g] -1e+03 -750.0 -500.0 -250.0 0.0
         >>> ds.pint.to({"a": "mm", "b": "g", "u": ureg.ms})
         <xarray.Dataset>
         Dimensions:  (x: 5)
         Coordinates:
-            u        (x) float64 <Quantity([   0. 1000. 2000. 3000. 4000.], 'millisec...
+            u        (x) float64 [ms] 0.0 1e+03 2e+03 3e+03 4e+03
         Dimensions without coordinates: x
         Data variables:
-            a        (x) float64 <Quantity([   0.  250.  500.  750. 1000.], 'millimet...
-            b        (x) float64 <Quantity([-1000.  -750.  -500.  -250.     0.], 'gra...
+            a        (x) float64 [mm] 0.0 250.0 500.0 750.0 1e+03
+            b        (x) float64 [g] -1e+03 -750.0 -500.0 -250.0 0.0
+
+        Convert homogeneous data
+
+        >>> ds = xr.Dataset(
+        ...     data_vars={
+        ...         "a": ("x", np.linspace(0, 1, 5) * ureg.kg),
+        ...         "b": ("x", np.linspace(-1, 0, 5) * ureg.mg),
+        ...     },
+        ...     coords={"u": ("x", np.arange(5) * ureg.s)},
+        ... )
+        >>> ds
+        <xarray.Dataset>
+        Dimensions:  (x: 5)
+        Coordinates:
+            u        (x) int64 [s] 0 1 2 3 4
+        Dimensions without coordinates: x
+        Data variables:
+            a        (x) float64 [kg] 0.0 0.25 0.5 0.75 1.0
+            b        (x) float64 [mg] -1.0 -0.75 -0.5 -0.25 0.0
+        >>> ds.pint.to("g")
+        <xarray.Dataset>
+        Dimensions:  (x: 5)
+        Coordinates:
+            u        (x) int64 [s] 0 1 2 3 4
+        Dimensions without coordinates: x
+        Data variables:
+            a        (x) float64 [g] 0.0 250.0 500.0 750.0 1e+03
+            b        (x) float64 [g] -0.001 -0.00075 -0.0005 -0.00025 0.0
         """
+        if isinstance(units, (str, pint.Unit)):
+            unit_kwargs.update(
+                {name: units for name in self.ds.keys() if name not in unit_kwargs}
+            )
+            units = None
+        elif units is not None and not is_dict_like(units):
+            raise ValueError(
+                "units must be either a string, a pint.Unit object or a dict-like,"
+                f" but got {units!r}"
+            )
+
         units = either_dict_or_kwargs(units, unit_kwargs, "to")
 
         return conversion.convert_units(self.ds, units)
 
+    def chunk(self, chunks, name_prefix="xarray-", token=None, lock=False):
+        """unit-aware version of chunk
+
+        Like :py:meth:`xarray.Dataset.chunk`, but chunking a quantity will change the
+        wrapped type to ``dask``.
+
+        .. note::
+            It is recommended to only use this when chunking in-memory arrays. To
+            rechunk please use :py:meth:`xarray.Dataset.chunk`.
+
+        See Also
+        --------
+        xarray.Dataset.chunk
+        xarray.DataArray.pint.chunk
+        """
+        units = conversion.extract_units(self.ds)
+        stripped = conversion.strip_units(self.ds)
+
+        chunked = stripped.chunk(
+            chunks, name_prefix=name_prefix, token=token, lock=lock
+        )
+        return conversion.attach_units(chunked, units)
+
+    def reindex(
+        self,
+        indexers=None,
+        method=None,
+        tolerance=None,
+        copy=True,
+        fill_value=NA,
+        **indexers_kwargs,
+    ):
+        """unit-aware version of reindex
+
+        Like :py:meth:`xarray.Dataset.reindex`, except the object's indexes are converted
+        to the units of the indexers first.
+
+        .. note::
+            ``tolerance`` and ``fill_value`` are not supported, yet. They will be passed through to
+            ``Dataset.reindex`` unmodified.
+
+        See Also
+        --------
+        xarray.DataArray.pint.reindex
+        xarray.Dataset.pint.reindex_like
+        xarray.Dataset.reindex
+        """
+        indexers = either_dict_or_kwargs(indexers, indexers_kwargs, "reindex")
+
+        indexer_units = {
+            name: conversion.extract_indexer_units(indexer)
+            for name, indexer in indexers.items()
+        }
+
+        # TODO: handle tolerance
+        # TODO: handle fill_value
+
+        # make sure we only have compatible units
+        dims = self.ds.dims
+        unit_attrs = conversion.extract_unit_attributes(self.ds)
+        index_units = {
+            name: units for name, units in unit_attrs.items() if name in dims
+        }
+
+        registry = get_registry(None, index_units, indexer_units)
+
+        units = zip_mappings(indexer_units, index_units)
+        incompatible_units = [
+            key
+            for key, (indexer_unit, index_unit) in units.items()
+            if (
+                None not in (indexer_unit, index_unit)
+                and not registry.is_compatible_with(indexer_unit, index_unit)
+            )
+        ]
+        if incompatible_units:
+            units1 = {key: indexer_units[key] for key in incompatible_units}
+            units2 = {key: index_units[key] for key in incompatible_units}
+            raise DimensionalityError(units1, units2)
+
+        # convert the indexes to the indexer's units
+        converted = conversion.convert_units(self.ds, indexer_units)
+
+        # index
+        stripped_indexers = {
+            name: conversion.strip_indexer_units(indexer)
+            for name, indexer in indexers.items()
+        }
+        indexed = converted.reindex(
+            stripped_indexers,
+            method=method,
+            tolerance=tolerance,
+            copy=copy,
+            fill_value=fill_value,
+        )
+        return indexed
+
+    def reindex_like(
+        self, other, method=None, tolerance=None, copy=True, fill_value=NA
+    ):
+        """unit-aware version of reindex_like
+
+        Like :py:meth:`xarray.Dataset.reindex_like`, except the object's indexes are converted
+        to the units of the indexers first.
+
+        .. note::
+            ``tolerance`` and ``fill_value`` are not supported, yet. They will be passed through to
+            ``Dataset.reindex_like`` unmodified.
+
+        See Also
+        --------
+        xarray.DataArray.pint.reindex_like
+        xarray.Dataset.pint.reindex
+        xarray.Dataset.reindex_like
+        """
+        indexer_units = conversion.extract_unit_attributes(other)
+
+        # TODO: handle tolerance
+        # TODO: handle fill_value
+
+        # make sure we only have compatible units
+        dims = self.ds.dims
+        unit_attrs = conversion.extract_unit_attributes(self.ds)
+        index_units = {
+            name: units for name, units in unit_attrs.items() if name in dims
+        }
+
+        registry = get_registry(None, index_units, indexer_units)
+
+        units = zip_mappings(indexer_units, index_units)
+        incompatible_units = [
+            key
+            for key, (indexer_unit, index_unit) in units.items()
+            if (
+                None not in (indexer_unit, index_unit)
+                and not registry.is_compatible_with(indexer_unit, index_unit)
+            )
+        ]
+        if incompatible_units:
+            units1 = {key: indexer_units[key] for key in incompatible_units}
+            units2 = {key: index_units[key] for key in incompatible_units}
+            raise DimensionalityError(units1, units2)
+
+        converted = conversion.convert_units(self.ds, indexer_units)
+        return converted.reindex_like(
+            other,
+            method=method,
+            tolerance=tolerance,
+            copy=copy,
+            fill_value=fill_value,
+        )
+
+    def interp(
+        self,
+        coords=None,
+        method="linear",
+        assume_sorted=False,
+        kwargs=None,
+        **coords_kwargs,
+    ):
+        """unit-aware version of interp
+
+        Like :py:meth:`xarray.Dataset.interp`, except the object's indexes are converted
+        to the units of the indexers first.
+
+        .. note::
+            ``kwargs`` is passed unmodified to ``Dataset.interp``
+
+        See Also
+        --------
+        xarray.DataArray.pint.interp
+        xarray.Dataset.pint.interp_like
+        xarray.Dataset.interp
+        """
+        indexers = either_dict_or_kwargs(coords, coords_kwargs, "interp")
+
+        indexer_units = {
+            name: conversion.extract_indexer_units(indexer)
+            for name, indexer in indexers.items()
+        }
+
+        # make sure we only have compatible units
+        dims = self.ds.dims
+        unit_attrs = conversion.extract_unit_attributes(self.ds)
+        index_units = {
+            name: units for name, units in unit_attrs.items() if name in dims
+        }
+
+        registry = get_registry(None, index_units, indexer_units)
+
+        units = zip_mappings(indexer_units, index_units)
+        incompatible_units = [
+            key
+            for key, (indexer_unit, index_unit) in units.items()
+            if (
+                None not in (indexer_unit, index_unit)
+                and not registry.is_compatible_with(indexer_unit, index_unit)
+            )
+        ]
+        if incompatible_units:
+            units1 = {key: indexer_units[key] for key in incompatible_units}
+            units2 = {key: index_units[key] for key in incompatible_units}
+            raise DimensionalityError(units1, units2)
+
+        # convert the indexes to the indexer's units
+        converted = conversion.convert_units(self.ds, indexer_units)
+        units = conversion.extract_units(converted)
+        stripped = conversion.strip_units(converted)
+
+        # index
+        stripped_indexers = {
+            name: conversion.strip_indexer_units(indexer)
+            for name, indexer in indexers.items()
+        }
+        interpolated = stripped.interp(
+            stripped_indexers,
+            method=method,
+            assume_sorted=False,
+            kwargs=None,
+        )
+        return conversion.attach_units(interpolated, units)
+
+    def interp_like(self, other, method="linear", assume_sorted=False, kwargs=None):
+        """unit-aware version of interp_like
+
+        Like :py:meth:`xarray.Dataset.interp_like`, except the object's indexes are
+        converted to the units of the indexers first.
+
+        .. note::
+            ``kwargs`` is passed unmodified to ``Dataset.interp``
+
+        See Also
+        --------
+        xarray.DataArray.pint.interp_like
+        xarray.Dataset.pint.interp
+        xarray.Dataset.interp_like
+        """
+        indexer_units = conversion.extract_unit_attributes(other)
+
+        # make sure we only have compatible units
+        dims = self.ds.dims
+        unit_attrs = conversion.extract_unit_attributes(self.ds)
+        index_units = {
+            name: units for name, units in unit_attrs.items() if name in dims
+        }
+
+        registry = get_registry(None, index_units, indexer_units)
+
+        units = zip_mappings(indexer_units, index_units)
+        incompatible_units = [
+            key
+            for key, (indexer_unit, index_unit) in units.items()
+            if (
+                None not in (indexer_unit, index_unit)
+                and not registry.is_compatible_with(indexer_unit, index_unit)
+            )
+        ]
+        if incompatible_units:
+            units1 = {key: indexer_units[key] for key in incompatible_units}
+            units2 = {key: index_units[key] for key in incompatible_units}
+            raise DimensionalityError(units1, units2)
+
+        converted = conversion.convert_units(self.ds, indexer_units)
+        units = conversion.extract_units(converted)
+        stripped = conversion.strip_units(converted)
+        interpolated = stripped.interp_like(
+            other,
+            method=method,
+            assume_sorted=assume_sorted,
+            kwargs=kwargs,
+        )
+        return conversion.attach_units(interpolated, units)
+
     def sel(
         self, indexers=None, method=None, tolerance=None, drop=False, **indexers_kwargs
     ):
-        ...
+        """unit-aware version of sel
+
+        Like :py:meth:`xarray.Dataset.sel`, except the object's indexes are converted to
+        the units of the indexers first.
+
+        .. note::
+            ``tolerance`` is not supported, yet. It will be passed through to
+            ``Dataset.sel`` unmodified.
+
+        See Also
+        --------
+        xarray.DataArray.pint.sel
+        xarray.Dataset.sel
+        xarray.DataArray.sel
+        """
+        indexers = either_dict_or_kwargs(indexers, indexers_kwargs, "sel")
+
+        indexer_units = {
+            name: conversion.extract_indexer_units(indexer)
+            for name, indexer in indexers.items()
+        }
+
+        # TODO: handle tolerance
+
+        # make sure we only have compatible units
+        dims = self.ds.dims
+        unit_attrs = conversion.extract_unit_attributes(self.ds)
+        index_units = {
+            name: units for name, units in unit_attrs.items() if name in dims
+        }
+
+        registry = get_registry(None, index_units, indexer_units)
+
+        units = zip_mappings(indexer_units, index_units)
+        incompatible_units = [
+            key
+            for key, (indexer_unit, index_unit) in units.items()
+            if (
+                None not in (indexer_unit, index_unit)
+                and not registry.is_compatible_with(indexer_unit, index_unit)
+            )
+        ]
+        if incompatible_units:
+            raise KeyError(
+                "not all values found in "
+                + (
+                    f"index {incompatible_units[0]!r}"
+                    if len(incompatible_units) == 1
+                    else f"indexes {', '.join(repr(_) for _ in incompatible_units)}"
+                )
+            )
+
+        # convert the indexes to the indexer's units
+        converted = conversion.convert_units(self.ds, indexer_units)
+
+        # index
+        stripped_indexers = {
+            name: conversion.strip_indexer_units(indexer)
+            for name, indexer in indexers.items()
+        }
+        indexed = converted.sel(
+            stripped_indexers,
+            method=method,
+            tolerance=tolerance,
+            drop=drop,
+        )
+
+        return indexed
 
     @property
     def loc(self):
-        ...
+        """Unit-aware attribute for indexing
+
+        Only supports ``__getitem__``.
+
+        .. note::
+           Position based indexing (e.g. ``ds.loc[1, 2:]``) is not supported, yet
+
+        See Also
+        --------
+        xarray.Dataset.loc
+        """
+        return DatasetLocIndexer(self.ds)
+
+    def drop_sel(self, labels=None, *, errors="raise", **labels_kwargs):
+        """unit-aware version of drop_sel
+
+        Just like :py:meth:`xarray.Dataset.drop_sel`, except the indexers are converted
+        to the units of the object's indexes first.
+
+        See Also
+        --------
+        xarray.DataArray.pint.drop_sel
+        xarray.Dataset.drop_sel
+        xarray.DataArray.drop_sel
+        """
+        indexers = either_dict_or_kwargs(labels, labels_kwargs, "drop_sel")
+
+        indexer_units = {
+            name: conversion.extract_indexer_units(indexer)
+            for name, indexer in indexers.items()
+        }
+
+        # make sure we only have compatible units
+        dims = self.ds.dims
+        unit_attrs = conversion.extract_unit_attributes(self.ds)
+        index_units = {
+            name: units for name, units in unit_attrs.items() if name in dims
+        }
+
+        registry = get_registry(None, index_units, indexer_units)
+
+        units = zip_mappings(indexer_units, index_units)
+        incompatible_units = [
+            key
+            for key, (indexer_unit, index_unit) in units.items()
+            if (
+                None not in (indexer_unit, index_unit)
+                and not registry.is_compatible_with(indexer_unit, index_unit)
+            )
+        ]
+        if incompatible_units:
+            units1 = {key: indexer_units[key] for key in incompatible_units}
+            units2 = {key: index_units[key] for key in incompatible_units}
+            raise DimensionalityError(units1, units2)
+
+        # convert the indexers to the indexes units
+        converted_indexers = {
+            name: conversion.convert_indexer_units(indexer, index_units[name])
+            for name, indexer in indexers.items()
+        }
+
+        # index
+        stripped_indexers = {
+            name: conversion.strip_indexer_units(indexer)
+            for name, indexer in converted_indexers.items()
+        }
+        indexed = self.ds.drop_sel(
+            stripped_indexers,
+            errors=errors,
+        )
+
+        return indexed
+
+    def ffill(self, dim, limit=None):
+        """unit-aware version of ffill
+
+        Like :py:meth:`xarray.Dataset.ffill` but without stripping the data units.
+
+        See Also
+        --------
+        xarray.Dataset.ffill
+        xarray.Dataset.pint.bfill
+        """
+        units = conversion.extract_units(self.ds)
+        stripped = conversion.strip_units(self.ds)
+
+        filled = stripped.ffill(dim=dim, limit=limit)
+
+        return conversion.attach_units(filled, units)
+
+    def bfill(self, dim, limit=None):
+        """unit-aware version of bfill
+
+        Like :py:meth:`xarray.Dataset.bfill` but without stripping the data units.
+
+        See Also
+        --------
+        xarray.Dataset.bfill
+        xarray.Dataset.pint.ffill
+        """
+        units = conversion.extract_units(self.ds)
+        stripped = conversion.strip_units(self.ds)
+
+        filled = stripped.bfill(dim=dim, limit=limit)
+
+        return conversion.attach_units(filled, units)
+
+    def interpolate_na(
+        self,
+        dim=None,
+        method="linear",
+        limit=None,
+        use_coordinate=True,
+        max_gap=None,
+        keep_attrs=None,
+        **kwargs,
+    ):
+        """unit-aware version of interpolate_na
+
+        Like :py:meth:`xarray.Dataset.interpolate_na` but without stripping the units on
+        data or coordinates.
+
+        .. note::
+            ``max_gap`` is not supported, yet, and will be passed through to
+            ``Dataset.interpolate_na`` unmodified.
+
+        See Also
+        --------
+        xarray.DataArray.pint.interpolate_na
+        xarray.Dataset.interpolate_na
+        """
+        units = conversion.extract_units(self.ds)
+        stripped = conversion.strip_units(self.ds)
+
+        interpolated = stripped.interpolate_na(
+            dim=dim,
+            method=method,
+            limit=limit,
+            use_coordinate=use_coordinate,
+            max_gap=max_gap,
+            keep_attrs=keep_attrs,
+            **kwargs,
+        )
+
+        return conversion.attach_units(interpolated, units)
