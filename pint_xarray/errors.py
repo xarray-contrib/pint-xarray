@@ -37,3 +37,33 @@ class DimensionalityError(pint.DimensionalityError):
             ]
         )
         return message
+
+
+class UnitParsingError(ValueError):
+    """Raised when parsing units fails
+
+    Parameters
+    ----------
+    invalid_units : mapping of hashable to tuple of unit-like, str and exception
+        The rejected units
+    """
+
+    def __init__(self, invalid_units):
+        if not invalid_units:
+            raise ValueError("no units given")
+        self.invalid_units = invalid_units
+
+    def __str__(self):
+        invalid_units = self.invalid_units
+
+        message = "Cannot parse units:"
+        sep = "\n    " if len(invalid_units) == 1 else "\n -- "
+        message = sep.join(
+            [message]
+            + [
+                f"invalid units for variable {key!r}: {unit} ({type}) (reason: {str(e)})"
+                for key, (unit, type, e) in invalid_units.items()
+            ]
+        )
+
+        return message
