@@ -27,11 +27,7 @@ class DimensionalityError(pint.DimensionalityError):
         incompatible_units = self.incompatible_units
 
         message = "Cannot convert some variables:"
-        if len(incompatible_units) == 1:
-            sep = ""
-            message += " "
-        else:
-            sep = "\n -- "
+        sep = " " if len(incompatible_units) == 1 else "\n -- "
 
         message = sep.join(
             [message]
