@@ -252,7 +252,7 @@ class TestQuantifyDataSet:
 
     def test_error_indicates_problematic_variable(self, example_unitless_ds):
         ds = example_unitless_ds
-        with raises_regex(ValueError, "users"):
+        with pytest.raises(ValueError, match="users"):
             ds.pint.quantify(units={"users": "aecjhbav"})
 
 
