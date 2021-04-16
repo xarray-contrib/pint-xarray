@@ -4,10 +4,8 @@ import pytest
 import xarray as xr
 from numpy.testing import assert_array_equal
 from pint import Unit, UnitRegistry
-from pint.errors import UndefinedUnitError
 
 from .. import accessors, conversion
-from ..errors import DimensionalityError
 from .utils import (
     assert_equal,
     assert_identical,
@@ -102,7 +100,7 @@ class TestQuantifyDataArray:
 
     def test_error_on_nonsense_units(self, example_unitless_da):
         da = example_unitless_da
-        with pytest.raises(UndefinedUnitError):
+        with pytest.raises(ValueError, match=str(da.name)):
             da.pint.quantify(units="aecjhbav")
 
     def test_parse_integer_inverse(self):
@@ -730,7 +728,7 @@ def test_loc_setitem(obj, indexers, values, expected, error):
             ),
             {"x": Quantity([1, 3], "s"), "y": Quantity([1], "m")},
             None,
-            DimensionalityError,
+            KeyError,
             id="Dataset-incompatible units",
         ),
         pytest.param(
@@ -798,7 +796,7 @@ def test_loc_setitem(obj, indexers, values, expected, error):
             ),
             {"x": Quantity([10, 30], "s"), "y": Quantity([60], "m")},
             None,
-            DimensionalityError,
+            KeyError,
             id="DataArray-incompatible units",
         ),
         pytest.param(
@@ -1098,7 +1096,7 @@ def test_reindex(obj, indexers, expected, error):
                 }
             ),
             None,
-            DimensionalityError,
+            ValueError,
             id="Dataset-incompatible units",
         ),
         pytest.param(
@@ -1169,7 +1167,7 @@ def test_reindex(obj, indexers, expected, error):
                 }
             ),
             None,
-            DimensionalityError,
+            ValueError,
             id="DataArray-incompatible units",
         ),
     ),
@@ -1231,8 +1229,20 @@ def test_reindex_like(obj, other, expected, error):
             ),
             {"x": Quantity([1, 3], "s"), "y": Quantity([1], "m")},
             None,
-            DimensionalityError,
+            ValueError,
             id="Dataset-incompatible units",
+        ),
+        pytest.param(
+            xr.Dataset(
+                {
+                    "a": ("x", [10, 20, 30], {"units": unit_registry.Unit("dm")}),
+                    "b": ("y", [60, 120], {"units": unit_registry.Unit("s")}),
+                }
+            ),
+            {"a": Quantity([1, 3], "s"), "b": Quantity([1], "m")},
+            None,
+            ValueError,
+            id="Dataset-incompatible units-invalid dims",
         ),
         pytest.param(
             xr.Dataset(
@@ -1309,7 +1319,7 @@ def test_reindex_like(obj, other, expected, error):
             ),
             {"x": Quantity([10, 30], "s"), "y": Quantity([60], "m")},
             None,
-            DimensionalityError,
+            ValueError,
             id="DataArray-incompatible units",
         ),
         pytest.param(
@@ -1335,6 +1345,20 @@ def test_reindex_like(obj, other, expected, error):
             ),
             None,
             id="DataArray-data units",
+        ),
+        pytest.param(
+            xr.DataArray(
+                [[0, 1], [2, 3], [4, 5]],
+                dims=("x", "y"),
+                coords={
+                    "x": ("x", [10, 20, 30], {"units": unit_registry.Unit("dm")}),
+                    "y": ("y", [60, 120], {"units": unit_registry.Unit("s")}),
+                },
+            ),
+            {"x": Quantity([10, 30], "s"), "y": Quantity([60], "m")},
+            None,
+            ValueError,
+            id="DataArray-incompatible units-invalid dims",
         ),
     ),
 )
@@ -1410,7 +1434,7 @@ def test_interp(obj, indexers, expected, error):
                 }
             ),
             None,
-            DimensionalityError,
+            ValueError,
             id="Dataset-incompatible units",
         ),
         pytest.param(
@@ -1505,7 +1529,7 @@ def test_interp(obj, indexers, expected, error):
                 }
             ),
             None,
-            DimensionalityError,
+            ValueError,
             id="DataArray-incompatible units",
         ),
         pytest.param(

@@ -30,6 +30,15 @@ def format_error_message(mapping, op):
                 for key, error in mapping.items()
             ]
         )
+    elif op == "convert_indexers":
+        message = "Cannot convert indexers:"
+        message = sep.join(
+            [message]
+            + [
+                f"incompatible units for indexer for {key!r}: {error}"
+                for key, error in mapping.items()
+            ]
+        )
     else:
         raise ValueError("invalid op")
 

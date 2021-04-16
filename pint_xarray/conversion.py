@@ -363,15 +363,30 @@ def convert_units_slice(indexer, units):
     return slice(*args)
 
 
-def convert_indexer_units(indexer, units):
-    if isinstance(indexer, slice):
-        return convert_units_slice(indexer, units)
-    elif isinstance(indexer, DataArray):
-        return convert_units(indexer, {None: units})
-    elif isinstance(indexer, Variable):
-        return convert_units_variable(indexer, units)
-    else:
-        return array_convert_units(indexer, units)
+def convert_indexer_units(indexers, units):
+    def convert(indexer, units):
+        if isinstance(indexer, slice):
+            return convert_units_slice(indexer, units)
+        elif isinstance(indexer, DataArray):
+            return convert_units(indexer, {None: units})
+        elif isinstance(indexer, Variable):
+            return convert_units_variable(indexer, units)
+        else:
+            return array_convert_units(indexer, units)
+
+    converted = {}
+    invalid = {}
+    for name, indexer in indexers.items():
+        indexer_units = units.get(name)
+        try:
+            converted[name] = convert(indexer, indexer_units)
+        except (ValueError, pint.errors.PintTypeError) as e:
+            invalid[name] = e
+
+    if invalid:
+        raise ValueError(format_error_message(invalid, "convert_indexers"))
+
+    return converted
 
 
 def extract_indexer_units(indexer):
