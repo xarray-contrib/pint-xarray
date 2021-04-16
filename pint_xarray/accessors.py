@@ -143,7 +143,7 @@ def _decide_units(units, registry, unit_attribute):
         # TODO and what happens if they pass in a Unit from a different registry
         pass
     else:
-        units = registry.Unit(units)
+        units = registry.parse_units(units)
     return units
 
 
