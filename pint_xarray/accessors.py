@@ -327,7 +327,7 @@ class PintDataArrayAccessor:
             if unit is not None or attr is not None:
                 try:
                     new_units[name] = _decide_units(unit, registry, attr)
-                except Exception as e:
+                except (ValueError, pint.UndefinedUnitError) as e:
                     if unit is not None:
                         type = "parameter"
                         reported_unit = unit
@@ -960,7 +960,7 @@ class PintDatasetAccessor:
             if unit is not None or attr is not None:
                 try:
                     new_units[name] = _decide_units(unit, registry, attr)
-                except Exception as e:
+                except (ValueError, pint.UndefinedUnitError) as e:
                     if unit is not None:
                         type = "parameter"
                         reported_unit = unit
