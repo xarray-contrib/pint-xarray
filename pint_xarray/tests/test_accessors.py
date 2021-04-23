@@ -542,7 +542,7 @@ def test_sel(obj, indexers, expected, error):
 def test_loc(obj, indexers, expected, error):
     if error is not None:
         with pytest.raises(error):
-            obj.pint.sel(indexers)
+            obj.pint.loc[indexers]
     else:
         actual = obj.pint.loc[indexers]
         assert_units_equal(actual, expected)
