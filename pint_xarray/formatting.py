@@ -4,30 +4,11 @@ import numpy as np
 
 
 # vendored from xarray.core.formatting
-# https://github.com/pydata/xarray/blob/v0.16.0/xarray/core/formatting.py#L18-216
-def pretty_print(x, numchars: int):
-    """Given an object `x`, call `str(x)` and format the returned string so
-    that it is numchars long, padding with trailing spaces or truncating with
-    ellipses as necessary
-    """
-    s = maybe_truncate(x, numchars)
-    return s + " " * max(numchars - len(s), 0)
-
-
-# vendored from xarray.core.formatting
 def maybe_truncate(obj, maxlen=500):
     s = str(obj)
     if len(s) > maxlen:
         s = s[: (maxlen - 3)] + "..."
     return s
-
-
-# vendored from xarray.core.formatting
-def wrap_indent(text, start="", length=None):
-    if length is None:
-        length = len(start)
-    indent = "\n" + " " * length
-    return start + indent.join(x for x in text.splitlines())
 
 
 # vendored from xarray.core.formatting
@@ -78,17 +59,6 @@ def last_n_items(array, n_desired):
         indexer = _get_indexer_at_least_n_items(array.shape, n_desired, from_end=True)
         array = array[indexer]
     return np.asarray(array).flat[-n_desired:]
-
-
-# vendored from xarray.core.formatting
-def last_item(array):
-    """Returns the last item of an array in a list or an empty list."""
-    if array.size == 0:
-        # work around for https://github.com/numpy/numpy/issues/5195
-        return []
-
-    indexer = (slice(-1, None),) * array.ndim
-    return np.ravel(np.asarray(array[indexer])).tolist()
 
 
 # based on xarray.core.formatting.format_item
