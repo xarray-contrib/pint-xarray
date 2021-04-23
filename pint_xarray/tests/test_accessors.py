@@ -103,6 +103,14 @@ class TestQuantifyDataArray:
         with pytest.raises(ValueError, match=str(da.name)):
             da.pint.quantify(units="aecjhbav")
 
+    def test_error_on_nonsense_units_attrs(self, example_unitless_da):
+        da = example_unitless_da
+        da.attrs["units"] = "aecjhbav"
+        with pytest.raises(
+            ValueError, match=rf"{da.name}: {da.attrs['units']} \(attribute\)"
+        ):
+            da.pint.quantify()
+
     def test_parse_integer_inverse(self):
         # Regression test for issue #40
         da = xr.DataArray([10], attrs={"units": "m^-1"})
@@ -247,6 +255,14 @@ class TestQuantifyDataSet:
         ds = example_unitless_ds
         with pytest.raises(ValueError):
             ds.pint.quantify(units={"users": "aecjhbav"})
+
+    def test_error_on_nonsense_units_attrs(self, example_unitless_ds):
+        ds = example_unitless_ds
+        ds.users.attrs["units"] = "aecjhbav"
+        with pytest.raises(
+            ValueError, match=rf"'users': {ds.users.attrs['units']} \(attribute\)"
+        ):
+            ds.pint.quantify()
 
     def test_error_indicates_problematic_variable(self, example_unitless_ds):
         ds = example_unitless_ds
