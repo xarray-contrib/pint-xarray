@@ -8,9 +8,9 @@ What's new
 - rewrite :py:meth:`Dataset.pint.quantify` and :py:meth:`DataArray.pint.quantify`,
   to use pint's `parse_units` instead of `parse_expression` (:pull:`40`)
   By `Tom Nicholas <https://github.com/TomNicholas>`_.
-- ensure the variable which causes the error is explicit if an error occurs in
-  :py:meth:`Dataset.pint.quantify` (:pull:`43`)
-  By `Tom Nicholas <https://github.com/TomNicholas>`_.
+- ensure the variables which causes the error is explicit if an error occurs in
+  :py:meth:`Dataset.pint.quantify` and other methods (:pull:`43`, :pull:`91`)
+  By `Tom Nicholas <https://github.com/TomNicholas>`_ and `Justus Magin <https://github.com/keewis>`_.
 - refactor the internal conversion functions (:pull:`56`)
   By `Justus Magin <https://github.com/keewis>`_.
 - allow converting indexes (except :py:class:`pandas.MultiIndex`) (:pull:`56`)
@@ -45,7 +45,7 @@ What's new
   By `Justus Magin <https://github.com/keewis>`_.
 - implement :py:meth:`Dataset.pint.interpolate_na` and :py:meth:`DataArray.pint.interpolate_na` (:pull:`82`).
   By `Justus Magin <https://github.com/keewis>`_.
-- expose :py:func:`pint_xarray.accessors.setup_registry` as public API (:pull:`89`)
+- expose :py:func:`pint_xarray.setup_registry` as public API (:pull:`89`)
   By `Justus Magin <https://github.com/keewis>`_.
 
 v0.1 (October 26 2020)

@@ -8,7 +8,7 @@ from xarray import register_dataarray_accessor, register_dataset_accessor
 from xarray.core.dtypes import NA
 
 from . import conversion
-from .errors import DimensionalityError
+from .errors import format_error_message
 
 
 def setup_registry(registry):
@@ -143,7 +143,7 @@ def _decide_units(units, registry, unit_attribute):
         # TODO and what happens if they pass in a Unit from a different registry
         pass
     else:
-        units = registry.Unit(units)
+        units = registry.parse_units(units)
     return units
 
 
@@ -157,41 +157,18 @@ class DatasetLocIndexer:
         if not is_dict_like(indexers):
             raise NotImplementedError("pandas-style indexing is not supported, yet")
 
+        dims = self.ds.dims
         indexer_units = {
             name: conversion.extract_indexer_units(indexer)
             for name, indexer in indexers.items()
+            if name in dims
         }
-
-        # make sure we only have compatible units
-        dims = self.ds.dims
-        unit_attrs = conversion.extract_unit_attributes(self.ds)
-        index_units = {
-            name: units for name, units in unit_attrs.items() if name in dims
-        }
-
-        registry = get_registry(None, index_units, indexer_units)
-
-        units = zip_mappings(indexer_units, index_units)
-        incompatible_units = [
-            key
-            for key, (indexer_unit, index_unit) in units.items()
-            if (
-                None not in (indexer_unit, index_unit)
-                and not registry.is_compatible_with(indexer_unit, index_unit)
-            )
-        ]
-        if incompatible_units:
-            raise KeyError(
-                "not all values found in "
-                + (
-                    f"index {incompatible_units[0]!r}"
-                    if len(incompatible_units) == 1
-                    else f"indexes {', '.join(repr(_) for _ in incompatible_units)}"
-                )
-            )
 
         # convert the indexes to the indexer's units
-        converted = conversion.convert_units(self.ds, indexer_units)
+        try:
+            converted = conversion.convert_units(self.ds, indexer_units)
+        except ValueError as e:
+            raise KeyError(*e.args) from e
 
         # index
         stripped_indexers = {
@@ -211,41 +188,18 @@ class DataArrayLocIndexer:
         if not is_dict_like(indexers):
             raise NotImplementedError("pandas-style indexing is not supported, yet")
 
+        dims = self.da.dims
         indexer_units = {
             name: conversion.extract_indexer_units(indexer)
             for name, indexer in indexers.items()
+            if name in dims
         }
-
-        # make sure we only have compatible units
-        dims = self.da.dims
-        unit_attrs = conversion.extract_unit_attributes(self.da)
-        index_units = {
-            name: units for name, units in unit_attrs.items() if name in dims
-        }
-
-        registry = get_registry(None, index_units, indexer_units)
-
-        units = zip_mappings(indexer_units, index_units)
-        incompatible_units = [
-            key
-            for key, (indexer_unit, index_unit) in units.items()
-            if (
-                None not in (indexer_unit, index_unit)
-                and not registry.is_compatible_with(indexer_unit, index_unit)
-            )
-        ]
-        if incompatible_units:
-            raise KeyError(
-                "not all values found in "
-                + (
-                    f"index {incompatible_units[0]!r}"
-                    if len(incompatible_units) == 1
-                    else f"indexes {', '.join(repr(_) for _ in incompatible_units)}"
-                )
-            )
 
         # convert the indexes to the indexer's units
-        converted = conversion.convert_units(self.da, indexer_units)
+        try:
+            converted = conversion.convert_units(self.da, indexer_units)
+        except ValueError as e:
+            raise KeyError(*e.args) from e
 
         # index
         stripped_indexers = {
@@ -258,44 +212,17 @@ class DataArrayLocIndexer:
         if not is_dict_like(indexers):
             raise NotImplementedError("pandas-style indexing is not supported, yet")
 
-        indexer_units = {
-            name: conversion.extract_indexer_units(indexer)
-            for name, indexer in indexers.items()
-        }
-
-        # make sure we only have compatible units
         dims = self.da.dims
         unit_attrs = conversion.extract_unit_attributes(self.da)
         index_units = {
             name: units for name, units in unit_attrs.items() if name in dims
         }
 
-        registry = get_registry(None, index_units, indexer_units)
-
-        units = zip_mappings(indexer_units, index_units)
-        incompatible_units = [
-            key
-            for key, (indexer_unit, index_unit) in units.items()
-            if (
-                None not in (indexer_unit, index_unit)
-                and not registry.is_compatible_with(indexer_unit, index_unit)
-            )
-        ]
-        if incompatible_units:
-            raise KeyError(
-                "not all values found in "
-                + (
-                    f"index {incompatible_units[0]!r}"
-                    if len(incompatible_units) == 1
-                    else f"indexes {', '.join(repr(_) for _ in incompatible_units)}"
-                )
-            )
-
         # convert the indexers to the index units
-        converted = {
-            name: conversion.convert_indexer_units(indexer, index_units[name])
-            for name, indexer in indexers.items()
-        }
+        try:
+            converted = conversion.convert_indexer_units(indexers, index_units)
+        except ValueError as e:
+            raise KeyError(*e.args) from e
 
         # index
         stripped_indexers = {
@@ -393,14 +320,28 @@ class PintDataArrayAccessor:
 
         unit_attrs = conversion.extract_unit_attributes(self.da)
 
-        units = {
-            name: _decide_units(unit, registry, unit_attribute)
-            for name, (unit, unit_attribute) in zip_mappings(units, unit_attrs).items()
-            if unit is not None or unit_attribute is not None
-        }
+        possible_new_units = zip_mappings(units, unit_attrs)
+        new_units = {}
+        invalid_units = {}
+        for name, (unit, attr) in possible_new_units.items():
+            if unit is not None or attr is not None:
+                try:
+                    new_units[name] = _decide_units(unit, registry, attr)
+                except (ValueError, pint.UndefinedUnitError) as e:
+                    if unit is not None:
+                        type = "parameter"
+                        reported_unit = unit
+                    else:
+                        type = "attribute"
+                        reported_unit = attr
+
+                    invalid_units[name] = (reported_unit, type, e)
+
+        if invalid_units:
+            raise ValueError(format_error_message(invalid_units, "parse"))
 
         return self.da.pipe(conversion.strip_unit_attributes).pipe(
-            conversion.attach_units, units
+            conversion.attach_units, new_units
         )
 
     def dequantify(self, format=None):
@@ -618,36 +559,15 @@ class PintDataArrayAccessor:
         """
         indexers = either_dict_or_kwargs(indexers, indexers_kwargs, "reindex")
 
+        dims = self.da.dims
         indexer_units = {
             name: conversion.extract_indexer_units(indexer)
             for name, indexer in indexers.items()
+            if name in dims
         }
 
         # TODO: handle tolerance
         # TODO: handle fill_value
-
-        # make sure we only have compatible units
-        dims = self.da.dims
-        unit_attrs = conversion.extract_unit_attributes(self.da)
-        index_units = {
-            name: units for name, units in unit_attrs.items() if name in dims
-        }
-
-        registry = get_registry(None, index_units, indexer_units)
-
-        units = zip_mappings(indexer_units, index_units)
-        incompatible_units = [
-            key
-            for key, (indexer_unit, index_unit) in units.items()
-            if (
-                None not in (indexer_unit, index_unit)
-                and not registry.is_compatible_with(indexer_unit, index_unit)
-            )
-        ]
-        if incompatible_units:
-            units1 = {key: indexer_units[key] for key in incompatible_units}
-            units2 = {key: index_units[key] for key in incompatible_units}
-            raise DimensionalityError(units1, units2)
 
         # convert the indexes to the indexer's units
         converted = conversion.convert_units(self.da, indexer_units)
@@ -689,29 +609,6 @@ class PintDataArrayAccessor:
         # TODO: handle tolerance
         # TODO: handle fill_value
 
-        # make sure we only have compatible units
-        dims = self.da.dims
-        unit_attrs = conversion.extract_unit_attributes(self.da)
-        index_units = {
-            name: units for name, units in unit_attrs.items() if name in dims
-        }
-
-        registry = get_registry(None, index_units, indexer_units)
-
-        units = zip_mappings(indexer_units, index_units)
-        incompatible_units = [
-            key
-            for key, (indexer_unit, index_unit) in units.items()
-            if (
-                None not in (indexer_unit, index_unit)
-                and not registry.is_compatible_with(indexer_unit, index_unit)
-            )
-        ]
-        if incompatible_units:
-            units1 = {key: indexer_units[key] for key in incompatible_units}
-            units2 = {key: index_units[key] for key in incompatible_units}
-            raise DimensionalityError(units1, units2)
-
         converted = conversion.convert_units(self.da, indexer_units)
         return converted.reindex_like(
             other,
@@ -745,33 +642,12 @@ class PintDataArrayAccessor:
         """
         indexers = either_dict_or_kwargs(coords, coords_kwargs, "interp")
 
+        dims = self.da.dims
         indexer_units = {
             name: conversion.extract_indexer_units(indexer)
             for name, indexer in indexers.items()
+            if name in dims
         }
-
-        # make sure we only have compatible units
-        dims = self.da.dims
-        unit_attrs = conversion.extract_unit_attributes(self.da)
-        index_units = {
-            name: units for name, units in unit_attrs.items() if name in dims
-        }
-
-        registry = get_registry(None, index_units, indexer_units)
-
-        units = zip_mappings(indexer_units, index_units)
-        incompatible_units = [
-            key
-            for key, (indexer_unit, index_unit) in units.items()
-            if (
-                None not in (indexer_unit, index_unit)
-                and not registry.is_compatible_with(indexer_unit, index_unit)
-            )
-        ]
-        if incompatible_units:
-            units1 = {key: indexer_units[key] for key in incompatible_units}
-            units2 = {key: index_units[key] for key in incompatible_units}
-            raise DimensionalityError(units1, units2)
 
         # convert the indexes to the indexer's units
         converted = conversion.convert_units(self.da, indexer_units)
@@ -808,29 +684,6 @@ class PintDataArrayAccessor:
         """
         indexer_units = conversion.extract_unit_attributes(other)
 
-        # make sure we only have compatible units
-        dims = self.da.dims
-        unit_attrs = conversion.extract_unit_attributes(self.da)
-        index_units = {
-            name: units for name, units in unit_attrs.items() if name in dims
-        }
-
-        registry = get_registry(None, index_units, indexer_units)
-
-        units = zip_mappings(indexer_units, index_units)
-        incompatible_units = [
-            key
-            for key, (indexer_unit, index_unit) in units.items()
-            if (
-                None not in (indexer_unit, index_unit)
-                and not registry.is_compatible_with(indexer_unit, index_unit)
-            )
-        ]
-        if incompatible_units:
-            units1 = {key: indexer_units[key] for key in incompatible_units}
-            units2 = {key: index_units[key] for key in incompatible_units}
-            raise DimensionalityError(units1, units2)
-
         converted = conversion.convert_units(self.da, indexer_units)
         units = conversion.extract_units(converted)
         stripped = conversion.strip_units(converted)
@@ -862,43 +715,20 @@ class PintDataArrayAccessor:
         """
         indexers = either_dict_or_kwargs(indexers, indexers_kwargs, "sel")
 
+        dims = self.da.dims
         indexer_units = {
             name: conversion.extract_indexer_units(indexer)
             for name, indexer in indexers.items()
+            if name in dims
         }
 
         # TODO: handle tolerance
 
-        # make sure we only have compatible units
-        dims = self.da.dims
-        unit_attrs = conversion.extract_unit_attributes(self.da)
-        index_units = {
-            name: units for name, units in unit_attrs.items() if name in dims
-        }
-
-        registry = get_registry(None, index_units, indexer_units)
-
-        units = zip_mappings(indexer_units, index_units)
-        incompatible_units = [
-            key
-            for key, (indexer_unit, index_unit) in units.items()
-            if (
-                None not in (indexer_unit, index_unit)
-                and not registry.is_compatible_with(indexer_unit, index_unit)
-            )
-        ]
-        if incompatible_units:
-            raise KeyError(
-                "not all values found in "
-                + (
-                    f"index {incompatible_units[0]!r}"
-                    if len(incompatible_units) == 1
-                    else f"indexes {', '.join(repr(_) for _ in incompatible_units)}"
-                )
-            )
-
         # convert the indexes to the indexer's units
-        converted = conversion.convert_units(self.da, indexer_units)
+        try:
+            converted = conversion.convert_units(self.da, indexer_units)
+        except ValueError as e:
+            raise KeyError(*e.args) from e
 
         # index
         stripped_indexers = {
@@ -941,39 +771,17 @@ class PintDataArrayAccessor:
         """
         indexers = either_dict_or_kwargs(labels, labels_kwargs, "drop_sel")
 
-        indexer_units = {
-            name: conversion.extract_indexer_units(indexer)
-            for name, indexer in indexers.items()
-        }
-
-        # make sure we only have compatible units
         dims = self.da.dims
         unit_attrs = conversion.extract_unit_attributes(self.da)
         index_units = {
             name: units for name, units in unit_attrs.items() if name in dims
         }
 
-        registry = get_registry(None, index_units, indexer_units)
-
-        units = zip_mappings(indexer_units, index_units)
-        incompatible_units = [
-            key
-            for key, (indexer_unit, index_unit) in units.items()
-            if (
-                None not in (indexer_unit, index_unit)
-                and not registry.is_compatible_with(indexer_unit, index_unit)
-            )
-        ]
-        if incompatible_units:
-            units1 = {key: indexer_units[key] for key in incompatible_units}
-            units2 = {key: index_units[key] for key in incompatible_units}
-            raise DimensionalityError(units1, units2)
-
         # convert the indexers to the indexes units
-        converted_indexers = {
-            name: conversion.convert_indexer_units(indexer, index_units[name])
-            for name, indexer in indexers.items()
-        }
+        try:
+            converted_indexers = conversion.convert_indexer_units(indexers, index_units)
+        except ValueError as e:
+            raise KeyError(*e.args) from e
 
         # index
         stripped_indexers = {
@@ -1147,14 +955,24 @@ class PintDatasetAccessor:
 
         possible_new_units = zip_mappings(units, unit_attrs)
         new_units = {}
+        invalid_units = {}
         for name, (unit, attr) in possible_new_units.items():
             if unit is not None or attr is not None:
                 try:
                     new_units[name] = _decide_units(unit, registry, attr)
-                except Exception as e:
-                    raise ValueError(
-                        f"Failed to assign units to variable {name}"
-                    ) from e
+                except (ValueError, pint.UndefinedUnitError) as e:
+                    if unit is not None:
+                        type = "parameter"
+                        reported_unit = unit
+                    else:
+                        type = "attribute"
+                        reported_unit = attr
+
+                    invalid_units[name] = (reported_unit, type, e)
+
+        if invalid_units:
+            raise ValueError(format_error_message(invalid_units, "parse"))
+
         return self.ds.pipe(conversion.strip_unit_attributes).pipe(
             conversion.attach_units, new_units
         )
@@ -1382,36 +1200,15 @@ class PintDatasetAccessor:
         """
         indexers = either_dict_or_kwargs(indexers, indexers_kwargs, "reindex")
 
+        dims = self.ds.dims
         indexer_units = {
             name: conversion.extract_indexer_units(indexer)
             for name, indexer in indexers.items()
+            if name in dims
         }
 
         # TODO: handle tolerance
         # TODO: handle fill_value
-
-        # make sure we only have compatible units
-        dims = self.ds.dims
-        unit_attrs = conversion.extract_unit_attributes(self.ds)
-        index_units = {
-            name: units for name, units in unit_attrs.items() if name in dims
-        }
-
-        registry = get_registry(None, index_units, indexer_units)
-
-        units = zip_mappings(indexer_units, index_units)
-        incompatible_units = [
-            key
-            for key, (indexer_unit, index_unit) in units.items()
-            if (
-                None not in (indexer_unit, index_unit)
-                and not registry.is_compatible_with(indexer_unit, index_unit)
-            )
-        ]
-        if incompatible_units:
-            units1 = {key: indexer_units[key] for key in incompatible_units}
-            units2 = {key: index_units[key] for key in incompatible_units}
-            raise DimensionalityError(units1, units2)
 
         # convert the indexes to the indexer's units
         converted = conversion.convert_units(self.ds, indexer_units)
@@ -1453,29 +1250,6 @@ class PintDatasetAccessor:
         # TODO: handle tolerance
         # TODO: handle fill_value
 
-        # make sure we only have compatible units
-        dims = self.ds.dims
-        unit_attrs = conversion.extract_unit_attributes(self.ds)
-        index_units = {
-            name: units for name, units in unit_attrs.items() if name in dims
-        }
-
-        registry = get_registry(None, index_units, indexer_units)
-
-        units = zip_mappings(indexer_units, index_units)
-        incompatible_units = [
-            key
-            for key, (indexer_unit, index_unit) in units.items()
-            if (
-                None not in (indexer_unit, index_unit)
-                and not registry.is_compatible_with(indexer_unit, index_unit)
-            )
-        ]
-        if incompatible_units:
-            units1 = {key: indexer_units[key] for key in incompatible_units}
-            units2 = {key: index_units[key] for key in incompatible_units}
-            raise DimensionalityError(units1, units2)
-
         converted = conversion.convert_units(self.ds, indexer_units)
         return converted.reindex_like(
             other,
@@ -1509,33 +1283,12 @@ class PintDatasetAccessor:
         """
         indexers = either_dict_or_kwargs(coords, coords_kwargs, "interp")
 
+        dims = self.ds.dims
         indexer_units = {
             name: conversion.extract_indexer_units(indexer)
             for name, indexer in indexers.items()
+            if name in dims
         }
-
-        # make sure we only have compatible units
-        dims = self.ds.dims
-        unit_attrs = conversion.extract_unit_attributes(self.ds)
-        index_units = {
-            name: units for name, units in unit_attrs.items() if name in dims
-        }
-
-        registry = get_registry(None, index_units, indexer_units)
-
-        units = zip_mappings(indexer_units, index_units)
-        incompatible_units = [
-            key
-            for key, (indexer_unit, index_unit) in units.items()
-            if (
-                None not in (indexer_unit, index_unit)
-                and not registry.is_compatible_with(indexer_unit, index_unit)
-            )
-        ]
-        if incompatible_units:
-            units1 = {key: indexer_units[key] for key in incompatible_units}
-            units2 = {key: index_units[key] for key in incompatible_units}
-            raise DimensionalityError(units1, units2)
 
         # convert the indexes to the indexer's units
         converted = conversion.convert_units(self.ds, indexer_units)
@@ -1572,29 +1325,6 @@ class PintDatasetAccessor:
         """
         indexer_units = conversion.extract_unit_attributes(other)
 
-        # make sure we only have compatible units
-        dims = self.ds.dims
-        unit_attrs = conversion.extract_unit_attributes(self.ds)
-        index_units = {
-            name: units for name, units in unit_attrs.items() if name in dims
-        }
-
-        registry = get_registry(None, index_units, indexer_units)
-
-        units = zip_mappings(indexer_units, index_units)
-        incompatible_units = [
-            key
-            for key, (indexer_unit, index_unit) in units.items()
-            if (
-                None not in (indexer_unit, index_unit)
-                and not registry.is_compatible_with(indexer_unit, index_unit)
-            )
-        ]
-        if incompatible_units:
-            units1 = {key: indexer_units[key] for key in incompatible_units}
-            units2 = {key: index_units[key] for key in incompatible_units}
-            raise DimensionalityError(units1, units2)
-
         converted = conversion.convert_units(self.ds, indexer_units)
         units = conversion.extract_units(converted)
         stripped = conversion.strip_units(converted)
@@ -1626,43 +1356,20 @@ class PintDatasetAccessor:
         """
         indexers = either_dict_or_kwargs(indexers, indexers_kwargs, "sel")
 
+        dims = self.ds.dims
         indexer_units = {
             name: conversion.extract_indexer_units(indexer)
             for name, indexer in indexers.items()
+            if name in dims
         }
 
         # TODO: handle tolerance
 
-        # make sure we only have compatible units
-        dims = self.ds.dims
-        unit_attrs = conversion.extract_unit_attributes(self.ds)
-        index_units = {
-            name: units for name, units in unit_attrs.items() if name in dims
-        }
-
-        registry = get_registry(None, index_units, indexer_units)
-
-        units = zip_mappings(indexer_units, index_units)
-        incompatible_units = [
-            key
-            for key, (indexer_unit, index_unit) in units.items()
-            if (
-                None not in (indexer_unit, index_unit)
-                and not registry.is_compatible_with(indexer_unit, index_unit)
-            )
-        ]
-        if incompatible_units:
-            raise KeyError(
-                "not all values found in "
-                + (
-                    f"index {incompatible_units[0]!r}"
-                    if len(incompatible_units) == 1
-                    else f"indexes {', '.join(repr(_) for _ in incompatible_units)}"
-                )
-            )
-
         # convert the indexes to the indexer's units
-        converted = conversion.convert_units(self.ds, indexer_units)
+        try:
+            converted = conversion.convert_units(self.ds, indexer_units)
+        except ValueError as e:
+            raise KeyError(*e.args) from e
 
         # index
         stripped_indexers = {
@@ -1707,39 +1414,17 @@ class PintDatasetAccessor:
         """
         indexers = either_dict_or_kwargs(labels, labels_kwargs, "drop_sel")
 
-        indexer_units = {
-            name: conversion.extract_indexer_units(indexer)
-            for name, indexer in indexers.items()
-        }
-
-        # make sure we only have compatible units
         dims = self.ds.dims
         unit_attrs = conversion.extract_unit_attributes(self.ds)
         index_units = {
             name: units for name, units in unit_attrs.items() if name in dims
         }
 
-        registry = get_registry(None, index_units, indexer_units)
-
-        units = zip_mappings(indexer_units, index_units)
-        incompatible_units = [
-            key
-            for key, (indexer_unit, index_unit) in units.items()
-            if (
-                None not in (indexer_unit, index_unit)
-                and not registry.is_compatible_with(indexer_unit, index_unit)
-            )
-        ]
-        if incompatible_units:
-            units1 = {key: indexer_units[key] for key in incompatible_units}
-            units2 = {key: index_units[key] for key in incompatible_units}
-            raise DimensionalityError(units1, units2)
-
         # convert the indexers to the indexes units
-        converted_indexers = {
-            name: conversion.convert_indexer_units(indexer, index_units[name])
-            for name, indexer in indexers.items()
-        }
+        try:
+            converted_indexers = conversion.convert_indexer_units(indexers, index_units)
+        except ValueError as e:
+            raise KeyError(*e.args) from e
 
         # index
         stripped_indexers = {

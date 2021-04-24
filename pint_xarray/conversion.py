@@ -3,6 +3,8 @@ import itertools
 import pint
 from xarray import DataArray, Dataset, IndexVariable, Variable
 
+from .errors import format_error_message
+
 unit_attribute_name = "units"
 slice_attributes = ("start", "stop", "step")
 
@@ -116,15 +118,24 @@ def attach_units(obj, units):
         new_ds = attach_units(ds, units)
         new_obj = new_ds.get(new_name).rename(old_name)
     elif isinstance(obj, Dataset):
+        attached = {}
+        rejected_vars = {}
+        for name, var in obj.variables.items():
+            unit = units.get(name)
+            try:
+                converted = attach_units_variable(var, unit)
+                attached[name] = converted
+            except ValueError as e:
+                rejected_vars[name] = (unit, e)
+
+        if rejected_vars:
+            raise ValueError(format_error_message(rejected_vars, "attach"))
+
         data_vars = {
-            name: attach_units_variable(var, units.get(name))
-            for name, var in obj.variables.items()
-            if name not in obj._coord_names
+            name: var for name, var in attached.items() if name not in obj._coord_names
         }
         coords = {
-            name: attach_units_variable(var, units.get(name))
-            for name, var in obj.variables.items()
-            if name in obj._coord_names
+            name: var for name, var in attached.items() if name in obj._coord_names
         }
 
         new_obj = Dataset(data_vars=data_vars, coords=coords, attrs=obj.attrs)
@@ -191,16 +202,23 @@ def convert_units(obj, units):
 
         new_obj = converted[name].rename(original_name)
     elif isinstance(obj, Dataset):
-        coords = {
-            name: convert_units_variable(variable, units.get(name))
-            for name, variable in obj.variables.items()
-            if name in obj._coord_names
-        }
+        converted = {}
+        failed = {}
+        for name, var in obj.variables.items():
+            unit = units.get(name)
+            try:
+                converted[name] = convert_units_variable(var, unit)
+            except (ValueError, pint.errors.PintTypeError) as e:
+                failed[name] = e
 
+        if failed:
+            raise ValueError(format_error_message(failed, "convert"))
+
+        coords = {
+            name: var for name, var in converted.items() if name in obj._coord_names
+        }
         data_vars = {
-            name: convert_units_variable(variable, units.get(name))
-            for name, variable in obj.variables.items()
-            if name not in obj._coord_names
+            name: var for name, var in converted.items() if name not in obj._coord_names
         }
 
         new_obj = Dataset(data_vars=data_vars, coords=coords, attrs=obj.attrs)
@@ -345,15 +363,30 @@ def convert_units_slice(indexer, units):
     return slice(*args)
 
 
-def convert_indexer_units(indexer, units):
-    if isinstance(indexer, slice):
-        return convert_units_slice(indexer, units)
-    elif isinstance(indexer, DataArray):
-        return convert_units(indexer, {None: units})
-    elif isinstance(indexer, Variable):
-        return convert_units_variable(indexer, units)
-    else:
-        return array_convert_units(indexer, units)
+def convert_indexer_units(indexers, units):
+    def convert(indexer, units):
+        if isinstance(indexer, slice):
+            return convert_units_slice(indexer, units)
+        elif isinstance(indexer, DataArray):
+            return convert_units(indexer, {None: units})
+        elif isinstance(indexer, Variable):
+            return convert_units_variable(indexer, units)
+        else:
+            return array_convert_units(indexer, units)
+
+    converted = {}
+    invalid = {}
+    for name, indexer in indexers.items():
+        indexer_units = units.get(name)
+        try:
+            converted[name] = convert(indexer, indexer_units)
+        except (ValueError, pint.errors.PintTypeError) as e:
+            invalid[name] = e
+
+    if invalid:
+        raise ValueError(format_error_message(invalid, "convert_indexers"))
+
+    return converted
 
 
 def extract_indexer_units(indexer):
