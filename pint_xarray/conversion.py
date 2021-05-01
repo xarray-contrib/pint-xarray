@@ -182,7 +182,7 @@ def convert_units_variable(variable, units):
 
             new_obj.attrs[unit_attribute_name] = units
         else:
-            new_obj = variable.copy()
+            new_obj = variable
     elif isinstance(variable, Variable):
         converted = array_convert_units(variable.data, units)
         new_obj = variable.copy(data=converted)
