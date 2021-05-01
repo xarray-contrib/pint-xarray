@@ -10,10 +10,10 @@ from xarray.testing import assert_equal, assert_identical  # noqa: F401
 from ..conversion import (
     array_strip_units,
     extract_indexer_units,
-    extract_units,
     strip_units,
     strip_units_variable,
 )
+from ..testing import assert_units_equal  # noqa: F401
 
 
 def importorskip(name):
@@ -104,8 +104,3 @@ def assert_indexer_units_equal(a, b):
     units_b = extract_indexer_units(b)
 
     assert units_a == units_b, f"different units: {units_a!r} ←→ {units_b!r}"
-
-
-def assert_units_equal(a, b):
-    __tracebackhide__ = True
-    assert extract_units(a) == extract_units(b)

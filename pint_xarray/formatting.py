@@ -1,6 +1,7 @@
 from itertools import zip_longest
 
 import numpy as np
+from xarray.core.options import OPTIONS
 
 
 # vendored from xarray.core.formatting
@@ -9,6 +10,16 @@ def maybe_truncate(obj, maxlen=500):
     if len(s) > maxlen:
         s = s[: (maxlen - 3)] + "..."
     return s
+
+
+# vendored from xarray.core.formatting
+def pretty_print(x, numchars: int):
+    """Given an object `x`, call `str(x)` and format the returned string so
+    that it is numchars long, padding with trailing spaces or truncating with
+    ellipses as necessary
+    """
+    s = maybe_truncate(x, numchars)
+    return s + " " * max(numchars - len(s), 0)
 
 
 # vendored from xarray.core.formatting
@@ -78,6 +89,53 @@ def format_items(x):
     x = np.asarray(x)
     formatted = [format_item(xi) for xi in x]
     return formatted
+
+
+def summarize_attr(key, value, col_width=None):
+    """Summary for __repr__ - use ``X.attrs[key]`` for full value."""
+    # Indent key and add ':', then right-pad if col_width is not None
+    k_str = f"    {key}:"
+    if col_width is not None:
+        k_str = pretty_print(k_str, col_width)
+    # Replace tabs and newlines, so we print on one line in known width
+    v_str = str(value).replace("\t", "\\t").replace("\n", "\\n")
+    # Finally, truncate to the desired display width
+    return maybe_truncate(f"{k_str} {v_str}", OPTIONS["display_width"])
+
+
+# adapted from xarray.core.formatting
+def _diff_mapping_repr(a_mapping, b_mapping, title, summarizer, col_width=None):
+    def extra_items_repr(extra_keys, mapping, ab_side):
+        extra_repr = [summarizer(k, mapping[k], col_width) for k in extra_keys]
+        if extra_repr:
+            header = f"{title} only on the {ab_side} object:"
+            return [header] + extra_repr
+        else:
+            return []
+
+    a_keys = set(a_mapping)
+    b_keys = set(b_mapping)
+
+    summary = []
+
+    diff_items = []
+
+    for k in a_keys & b_keys:
+        compatible = a_mapping[k] == b_mapping[k]
+        if not compatible:
+            temp = [
+                summarizer(k, vars[k], col_width) for vars in (a_mapping, b_mapping)
+            ]
+
+            diff_items += [ab_side + s[1:] for ab_side, s in zip(("L", "R"), temp)]
+
+    if diff_items:
+        summary += [f"Differing {title.lower()}:"] + diff_items
+
+    summary += extra_items_repr(a_keys - b_keys, a_mapping, "left")
+    summary += extra_items_repr(b_keys - a_keys, b_mapping, "right")
+
+    return "\n".join(summary)
 
 
 # vendored from xarray.core.formatting
