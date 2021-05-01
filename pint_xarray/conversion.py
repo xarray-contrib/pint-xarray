@@ -173,12 +173,16 @@ def convert_units_variable(variable, units):
             # don't try to convert MultiIndexes
             return variable
 
-        quantity = array_attach_units(
-            variable.data, variable.attrs.get(unit_attribute_name)
-        )
-        converted = array_convert_units(quantity, units)
-        new_obj = variable.copy(data=array_strip_units(converted))
-        new_obj.attrs[unit_attribute_name] = array_extract_units(converted)
+        if units is not None:
+            quantity = array_attach_units(
+                variable.data, variable.attrs.get(unit_attribute_name)
+            )
+            converted = array_convert_units(quantity, units)
+            new_obj = variable.copy(data=array_strip_units(converted))
+
+            new_obj.attrs[unit_attribute_name] = units
+        else:
+            new_obj = variable.copy()
     elif isinstance(variable, Variable):
         converted = array_convert_units(variable.data, units)
         new_obj = variable.copy(data=converted)
