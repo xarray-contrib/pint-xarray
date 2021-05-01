@@ -39,7 +39,7 @@ What's new
   By `Justus Magin <https://github.com/keewis>`_.
 - implement :py:meth:`Dataset.pint.interp`, :py:meth:`Dataset.pint.interp_like`,
   :py:meth:`DataArray.pint.interp` and :py:meth:`DataArray.pint.interp_like`
-     (:pull:`72`, :pull:`76`, :pull:`97`).
+  (:pull:`72`, :pull:`76`, :pull:`97`).
   By `Justus Magin <https://github.com/keewis>`_.
 - implement :py:meth:`Dataset.pint.ffill`, :py:meth:`Dataset.pint.bfill`,
   :py:meth:`DataArray.pint.ffill` and :py:meth:`DataArray.pint.bfill` (:pull:`78`).
