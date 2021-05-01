@@ -157,6 +157,7 @@ jobs:
               }
             }
           }`;
+
           const variables = {
               owner: context.repo.owner,
               name: context.repo.repo,
@@ -164,10 +165,7 @@ jobs:
               creator: "github-actions[bot]"
           }
           const result = await github.graphql(query, variables)
-          const issue_info = result.repository.issues.edges[0].node
-          // If no issue is open, create a new issue, else update the
-          // body of the existing issue.
-          if (typeof issue_info.number === 'undefined') {
+
           // If no issue is open, create a new issue,
           // else update the body of the existing issue.
           if (result.repository.issues.edges.length === 0) {
