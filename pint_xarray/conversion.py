@@ -180,7 +180,7 @@ def convert_units_variable(variable, units):
             converted = array_convert_units(quantity, units)
             new_obj = variable.copy(data=array_strip_units(converted))
 
-            new_obj.attrs[unit_attribute_name] = units
+            new_obj.attrs[unit_attribute_name] = array_extract_units(converted)
         else:
             new_obj = variable
     elif isinstance(variable, Variable):
