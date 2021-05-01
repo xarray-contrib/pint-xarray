@@ -1,4 +1,4 @@
-from . import conversion
+from . import conversion, formatting
 
 
 def assert_units_equal(a, b):
@@ -16,7 +16,14 @@ def assert_units_equal(a, b):
 
     __tracebackhide__ = True
 
-    assert conversion.extract_units(a) == conversion.extract_units(b)
-    assert conversion.extract_unit_attributes(a) == conversion.extract_unit_attributes(
-        b
+    units_a = conversion.extract_units(a)
+    units_b = conversion.extract_units(b)
+    assert units_a == units_b, formatting._diff_mapping_repr(
+        units_a, units_b, "Units", formatting.summarize_attr
+    )
+
+    unit_attrs_a = conversion.extract_unit_attributes(a)
+    unit_attrs_b = conversion.extract_unit_attributes(b)
+    assert unit_attrs_a == unit_attrs_b, formatting._diff_mapping_repr(
+        unit_attrs_a, unit_attrs_b, "Unit attrs", formatting.summarize_attr
     )
