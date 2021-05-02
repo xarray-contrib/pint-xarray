@@ -86,7 +86,7 @@ def array_extract_units(data):
 
 
 def array_strip_units(data):
-    """ strip the units of a quantity """
+    """strip the units of a quantity"""
     try:
         return data.magnitude
     except AttributeError:
