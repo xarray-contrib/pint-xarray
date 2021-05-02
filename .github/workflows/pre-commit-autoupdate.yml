@@ -35,6 +35,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           EXECUTE_COMMANDS: |
             python -m pre_commit autoupdate
+            python -m pre_commit run --all-files
           COMMIT_MESSAGE: 'pre-commit: autoupdate hook versions'
           COMMIT_NAME: 'github-actions[bot]'
           COMMIT_EMAIL: 'github-actions[bot]@users.noreply.github.com'
