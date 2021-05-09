@@ -5,8 +5,9 @@ What's new
 
 0.2 (*unreleased*)
 ------------------
-- rewrite :py:meth:`Dataset.pint.quantify` and :py:meth:`DataArray.pint.quantify`,
-  to use pint's `parse_units` instead of `parse_expression` (:pull:`40`)
+- rewrite :py:meth:`Dataset.pint.quantify` and :py:meth:`DataArray.pint.quantify`, to
+  use pint's ``UnitRegistry.parse_units`` instead of ``UnitRegistry.parse_expression``
+  (:pull:`40`)
   By `Tom Nicholas <https://github.com/TomNicholas>`_.
 - ensure the variables which causes the error is explicit if an error occurs in
   :py:meth:`Dataset.pint.quantify` and other methods (:pull:`43`, :pull:`91`)
