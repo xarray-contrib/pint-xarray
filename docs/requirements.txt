@@ -1,7 +1,8 @@
 pint>=0.14
 xarray>=0.16.0
+pooch
 netCDF4
-sphinx>=3.2
+sphinx<4
 sphinx_rtd_theme
 ipython
 ipykernel
