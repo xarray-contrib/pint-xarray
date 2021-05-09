@@ -3,6 +3,10 @@
 What's new
 ==========
 
+0.3 (*unreleased*)
+------------------
+
+
 0.2 (May 10 2021)
 -----------------
 - rewrite :py:meth:`Dataset.pint.quantify` and :py:meth:`DataArray.pint.quantify`, to
