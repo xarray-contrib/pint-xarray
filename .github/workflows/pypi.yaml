@@ -7,6 +7,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    if: github.repository == 'xarray-contrib/pint-xarray'
     steps:
       - uses: actions/checkout@v1
       - name: Set up Python
