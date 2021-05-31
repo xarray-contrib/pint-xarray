@@ -208,6 +208,7 @@ class TestXarrayFunctions:
     @pytest.mark.parametrize(
         "units",
         (
+            pytest.param({}, id="empty units"),
             pytest.param({"a": None, "b": None, "u": None, "x": None}, id="no units"),
             pytest.param(
                 {"a": unit_registry.m, "b": unit_registry.m, "u": None, "x": None},
