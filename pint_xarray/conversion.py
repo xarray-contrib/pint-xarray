@@ -3,10 +3,12 @@ import itertools
 import pint
 from xarray import DataArray, Dataset, IndexVariable, Variable
 
+from .compat import call_on_dataset
 from .errors import format_error_message
 
 unit_attribute_name = "units"
 slice_attributes = ("start", "stop", "step")
+temporary_name = "<this-array>"
 
 
 def array_attach_units(data, unit):
@@ -107,40 +109,49 @@ def attach_units_variable(variable, units):
     return new_obj
 
 
+def dataset_from_variables(variables, coords, attrs):
+    data_vars = {name: var for name, var in variables.items() if name not in coords}
+    coords = {name: var for name, var in variables.items() if name in coords}
+
+    return Dataset(data_vars=data_vars, coords=coords, attrs=attrs)
+
+
+def attach_units_dataset(obj, units):
+    attached = {}
+    rejected_vars = {}
+    for name, var in obj.variables.items():
+        unit = units.get(name)
+        try:
+            converted = attach_units_variable(var, unit)
+            attached[name] = converted
+        except ValueError as e:
+            rejected_vars[name] = (unit, e)
+
+    if rejected_vars:
+        raise ValueError(rejected_vars)
+
+    return dataset_from_variables(attached, obj._coord_names, obj.attrs)
+
+
 def attach_units(obj, units):
-    if isinstance(obj, DataArray):
-        old_name = obj.name
-        new_name = old_name if old_name is not None else "<this-array>"
-        ds = obj.rename(new_name).to_dataset()
-        units = units.copy()
-        units[new_name] = units.get(old_name)
-
-        new_ds = attach_units(ds, units)
-        new_obj = new_ds.get(new_name).rename(old_name)
-    elif isinstance(obj, Dataset):
-        attached = {}
-        rejected_vars = {}
-        for name, var in obj.variables.items():
-            unit = units.get(name)
-            try:
-                converted = attach_units_variable(var, unit)
-                attached[name] = converted
-            except ValueError as e:
-                rejected_vars[name] = (unit, e)
-
-        if rejected_vars:
-            raise ValueError(format_error_message(rejected_vars, "attach"))
-
-        data_vars = {
-            name: var for name, var in attached.items() if name not in obj._coord_names
-        }
-        coords = {
-            name: var for name, var in attached.items() if name in obj._coord_names
-        }
-
-        new_obj = Dataset(data_vars=data_vars, coords=coords, attrs=obj.attrs)
-    else:
+    if not isinstance(obj, (DataArray, Dataset)):
         raise ValueError(f"cannot attach units to {obj!r}: unknown type")
+
+    if isinstance(obj, DataArray):
+        units = units.copy()
+        if obj.name in units:
+            units[temporary_name] = units.get(obj.name)
+
+    try:
+        new_obj = call_on_dataset(
+            attach_units_dataset, obj, name=temporary_name, units=units
+        )
+    except ValueError as e:
+        (rejected_vars,) = e.args
+        if temporary_name in rejected_vars:
+            rejected_vars[obj.name] = rejected_vars.pop(temporary_name)
+
+        raise ValueError(format_error_message(rejected_vars, "attach")) from e
 
     return new_obj
 
@@ -192,86 +203,80 @@ def convert_units_variable(variable, units):
     return new_obj
 
 
+def convert_units_dataset(obj, units):
+    converted = {}
+    failed = {}
+    for name, var in obj.variables.items():
+        unit = units.get(name)
+        try:
+            converted[name] = convert_units_variable(var, unit)
+        except (ValueError, pint.errors.PintTypeError) as e:
+            failed[name] = e
+
+    if failed:
+        raise ValueError(failed)
+
+    return dataset_from_variables(converted, obj._coord_names, obj.attrs)
+
+
 def convert_units(obj, units):
+    if not isinstance(obj, (DataArray, Dataset)):
+        raise ValueError(f"cannot convert object: {obj!r}: unknown type")
+
     if isinstance(obj, DataArray):
-        original_name = obj.name
-        name = obj.name if obj.name is not None else "<this-array>"
+        units = units.copy()
+        if obj.name in units:
+            units[temporary_name] = units.pop(obj.name)
 
-        units_ = units.copy()
-        if obj.name in units_:
-            units_[name] = units_[obj.name]
+    try:
+        new_obj = call_on_dataset(
+            convert_units_dataset, obj, name=temporary_name, units=units
+        )
+    except ValueError as e:
+        (failed,) = e.args
+        if temporary_name in failed:
+            failed[obj.name] = failed.pop(temporary_name)
 
-        ds = obj.rename(name).to_dataset()
-        converted = convert_units(ds, units_)
-
-        new_obj = converted[name].rename(original_name)
-    elif isinstance(obj, Dataset):
-        converted = {}
-        failed = {}
-        for name, var in obj.variables.items():
-            unit = units.get(name)
-            try:
-                converted[name] = convert_units_variable(var, unit)
-            except (ValueError, pint.errors.PintTypeError) as e:
-                failed[name] = e
-
-        if failed:
-            raise ValueError(format_error_message(failed, "convert"))
-
-        coords = {
-            name: var for name, var in converted.items() if name in obj._coord_names
-        }
-        data_vars = {
-            name: var for name, var in converted.items() if name not in obj._coord_names
-        }
-
-        new_obj = Dataset(data_vars=data_vars, coords=coords, attrs=obj.attrs)
-    else:
-        raise ValueError(f"cannot convert object: {obj}")
+        raise ValueError(format_error_message(failed, "convert")) from e
 
     return new_obj
 
 
+def extract_units_dataset(obj):
+    return {name: array_extract_units(var.data) for name, var in obj.variables.items()}
+
+
 def extract_units(obj):
-    if isinstance(obj, Dataset):
-        units = extract_unit_attributes(obj)
-        dims = obj.dims
-        units.update(
-            {
-                name: array_extract_units(value.data)
-                for name, value in obj.variables.items()
-                if name not in dims
-            }
-        )
-    elif isinstance(obj, DataArray):
-        original_name = obj.name
-        name = obj.name if obj.name is not None else "<this-array>"
-
-        ds = obj.rename(name).to_dataset()
-
-        units = extract_units(ds)
-        units[original_name] = units.pop(name)
-    else:
+    if not isinstance(obj, (DataArray, Dataset)):
         raise ValueError(f"unknown type: {type(obj)}")
 
-    return units
+    unit_attributes = extract_unit_attributes(obj)
+
+    units = call_on_dataset(extract_units_dataset, obj, name=temporary_name)
+    if temporary_name in units:
+        units[obj.name] = units.pop(temporary_name)
+
+    units_ = unit_attributes.copy()
+    units_.update({k: v for k, v in units.items() if v is not None})
+
+    return units_
+
+
+def extract_unit_attributes_dataset(obj, attr="units"):
+    return {name: var.attrs.get(attr, None) for name, var in obj.variables.items()}
 
 
 def extract_unit_attributes(obj, attr="units"):
-    if isinstance(obj, DataArray):
-        original_name = obj.name
-        name = obj.name if obj.name is not None else "<this-array>"
-
-        ds = obj.rename(name).to_dataset()
-
-        units = extract_unit_attributes(ds)
-        units[original_name] = units.pop(name)
-    elif isinstance(obj, Dataset):
-        units = {name: var.attrs.get(attr, None) for name, var in obj.variables.items()}
-    else:
+    if not isinstance(obj, (DataArray, Dataset)):
         raise ValueError(
             f"cannot retrieve unit attributes from unknown type: {type(obj)}"
         )
+
+    units = call_on_dataset(
+        extract_unit_attributes_dataset, obj, name=temporary_name, attr=attr
+    )
+    if temporary_name in units:
+        units[obj.name] = units.pop(temporary_name)
 
     return units
 
@@ -281,51 +286,34 @@ def strip_units_variable(var):
     return var.copy(data=data)
 
 
+def strip_units_dataset(obj):
+    variables = {name: strip_units_variable(var) for name, var in obj.variables.items()}
+
+    return dataset_from_variables(variables, obj._coord_names, obj.attrs)
+
+
 def strip_units(obj):
-    if isinstance(obj, DataArray):
-        original_name = obj.name
-        name = obj.name if obj.name is not None else "<this-array>"
-        ds = obj.rename(name).to_dataset()
-        stripped = strip_units(ds)
-
-        new_obj = stripped[name].rename(original_name)
-    elif isinstance(obj, Dataset):
-        data_vars = {
-            name: strip_units_variable(variable)
-            for name, variable in obj.variables.items()
-            if name not in obj._coord_names
-        }
-        coords = {
-            name: strip_units_variable(variable)
-            for name, variable in obj.variables.items()
-            if name in obj._coord_names
-        }
-
-        new_obj = Dataset(data_vars=data_vars, coords=coords, attrs=obj.attrs)
-    else:
+    if not isinstance(obj, (DataArray, Dataset)):
         raise ValueError("cannot strip units from {obj!r}: unknown type")
+
+    return call_on_dataset(strip_units_dataset, obj, name=temporary_name)
+
+
+def strip_unit_attributes_dataset(obj, attr="units"):
+    new_obj = obj.copy()
+    for var in new_obj.variables.values():
+        var.attrs.pop(attr, None)
 
     return new_obj
 
 
 def strip_unit_attributes(obj, attr="units"):
-    if isinstance(obj, DataArray):
-        original_name = obj.name
-        name = obj.name if obj.name is not None else "<this-array>"
-
-        ds = obj.rename(name).to_dataset()
-
-        stripped = strip_unit_attributes(ds)
-
-        new_obj = stripped[name].rename(original_name)
-    elif isinstance(obj, Dataset):
-        new_obj = obj.copy()
-        for var in new_obj.variables.values():
-            var.attrs.pop(attr, None)
-    else:
+    if not isinstance(obj, (DataArray, Dataset)):
         raise ValueError(f"cannot strip unit attributes from unknown type: {type(obj)}")
 
-    return new_obj
+    return call_on_dataset(
+        strip_unit_attributes_dataset, obj, name=temporary_name, attr=attr
+    )
 
 
 def slice_extract_units(indexer):
