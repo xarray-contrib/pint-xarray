@@ -12,7 +12,7 @@ except AttributeError:
 
         result = func(ds, *args, **kwargs)
 
-        if isinstance(obj, xr.DataArray):
+        if isinstance(obj, xr.DataArray) and isinstance(result, xr.Dataset):
             result = result.get(name).rename(obj.name)
 
         return result
