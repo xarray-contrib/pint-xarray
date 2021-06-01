@@ -31,14 +31,6 @@ Release process
 8. Draft a release for the new tag on github. A CI will pick that up, build the project
    and push to PyPI. Be careful, this can't be undone.
 
-9. Update stable:
+9. Make sure readthedocs builds both `stable` and the new tag
 
-    .. code:: sh
-
-       git checkout stable
-       git merge v0.X.Y
-       git push origin stable
-
-10. Make sure readthedocs builds both `stable` and the new tag
-
-11. Add a new section to `whats-new.rst` and push directly to master
+10. Add a new section to `whats-new.rst` and push directly to master
