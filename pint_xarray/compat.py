@@ -2,7 +2,7 @@ import xarray as xr
 
 try:
     from xarray import call_on_dataset
-except AttributeError:
+except ImportError:
 
     def call_on_dataset(func, obj, name, *args, **kwargs):
         if isinstance(obj, xr.DataArray):
