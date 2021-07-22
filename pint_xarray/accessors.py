@@ -271,7 +271,7 @@ class PintDataArrayAccessor:
             pint.Unit, will be used as the DataArray's units. If a
             dict-like, it should map a variable name to the desired
             unit (use the DataArray's name to refer to its data). If
-            not provided, will try to read them from
+            not provided, ``quantify`` will try to read them from
             ``DataArray.attrs['units']`` using pint's parser. The
             ``"units"`` attribute will be removed from all variables
             except from dimension coordinates.
@@ -907,10 +907,10 @@ class PintDatasetAccessor:
         units : mapping of hashable to unit-like, optional
             Physical units to use for particular DataArrays in this
             Dataset. It should map variable names to units (unit names
-            or ``pint.Unit`` objects). If not provided, will try to
-            read them from ``Dataset[var].attrs['units']`` using
-            pint's parser. The ``"units"`` attribute will be removed
-            from all variables except from dimension coordinates.
+            or ``pint.Unit`` objects). If not provided, ``quantify``
+            will try to read them from ``Dataset[var].attrs['units']``
+            using pint's parser. The ``"units"`` attribute will be
+            removed from all variables except from dimension coordinates.
         unit_registry : pint.UnitRegistry, optional
             Unit registry to be used for the units attached to each
             DataArray in this Dataset. If not given then a default
