@@ -65,10 +65,10 @@ def example_quantity_da():
 class TestQuantifyDataArray:
     def test_attach_units_from_str(self, example_unitless_da):
         orig = example_unitless_da
-        result = orig.pint.quantify("m")
+        result = orig.pint.quantify("s")
         assert_array_equal(result.data.magnitude, orig.data)
         # TODO better comparisons for when you can't access the unit_registry?
-        assert str(result.data.units) == "meter"
+        assert str(result.data.units) == "second"
 
     def test_attach_units_given_registry(self, example_unitless_da):
         orig = example_unitless_da
