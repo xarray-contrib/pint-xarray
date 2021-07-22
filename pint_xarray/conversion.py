@@ -5,7 +5,7 @@ from xarray import DataArray, Dataset, IndexVariable, Variable
 
 from .errors import format_error_message
 
-no_unit_values = ("1", "none")
+no_unit_values = ("1", "none", None)
 unit_attribute_name = "units"
 slice_attributes = ("start", "stop", "step")
 
