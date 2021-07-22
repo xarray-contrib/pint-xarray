@@ -287,6 +287,11 @@ class PintDataArrayAccessor:
             DataArray whose wrapped array data will now be a Quantity
             array with the specified units.
 
+        Notes
+        -----
+        ``"1"``, ``"none"``, and ``None`` can be used to mark variables that should not
+        be quantified.
+
         Examples
         --------
         >>> da = xr.DataArray(
@@ -923,6 +928,11 @@ class PintDatasetAccessor:
         quantified : Dataset
             Dataset whose variables will now contain Quantity arrays
             with units.
+
+        Notes
+        -----
+        ``"1"``, ``"none"``, and ``None`` can be used to mark variables
+        that should not be quantified.
 
         Examples
         --------
