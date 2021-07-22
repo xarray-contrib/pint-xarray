@@ -93,6 +93,12 @@ class TestQuantifyDataArray:
         assert_array_equal(result.data.magnitude, orig.data)
         assert result.data.units == ureg.Unit("m")
 
+    @pytest.mark.parametrize("no_unit_value", conversion.no_unit_values)
+    def test_override_units(self, example_unitless_da, no_unit_value):
+        orig = example_unitless_da
+        result = orig.pint.quantify(no_unit_value)
+        assert getattr(result.data, "units", "not a quantity") == "not a quantity"
+
     def test_error_when_already_units(self, example_quantity_da):
         da = example_quantity_da
         with raises_regex(ValueError, "already has units"):
@@ -246,6 +252,14 @@ class TestQuantifyDataSet:
         result = orig.pint.quantify({"users": dimensionless})
         assert_array_equal(result["users"].data.magnitude, orig["users"].data)
         assert str(result["users"].data.units) == "dimensionless"
+
+    @pytest.mark.parametrize("no_unit_value", conversion.no_unit_values)
+    def test_override_units(self, example_unitless_ds, no_unit_value):
+        orig = example_unitless_ds
+        result = orig.pint.quantify({"users": no_unit_value})
+        assert (
+            getattr(result["users"].data, "units", "not a quantity") == "not a quantity"
+        )
 
     def test_error_when_already_units(self, example_quantity_ds):
         with raises_regex(ValueError, "already has units"):
