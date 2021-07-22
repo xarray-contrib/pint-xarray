@@ -258,7 +258,7 @@ def extract_units(obj):
     return units
 
 
-def extract_unit_attributes(obj, attr="units", fill_value=None):
+def extract_unit_attributes(obj, attr="units"):
     if isinstance(obj, DataArray):
         original_name = obj.name
         name = obj.name if obj.name is not None else "<this-array>"
@@ -268,9 +268,7 @@ def extract_unit_attributes(obj, attr="units", fill_value=None):
         units = extract_unit_attributes(ds)
         units[original_name] = units.pop(name)
     elif isinstance(obj, Dataset):
-        units = {
-            name: var.attrs.get(attr, fill_value) for name, var in obj.variables.items()
-        }
+        units = {name: var.attrs.get(attr, None) for name, var in obj.variables.items()}
     else:
         raise ValueError(
             f"cannot retrieve unit attributes from unknown type: {type(obj)}"

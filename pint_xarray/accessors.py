@@ -325,7 +325,7 @@ class PintDataArrayAccessor:
 
         registry = get_registry(unit_registry, units, conversion.extract_units(self.da))
 
-        unit_attrs = conversion.extract_unit_attributes(self.da, fill_value=_default)
+        unit_attrs = conversion.extract_unit_attributes(self.da)
 
         possible_new_units = zip_mappings(units, unit_attrs, fill_value=_default)
         new_units = {}
@@ -963,7 +963,7 @@ class PintDatasetAccessor:
         units = either_dict_or_kwargs(units, unit_kwargs, "quantify")
         registry = get_registry(unit_registry, units, conversion.extract_units(self.ds))
 
-        unit_attrs = conversion.extract_unit_attributes(self.ds, fill_value=_default)
+        unit_attrs = conversion.extract_unit_attributes(self.ds)
 
         possible_new_units = zip_mappings(units, unit_attrs, fill_value=_default)
         new_units = {}
