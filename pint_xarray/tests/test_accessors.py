@@ -86,6 +86,13 @@ class TestQuantifyDataArray:
         remaining_attrs = conversion.extract_unit_attributes(result)
         assert {k: v for k, v in remaining_attrs.items() if v is not None} == {}
 
+    def test_attach_units_from_str_attr_no_unit(self, example_unitless_da):
+        orig = example_unitless_da
+        orig.attrs["units"] = "none"
+        result = orig.pint.quantify("m")
+        assert_array_equal(result.data.magnitude, orig.data)
+        assert str(result.data.units) == "meter"
+
     def test_attach_units_given_unit_objs(self, example_unitless_da):
         orig = example_unitless_da
         ureg = UnitRegistry(force_ndarray=True)
@@ -253,6 +260,13 @@ class TestQuantifyDataSet:
         result = orig.pint.quantify({"users": dimensionless})
         assert_array_equal(result["users"].data.magnitude, orig["users"].data)
         assert str(result["users"].data.units) == "dimensionless"
+
+    def test_attach_units_from_str_attr_no_unit(self, example_unitless_ds):
+        orig = example_unitless_ds
+        orig["users"].attrs["units"] = "none"
+        result = orig.pint.quantify({"users": "m"})
+        assert_array_equal(result["users"].data.magnitude, orig.data)
+        assert str(result["users"].data.units) == "meter"
 
     @pytest.mark.parametrize("no_unit_value", conversion.no_unit_values)
     def test_override_units(self, example_unitless_ds, no_unit_value):
