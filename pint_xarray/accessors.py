@@ -289,7 +289,7 @@ class PintDataArrayAccessor:
 
         Notes
         -----
-        ``"1"``, ``"none"``, and ``None`` can be used to mark variables that should not
+        ``"none"`` and ``None`` can be used to mark variables that should not
         be quantified.
 
         Examples
@@ -931,7 +931,7 @@ class PintDatasetAccessor:
 
         Notes
         -----
-        ``"1"``, ``"none"``, and ``None`` can be used to mark variables
+        ``"none"`` and ``None`` can be used to mark variables
         that should not be quantified.
 
         Examples

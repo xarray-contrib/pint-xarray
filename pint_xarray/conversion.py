@@ -5,7 +5,7 @@ from xarray import DataArray, Dataset, IndexVariable, Variable
 
 from .errors import format_error_message
 
-no_unit_values = ("1", "none", None)
+no_unit_values = ("none", None)
 unit_attribute_name = "units"
 slice_attributes = ("start", "stop", "step")
 
@@ -24,8 +24,7 @@ def array_attach_units(data, unit):
     -------
     quantity : pint.Quantity
     """
-    # type-check because 'ureg.dimensionless == "1"' is True
-    if not isinstance(unit, pint.Unit) and unit in no_unit_values:
+    if unit in no_unit_values:
         return data
 
     if not isinstance(unit, pint.Unit):
