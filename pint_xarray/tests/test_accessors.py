@@ -96,8 +96,9 @@ class TestQuantifyDataArray:
     @pytest.mark.parametrize("no_unit_value", conversion.no_unit_values)
     def test_override_units(self, example_unitless_da, no_unit_value):
         orig = example_unitless_da
-        result = orig.pint.quantify(no_unit_value)
+        result = orig.pint.quantify(no_unit_value, u=no_unit_value)
         assert getattr(result.data, "units", "not a quantity") == "not a quantity"
+        assert getattr(result["u"].data, "units", "not a quantity") == "not a quantity"
 
     def test_error_when_already_units(self, example_quantity_da):
         da = example_quantity_da
