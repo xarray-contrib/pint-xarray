@@ -24,8 +24,7 @@ def array_attach_units(data, unit):
     -------
     quantity : pint.Quantity
     """
-    # type-check because 'ureg.dimensionless in no_unit_values'
-    # evaluates to True for some reason
+    # type-check because 'ureg.dimensionless == "1"' is True
     if not isinstance(unit, pint.Unit) and unit in no_unit_values:
         return data
 
