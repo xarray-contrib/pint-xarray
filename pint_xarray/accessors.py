@@ -140,9 +140,9 @@ def _decide_units(units, registry, unit_attribute):
     elif units in no_unit_values or isinstance(units, Unit):
         # TODO what happens if they pass in a Unit from a different registry
         return units
-    elif unit_attribute in no_unit_values:
-        return unit_attribute
     elif units is _default:
+        if unit_attribute in no_unit_values:
+            return unit_attribute
         units = registry.parse_units(unit_attribute)
     else:
         units = registry.parse_units(units)
