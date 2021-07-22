@@ -138,14 +138,11 @@ def _decide_units(units, registry, unit_attribute):
         # or warn and return None?
         raise ValueError("no units given")
     elif units in no_unit_values or isinstance(units, Unit):
-        # TODO do we have to check what happens if someone passes a Unit instance
-        # without creating a unit registry?
-        # TODO and what happens if they pass in a Unit from a different registry
+        # TODO what happens if they pass in a Unit from a different registry
         return units
     elif unit_attribute in no_unit_values:
         return unit_attribute
     elif units is _default:
-        # TODO option to read and decode units according to CF conventions (see MetPy)?
         units = registry.parse_units(unit_attribute)
     else:
         units = registry.parse_units(units)
