@@ -265,7 +265,7 @@ class TestQuantifyDataSet:
         orig = example_unitless_ds
         orig["users"].attrs["units"] = "none"
         result = orig.pint.quantify({"users": "m"})
-        assert_array_equal(result["users"].data.magnitude, orig.data)
+        assert_array_equal(result["users"].data.magnitude, orig["users"].data)
         assert str(result["users"].data.units) == "meter"
 
     @pytest.mark.parametrize("no_unit_value", conversion.no_unit_values)
