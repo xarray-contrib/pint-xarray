@@ -10,6 +10,8 @@ from xarray.core.dtypes import NA
 from . import conversion
 from .errors import format_error_message
 
+_default = object()
+
 
 def setup_registry(registry):
     """set up the given registry for use with pint_xarray
@@ -91,7 +93,7 @@ def units_to_str_or_none(mapping, unit_format):
 # based on xarray.core.utils.either_dict_or_kwargs
 # https://github.com/pydata/xarray/blob/v0.15.1/xarray/core/utils.py#L249-L268
 def either_dict_or_kwargs(positional, keywords, method_name):
-    if positional is not None:
+    if positional not in (_default, None):
         if not is_dict_like(positional):
             raise ValueError(
                 f"the first argument to .{method_name} must be a dictionary"
@@ -131,10 +133,10 @@ def get_registry(unit_registry, new_units, existing_units):
 
 
 def _decide_units(units, registry, unit_attribute):
-    if units is None and unit_attribute is None:
+    if units is _default and unit_attribute is _default:
         # or warn and return None?
         raise ValueError("no units given")
-    elif units is None:
+    elif units is _default:
         # TODO option to read and decode units according to CF conventions (see MetPy)?
         units = registry.parse_units(unit_attribute)
     elif isinstance(units, Unit):
@@ -243,7 +245,7 @@ class PintDataArrayAccessor:
     def __init__(self, da):
         self.da = da
 
-    def quantify(self, units=None, unit_registry=None, **unit_kwargs):
+    def quantify(self, units=_default, unit_registry=None, **unit_kwargs):
         """
         Attach units to the DataArray.
 
@@ -305,7 +307,7 @@ class PintDataArrayAccessor:
                 f"already has units {self.da.data.units}"
             )
 
-        if isinstance(units, (str, pint.Unit)):
+        if units is None or isinstance(units, (str, pint.Unit)):
             if self.da.name in unit_kwargs:
                 raise ValueError(
                     f"ambiguous values given for {repr(self.da.name)}:"
@@ -318,17 +320,17 @@ class PintDataArrayAccessor:
 
         registry = get_registry(unit_registry, units, conversion.extract_units(self.da))
 
-        unit_attrs = conversion.extract_unit_attributes(self.da)
+        unit_attrs = conversion.extract_unit_attributes(self.da, fill_value=_default)
 
-        possible_new_units = zip_mappings(units, unit_attrs)
+        possible_new_units = zip_mappings(units, unit_attrs, fill_value=_default)
         new_units = {}
         invalid_units = {}
         for name, (unit, attr) in possible_new_units.items():
-            if unit is not None or attr is not None:
+            if unit is not _default or attr is not _default:
                 try:
                     new_units[name] = _decide_units(unit, registry, attr)
                 except (ValueError, pint.UndefinedUnitError) as e:
-                    if unit is not None:
+                    if unit is not _default:
                         type = "parameter"
                         reported_unit = unit
                     else:
@@ -880,7 +882,7 @@ class PintDatasetAccessor:
     def __init__(self, ds):
         self.ds = ds
 
-    def quantify(self, units=None, unit_registry=None, **unit_kwargs):
+    def quantify(self, units=_default, unit_registry=None, **unit_kwargs):
         """
         Attach units to the variables of the Dataset.
 
@@ -951,17 +953,17 @@ class PintDatasetAccessor:
         units = either_dict_or_kwargs(units, unit_kwargs, "quantify")
         registry = get_registry(unit_registry, units, conversion.extract_units(self.ds))
 
-        unit_attrs = conversion.extract_unit_attributes(self.ds)
+        unit_attrs = conversion.extract_unit_attributes(self.ds, fill_value=_default)
 
-        possible_new_units = zip_mappings(units, unit_attrs)
+        possible_new_units = zip_mappings(units, unit_attrs, fill_value=_default)
         new_units = {}
         invalid_units = {}
         for name, (unit, attr) in possible_new_units.items():
-            if unit is not None or attr is not None:
+            if unit is not _default or attr is not _default:
                 try:
                     new_units[name] = _decide_units(unit, registry, attr)
                 except (ValueError, pint.UndefinedUnitError) as e:
-                    if unit is not None:
+                    if unit is not _default:
                         type = "parameter"
                         reported_unit = unit
                     else:
