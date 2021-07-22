@@ -5,6 +5,7 @@ from xarray import DataArray, Dataset, IndexVariable, Variable
 
 from .errors import format_error_message
 
+no_unit_values = (1, "1", None, "none")
 unit_attribute_name = "units"
 slice_attributes = ("start", "stop", "step")
 
@@ -24,7 +25,7 @@ def array_attach_units(data, unit):
     quantity : pint.Quantity
     """
 
-    if unit is None:
+    if unit in no_unit_values:
         return data
 
     if not isinstance(unit, pint.Unit):
