@@ -5,7 +5,12 @@ What's new
 
 0.3 (*unreleased*)
 ------------------
-
+- allow special "no unit" values in :py:meth:`Dataset.pint.quantify` and
+  :py:meth:`DataArray.pint.quantify` (:pull:`125`)
+  By `Justus Magin <https://github.com/keewis>`_.
+- convert the note about dimension coordinates saving their units in the attributes a
+  warning (:issue:`124`, :pull:`126`)
+  By `Justus Magin <https://github.com/keewis>`_.
 
 0.2 (May 10 2021)
 -----------------
