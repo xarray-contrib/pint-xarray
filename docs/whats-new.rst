@@ -9,7 +9,7 @@ What's new
   :py:meth:`DataArray.pint.quantify` (:pull:`125`)
   By `Justus Magin <https://github.com/keewis>`_.
 - convert the note about dimension coordinates saving their units in the attributes a
-  warning (:pull:``, :issue:``)
+  warning (:issue:`124`, :pull:`126`)
   By `Justus Magin <https://github.com/keewis>`_.
 
 0.2 (May 10 2021)
