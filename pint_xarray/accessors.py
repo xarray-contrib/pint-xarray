@@ -260,6 +260,8 @@ class PintDataArrayAccessor:
             the data into memory. To avoid that, consider converting
             to ``dask`` first (e.g. using ``chunk``).
 
+        .. warning::
+
             As units in dimension coordinates are not supported until
             ``xarray`` changes the way it implements indexes, these
             units will be set as attributes.
@@ -914,6 +916,8 @@ class PintDatasetAccessor:
             Be aware that unless you're using ``dask`` this will load
             the data into memory. To avoid that, consider converting
             to ``dask`` first (e.g. using ``chunk``).
+
+        .. warning::
 
             As units in dimension coordinates are not supported until
             ``xarray`` changes the way it implements indexes, these
