@@ -306,6 +306,7 @@ class PintDataArrayAccessor:
           * wavelength  (wavelength) float64 0.0001 0.0002 0.0004 0.0006 0.001 0.002
 
         Don't quantify the data:
+
         >>> da = xr.DataArray(
         ...     data=[0.4, 0.9],
         ...     dims=["wavelength"],
@@ -972,6 +973,7 @@ class PintDatasetAccessor:
             b        (x) int64 [dm] 5 -2 1
 
         Don't quantify specific variables:
+
         >>> ds.pint.quantify({"a": None})
         <xarray.Dataset>
         Dimensions:  (x: 3)
