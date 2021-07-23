@@ -304,6 +304,17 @@ class PintDataArrayAccessor:
         <Quantity([0.4 0.9 1.7 4.8 3.2 9.1], 'hertz')>
         Coordinates:
           * wavelength  (wavelength) float64 0.0001 0.0002 0.0004 0.0006 0.001 0.002
+
+        Don't quantify the data:
+        >>> da = xr.DataArray(
+        ...     data=[0.4, 0.9],
+        ...     dims=["wavelength"],
+        ...     attrs={"units": "Hz"},
+        ... )
+        >>> da.pint.quantify(units=None)
+        <xarray.DataArray (wavelength: 2)>
+        array([0.4, 0.9])
+        Dimensions without coordinates: wavelength
         """
 
         if isinstance(self.da.data, Quantity):
@@ -959,6 +970,17 @@ class PintDatasetAccessor:
         Data variables:
             a        (x) int64 [m] 0 3 2
             b        (x) int64 [dm] 5 -2 1
+
+        Don't quantify specific variables:
+        >>> ds.pint.quantify({"a": None})
+        <xarray.Dataset>
+        Dimensions:  (x: 3)
+        Coordinates:
+          * x        (x) int64 0 1 2
+            u        (x) int64 [s] -1 0 1
+        Data variables:
+            a        (x) int64 0 3 2
+            b        (x) int64 5 -2 1
         """
         units = either_dict_or_kwargs(units, unit_kwargs, "quantify")
         registry = get_registry(unit_registry, units, conversion.extract_units(self.ds))
