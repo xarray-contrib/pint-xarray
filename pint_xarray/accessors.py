@@ -8,7 +8,10 @@ from xarray import register_dataarray_accessor, register_dataset_accessor
 from xarray.core.dtypes import NA
 
 from . import conversion
+from .conversion import no_unit_values
 from .errors import format_error_message
+
+_default = object()
 
 
 def setup_registry(registry):
@@ -91,7 +94,7 @@ def units_to_str_or_none(mapping, unit_format):
 # based on xarray.core.utils.either_dict_or_kwargs
 # https://github.com/pydata/xarray/blob/v0.15.1/xarray/core/utils.py#L249-L268
 def either_dict_or_kwargs(positional, keywords, method_name):
-    if positional is not None:
+    if positional not in (_default, None):
         if not is_dict_like(positional):
             raise ValueError(
                 f"the first argument to .{method_name} must be a dictionary"
@@ -131,17 +134,16 @@ def get_registry(unit_registry, new_units, existing_units):
 
 
 def _decide_units(units, registry, unit_attribute):
-    if units is None and unit_attribute is None:
+    if units is _default and unit_attribute is _default:
         # or warn and return None?
         raise ValueError("no units given")
-    elif units is None:
-        # TODO option to read and decode units according to CF conventions (see MetPy)?
+    elif units in no_unit_values or isinstance(units, Unit):
+        # TODO what happens if they pass in a Unit from a different registry
+        return units
+    elif units is _default:
+        if unit_attribute in no_unit_values:
+            return unit_attribute
         units = registry.parse_units(unit_attribute)
-    elif isinstance(units, Unit):
-        # TODO do we have to check what happens if someone passes a Unit instance
-        # without creating a unit registry?
-        # TODO and what happens if they pass in a Unit from a different registry
-        pass
     else:
         units = registry.parse_units(units)
     return units
@@ -243,7 +245,7 @@ class PintDataArrayAccessor:
     def __init__(self, da):
         self.da = da
 
-    def quantify(self, units=None, unit_registry=None, **unit_kwargs):
+    def quantify(self, units=_default, unit_registry=None, **unit_kwargs):
         """
         Attach units to the DataArray.
 
@@ -269,7 +271,7 @@ class PintDataArrayAccessor:
             pint.Unit, will be used as the DataArray's units. If a
             dict-like, it should map a variable name to the desired
             unit (use the DataArray's name to refer to its data). If
-            not provided, will try to read them from
+            not provided, ``quantify`` will try to read them from
             ``DataArray.attrs['units']`` using pint's parser. The
             ``"units"`` attribute will be removed from all variables
             except from dimension coordinates.
@@ -285,6 +287,11 @@ class PintDataArrayAccessor:
             DataArray whose wrapped array data will now be a Quantity
             array with the specified units.
 
+        Notes
+        -----
+        ``"none"`` and ``None`` can be used to mark variables that should not
+        be quantified.
+
         Examples
         --------
         >>> da = xr.DataArray(
@@ -297,6 +304,18 @@ class PintDataArrayAccessor:
         <Quantity([0.4 0.9 1.7 4.8 3.2 9.1], 'hertz')>
         Coordinates:
           * wavelength  (wavelength) float64 0.0001 0.0002 0.0004 0.0006 0.001 0.002
+
+        Don't quantify the data:
+
+        >>> da = xr.DataArray(
+        ...     data=[0.4, 0.9],
+        ...     dims=["wavelength"],
+        ...     attrs={"units": "Hz"},
+        ... )
+        >>> da.pint.quantify(units=None)
+        <xarray.DataArray (wavelength: 2)>
+        array([0.4, 0.9])
+        Dimensions without coordinates: wavelength
         """
 
         if isinstance(self.da.data, Quantity):
@@ -305,7 +324,7 @@ class PintDataArrayAccessor:
                 f"already has units {self.da.data.units}"
             )
 
-        if isinstance(units, (str, pint.Unit)):
+        if units is None or isinstance(units, (str, pint.Unit)):
             if self.da.name in unit_kwargs:
                 raise ValueError(
                     f"ambiguous values given for {repr(self.da.name)}:"
@@ -320,15 +339,15 @@ class PintDataArrayAccessor:
 
         unit_attrs = conversion.extract_unit_attributes(self.da)
 
-        possible_new_units = zip_mappings(units, unit_attrs)
+        possible_new_units = zip_mappings(units, unit_attrs, fill_value=_default)
         new_units = {}
         invalid_units = {}
         for name, (unit, attr) in possible_new_units.items():
-            if unit is not None or attr is not None:
+            if unit is not _default or attr is not _default:
                 try:
                     new_units[name] = _decide_units(unit, registry, attr)
                 except (ValueError, pint.UndefinedUnitError) as e:
-                    if unit is not None:
+                    if unit is not _default:
                         type = "parameter"
                         reported_unit = unit
                     else:
@@ -880,7 +899,7 @@ class PintDatasetAccessor:
     def __init__(self, ds):
         self.ds = ds
 
-    def quantify(self, units=None, unit_registry=None, **unit_kwargs):
+    def quantify(self, units=_default, unit_registry=None, **unit_kwargs):
         """
         Attach units to the variables of the Dataset.
 
@@ -905,10 +924,10 @@ class PintDatasetAccessor:
         units : mapping of hashable to unit-like, optional
             Physical units to use for particular DataArrays in this
             Dataset. It should map variable names to units (unit names
-            or ``pint.Unit`` objects). If not provided, will try to
-            read them from ``Dataset[var].attrs['units']`` using
-            pint's parser. The ``"units"`` attribute will be removed
-            from all variables except from dimension coordinates.
+            or ``pint.Unit`` objects). If not provided, ``quantify``
+            will try to read them from ``Dataset[var].attrs['units']``
+            using pint's parser. The ``"units"`` attribute will be
+            removed from all variables except from dimension coordinates.
         unit_registry : pint.UnitRegistry, optional
             Unit registry to be used for the units attached to each
             DataArray in this Dataset. If not given then a default
@@ -921,6 +940,11 @@ class PintDatasetAccessor:
         quantified : Dataset
             Dataset whose variables will now contain Quantity arrays
             with units.
+
+        Notes
+        -----
+        ``"none"`` and ``None`` can be used to mark variables
+        that should not be quantified.
 
         Examples
         --------
@@ -947,21 +971,33 @@ class PintDatasetAccessor:
         Data variables:
             a        (x) int64 [m] 0 3 2
             b        (x) int64 [dm] 5 -2 1
+
+        Don't quantify specific variables:
+
+        >>> ds.pint.quantify({"a": None})
+        <xarray.Dataset>
+        Dimensions:  (x: 3)
+        Coordinates:
+          * x        (x) int64 0 1 2
+            u        (x) int64 [s] -1 0 1
+        Data variables:
+            a        (x) int64 0 3 2
+            b        (x) int64 5 -2 1
         """
         units = either_dict_or_kwargs(units, unit_kwargs, "quantify")
         registry = get_registry(unit_registry, units, conversion.extract_units(self.ds))
 
         unit_attrs = conversion.extract_unit_attributes(self.ds)
 
-        possible_new_units = zip_mappings(units, unit_attrs)
+        possible_new_units = zip_mappings(units, unit_attrs, fill_value=_default)
         new_units = {}
         invalid_units = {}
         for name, (unit, attr) in possible_new_units.items():
-            if unit is not None or attr is not None:
+            if unit is not _default or attr is not _default:
                 try:
                     new_units[name] = _decide_units(unit, registry, attr)
                 except (ValueError, pint.UndefinedUnitError) as e:
-                    if unit is not None:
+                    if unit is not _default:
                         type = "parameter"
                         reported_unit = unit
                     else:
