@@ -375,13 +375,39 @@ class PintDataArrayAccessor:
         Parameters
         ----------
         format : str, optional
-            The format used for the string representations.
+            The format specification (as accepted by pint) used for the string
+            representations.
 
         Returns
         -------
         dequantified : DataArray
             DataArray whose array data is unitless, and of the type
             that was previously wrapped by `pint.Quantity`.
+
+        See Also
+        --------
+        https://pint.readthedocs.io/en/stable/tutorial.html#string-formatting
+
+        Examples
+        --------
+        >>> da = xr.DataArray([0, 1], dims="x")
+        >>> q = da.pint.quantify("m")
+        >>> q
+        <xarray.DataArray (x: 2)>
+        <Quantity([0 1], 'meter')>
+        Dimensions without coordinates: x
+        >>> q.pint.dequantify(format="P")
+        <xarray.DataArray (x: 2)>
+        array([0, 1])
+        Dimensions without coordinates: x
+        Attributes:
+            units:    meter
+        >>> q.pint.dequantify(format="~P")
+        <xarray.DataArray (x: 2)>
+        array([0, 1])
+        Dimensions without coordinates: x
+        Attributes:
+            units:    m
         """
         units = conversion.extract_unit_attributes(self.da)
         units.update(conversion.extract_units(self.da))
@@ -1027,13 +1053,44 @@ class PintDatasetAccessor:
         Parameters
         ----------
         format : str, optional
-            The format used for the string representations.
+            The format specification (as accepted by pint) used for the string
+            representations.
 
         Returns
         -------
         dequantified : Dataset
             Dataset whose data variables are unitless, and of the type
             that was previously wrapped by ``pint.Quantity``.
+
+        See Also
+        --------
+        https://pint.readthedocs.io/en/stable/tutorial.html#string-formatting
+
+        Examples
+        --------
+        >>> ds = xr.Dataset({"a": ("x", [0, 1]), "b": ("y", [2, 3, 4])})
+        >>> q = ds.pint.quantify({"a": "m", "b": "s"})
+        >>> q
+        <xarray.Dataset>
+        Dimensions:  (x: 2, y: 3)
+        Dimensions without coordinates: x, y
+        Data variables:
+            a        (x) int64 [m] 0 1
+            b        (y) int64 [s] 2 3 4
+        >>> q.pint.dequantify(format="P")
+        <xarray.Dataset>
+        Dimensions:  (x: 2, y: 3)
+        Dimensions without coordinates: x, y
+        Data variables:
+            a        (x) int64 0 1
+            b        (y) int64 2 3 4
+        >>> q.pint.dequantify(format="~P")
+        <xarray.Dataset>
+        Dimensions:  (x: 2, y: 3)
+        Dimensions without coordinates: x, y
+        Data variables:
+            a        (x) int64 0 1
+            b        (y) int64 2 3 4
         """
         units = conversion.extract_unit_attributes(self.ds)
         units.update(conversion.extract_units(self.ds))
