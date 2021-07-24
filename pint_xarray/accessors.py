@@ -1077,20 +1077,34 @@ class PintDatasetAccessor:
         Data variables:
             a        (x) int64 [m] 0 1
             b        (y) int64 [s] 2 3 4
-        >>> q.pint.dequantify(format="P")
-        <xarray.Dataset>
-        Dimensions:  (x: 2, y: 3)
-        Dimensions without coordinates: x, y
-        Data variables:
-            a        (x) int64 0 1
-            b        (y) int64 2 3 4
-        >>> q.pint.dequantify(format="~P")
-        <xarray.Dataset>
-        Dimensions:  (x: 2, y: 3)
-        Dimensions without coordinates: x, y
-        Data variables:
-            a        (x) int64 0 1
-            b        (y) int64 2 3 4
+
+        >>> d = q.pint.dequantify(format="P")
+        >>> d.a
+        <xarray.DataArray 'a' (x: 2)>
+        array([0, 1])
+        Dimensions without coordinates: x
+        Attributes:
+            units:    meter
+        >>> d.b
+        <xarray.DataArray 'b' (y: 3)>
+        array([2, 3, 4])
+        Dimensions without coordinates: y
+        Attributes:
+            units:    second
+
+        >>> d = q.pint.dequantify(format="~P")
+        >>> d.a
+        <xarray.DataArray 'a' (x: 2)>
+        array([0, 1])
+        Dimensions without coordinates: x
+        Attributes:
+            units:    m
+        >>> d.b
+        <xarray.DataArray 'b' (y: 3)>
+        array([2, 3, 4])
+        Dimensions without coordinates: y
+        Attributes:
+            units:    s
         """
         units = conversion.extract_unit_attributes(self.ds)
         units.update(conversion.extract_units(self.ds))
