@@ -12,7 +12,7 @@ What's new
   warning (:issue:`124`, :pull:`126`)
   By `Justus Magin <https://github.com/keewis>`_.
 - improve the documentation on the ``format`` parameter of :py:meth:`Dataset.pint.dequantify`
-  and :py:meth:`DataArray.pint.dequantify` (:issue:`121`, :pull:``)
+  and :py:meth:`DataArray.pint.dequantify` (:issue:`121`, :pull:`127`)
   By `Justus Magin <https://github.com/keewis>`_.
 
 0.2 (May 10 2021)
