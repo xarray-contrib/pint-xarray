@@ -1,5 +1,5 @@
-[![CI](https://github.com/xarray-contrib/pint-xarray/workflows/CI/badge.svg?branch=master)](https://github.com/xarray-contrib/pint-xarray/actions?query=branch%3Amaster)
-[![code coverage](https://codecov.io/gh/xarray-contrib/pint-xarray/branch/master/graph/badge.svg)](https://codecov.io/gh/xarray-contrib/pint-xarray)
+[![CI](https://github.com/xarray-contrib/pint-xarray/workflows/CI/badge.svg?branch=main)](https://github.com/xarray-contrib/pint-xarray/actions?query=branch%3Amain)
+[![code coverage](https://codecov.io/gh/xarray-contrib/pint-xarray/branch/main/graph/badge.svg)](https://codecov.io/gh/xarray-contrib/pint-xarray)
 [![docs](https://readthedocs.org/projects/pint-xarray/badge/?version=latest)](https://pint-xarray.readthedocs.io)
 [![PyPI version](https://img.shields.io/pypi/v/pint-xarray.svg)](https://pypi.org/project/pint-xarray)
 [![codestyle](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/python/black)
