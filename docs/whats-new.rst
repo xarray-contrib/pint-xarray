@@ -11,6 +11,9 @@ What's new
 - convert the note about dimension coordinates saving their units in the attributes a
   warning (:issue:`124`, :pull:`126`)
   By `Justus Magin <https://github.com/keewis>`_.
+- improve the documentation on the ``format`` parameter of :py:meth:`Dataset.pint.dequantify`
+  and :py:meth:`DataArray.pint.dequantify` (:issue:`121`, :pull:`127`)
+  By `Justus Magin <https://github.com/keewis>`_.
 - use ``cf-xarray``'s unit registry in the plotting example (:issue:`107`, :pull:`128`).
   By `Justus Magin <https://github.com/keewis>`_.
 
