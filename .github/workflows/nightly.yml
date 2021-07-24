@@ -3,9 +3,9 @@ name: Nightly CI
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
   schedule:
     - cron: "0 0 * * *"  # Daily "At 00:00" UTC
   workflow_dispatch:

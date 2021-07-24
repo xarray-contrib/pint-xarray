@@ -1,17 +1,17 @@
 Release process
 ===============
-1. the release happens from `master` so make sure it is up-to-date:
+1. the release happens from `main` so make sure it is up-to-date:
 
    .. code:: sh
 
-      git pull origin master
+      git pull origin main
 
 2. look at `whats-new.rst` and make sure it is complete and with
    references to issues and pull requests
 
 3. open and merge a pull request with these changes
 
-4. make sure the CI on master pass
+4. make sure the CI on main pass
 
 5. check that the documentation build on readthedocs completed successfully
 
@@ -21,7 +21,7 @@ Release process
 
       git commit -am "Release v0.X.Y"
 
-7. Tag the release and push to master:
+7. Tag the release and push to main:
 
    .. code:: sh
 
@@ -33,4 +33,4 @@ Release process
 
 9. Make sure readthedocs builds both `stable` and the new tag
 
-10. Add a new section to `whats-new.rst` and push directly to master
+10. Add a new section to `whats-new.rst` and push directly to main
