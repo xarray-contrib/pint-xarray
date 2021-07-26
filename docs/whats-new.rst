@@ -3,8 +3,8 @@
 What's new
 ==========
 
-0.3 (*unreleased*)
-------------------
+0.2.1 (*unreleased*)
+--------------------
 - allow special "no unit" values in :py:meth:`Dataset.pint.quantify` and
   :py:meth:`DataArray.pint.quantify` (:pull:`125`)
   By `Justus Magin <https://github.com/keewis>`_.
