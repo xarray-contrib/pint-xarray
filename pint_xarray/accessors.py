@@ -366,7 +366,7 @@ class PintDataArrayAccessor:
         )
 
     def dequantify(self, format=None):
-        """
+        r"""
         Convert the units of the DataArray to string attributes.
 
         Will replace ``.attrs['units']`` on each variable with a string
@@ -374,9 +374,10 @@ class PintDataArrayAccessor:
 
         Parameters
         ----------
-        format : str, optional
+        format : str, default: None
             The format specification (as accepted by pint) used for the string
-            representations.
+            representations. If ``None``, the registry's default
+            (:py:attr:`pint.UnitRegistry.default_format`) is used instead.
 
         Returns
         -------
@@ -391,23 +392,34 @@ class PintDataArrayAccessor:
         Examples
         --------
         >>> da = xr.DataArray([0, 1], dims="x")
-        >>> q = da.pint.quantify("m")
+        >>> q = da.pint.quantify("m / s")
         >>> q
         <xarray.DataArray (x: 2)>
-        <Quantity([0 1], 'meter')>
+        <Quantity([0 1], 'meter / second')>
         Dimensions without coordinates: x
+
         >>> q.pint.dequantify(format="P")
         <xarray.DataArray (x: 2)>
         array([0, 1])
         Dimensions without coordinates: x
         Attributes:
-            units:    meter
+            units:    meter/second
         >>> q.pint.dequantify(format="~P")
         <xarray.DataArray (x: 2)>
         array([0, 1])
         Dimensions without coordinates: x
         Attributes:
-            units:    m
+            units:    m/s
+
+        Use the registry's default format
+
+        >>> pint_xarray.unit_registry.default_format = "~L"
+        >>> q.pint.dequantify()
+        <xarray.DataArray (x: 2)>
+        array([0, 1])
+        Dimensions without coordinates: x
+        Attributes:
+            units:    \frac{\mathrm{m}}{\mathrm{s}}
         """
         units = conversion.extract_unit_attributes(self.da)
         units.update(conversion.extract_units(self.da))
@@ -1044,7 +1056,7 @@ class PintDatasetAccessor:
         )
 
     def dequantify(self, format=None):
-        """
+        r"""
         Convert units from the Dataset to string attributes.
 
         Will replace ``.attrs['units']`` on each variable with a string
@@ -1052,9 +1064,10 @@ class PintDatasetAccessor:
 
         Parameters
         ----------
-        format : str, optional
+        format : str, default: None
             The format specification (as accepted by pint) used for the string
-            representations.
+            representations. If ``None``, the registry's default
+            (:py:attr:`pint.UnitRegistry.default_format`) is used instead.
 
         Returns
         -------
@@ -1069,13 +1082,13 @@ class PintDatasetAccessor:
         Examples
         --------
         >>> ds = xr.Dataset({"a": ("x", [0, 1]), "b": ("y", [2, 3, 4])})
-        >>> q = ds.pint.quantify({"a": "m", "b": "s"})
+        >>> q = ds.pint.quantify({"a": "m / s", "b": "s"})
         >>> q
         <xarray.Dataset>
         Dimensions:  (x: 2, y: 3)
         Dimensions without coordinates: x, y
         Data variables:
-            a        (x) int64 [m] 0 1
+            a        (x) int64 [m/s] 0 1
             b        (y) int64 [s] 2 3 4
 
         >>> d = q.pint.dequantify(format="P")
@@ -1084,7 +1097,7 @@ class PintDatasetAccessor:
         array([0, 1])
         Dimensions without coordinates: x
         Attributes:
-            units:    meter
+            units:    meter/second
         >>> d.b
         <xarray.DataArray 'b' (y: 3)>
         array([2, 3, 4])
@@ -1098,13 +1111,30 @@ class PintDatasetAccessor:
         array([0, 1])
         Dimensions without coordinates: x
         Attributes:
-            units:    m
+            units:    m/s
         >>> d.b
         <xarray.DataArray 'b' (y: 3)>
         array([2, 3, 4])
         Dimensions without coordinates: y
         Attributes:
             units:    s
+
+        Use the registry's default format
+
+        >>> pint_xarray.unit_registry.default_format = "~L"
+        >>> d = q.pint.dequantify()
+        >>> d.a
+        <xarray.DataArray 'a' (x: 2)>
+        array([0, 1])
+        Dimensions without coordinates: x
+        Attributes:
+            units:    \frac{\mathrm{m}}{\mathrm{s}}
+        >>> d.b
+        <xarray.DataArray 'b' (y: 3)>
+        array([2, 3, 4])
+        Dimensions without coordinates: y
+        Attributes:
+            units:    \mathrm{s}
         """
         units = conversion.extract_unit_attributes(self.ds)
         units.update(conversion.extract_units(self.ds))
