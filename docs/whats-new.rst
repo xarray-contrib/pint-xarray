@@ -3,8 +3,8 @@
 What's new
 ==========
 
-0.2.1 (*unreleased*)
---------------------
+0.2.1 (26 Jul 2021)
+-------------------
 - allow special "no unit" values in :py:meth:`Dataset.pint.quantify` and
   :py:meth:`DataArray.pint.quantify` (:pull:`125`)
   By `Justus Magin <https://github.com/keewis>`_.
