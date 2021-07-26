@@ -3,8 +3,8 @@
 What's new
 ==========
 
-0.3 (*unreleased*)
-------------------
+0.2.1 (*unreleased*)
+--------------------
 - allow special "no unit" values in :py:meth:`Dataset.pint.quantify` and
   :py:meth:`DataArray.pint.quantify` (:pull:`125`)
   By `Justus Magin <https://github.com/keewis>`_.
@@ -12,9 +12,10 @@ What's new
   warning (:issue:`124`, :pull:`126`)
   By `Justus Magin <https://github.com/keewis>`_.
 - improve the documentation on the ``format`` parameter of :py:meth:`Dataset.pint.dequantify`
-  and :py:meth:`DataArray.pint.dequantify` (:issue:`121`, :pull:`127`)
+  and :py:meth:`DataArray.pint.dequantify` (:issue:`121`, :pull:`127`, :pull:`132`)
   By `Justus Magin <https://github.com/keewis>`_.
-- use ``cf-xarray``'s unit registry in the plotting example (:issue:`107`, :pull:`128`).
+- use `cf-xarray <https://github.com/xarray-contrib/cf-xarray>`_'s unit registry in the
+  plotting example (:issue:`107`, :pull:`128`).
   By `Justus Magin <https://github.com/keewis>`_.
 
 0.2 (May 10 2021)
