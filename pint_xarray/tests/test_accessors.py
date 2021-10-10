@@ -136,9 +136,9 @@ class TestQuantifyDataArray:
 
 
 @pytest.mark.parametrize("formatter", ("", "P", "C"))
-@pytest.mark.parametrize("flags", ("", "~", "#", "~#"))
-def test_units_to_str_or_none(formatter, flags):
-    unit_format = f"{{:{flags}{formatter}}}"
+@pytest.mark.parametrize("modifier", ("", "~"))
+def test_units_to_str_or_none(formatter, modifier):
+    unit_format = f"{{:{modifier}{formatter}}}"
     unit_attrs = {None: "m", "a": "s", "b": "degC", "c": "degF", "d": "degK"}
     units = {key: unit_registry.Unit(value) for key, value in unit_attrs.items()}
 
