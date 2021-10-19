@@ -1,6 +1,8 @@
 # Unit-aware arithmetic in xarray, via pint
 
-TLDR: Xarray now supports unit-aware operations by wrapping pint arrays, so your code automatically tracks the physical units that your numerical arrays represent, like this:
+- [ ] TODO: Add some pictures for interest
+
+TLDR: Xarray now supports unit-aware operations by wrapping [pint arrays](https://pint.readthedocs.io/en/stable/), so your code can automatically track the physical units that your numerical arrays represent, like this:
 
 ```python
 distance = xr.DataArray([10]).pint.quantify("metres")
@@ -12,7 +14,7 @@ print(velocity.units)
 Out: <Unit('meter / second')>
 ```
 
-## Units are integral to science
+## Units are integral to science
 
 - All quantities in science have units, whether explicitly or implicitly. (And even dimensionless quantities like ratios still technically have units.)
 - Getting our units right is tricky
@@ -21,7 +23,7 @@ Out: <Unit('meter / second')>
 
 ## Pint tracks units
 
-- There are a few packages for handling units in python (in particular unyt and astropy.units), but for technical reasons we started with Pint.
+- There are a few packages for handling units in python (in particular [unyt](https://github.com/yt-project/unyt) and [astropy.units](https://docs.astropy.org/en/stable/units/)), but for technical reasons we started with Pint.
 - These various packages work by providing a numerical array type that acts similarly to a numpy array, and is intended to plug an and replace the raw numpy array (a so-called "duck array type")
 - Pint provides the Quantity object, which is a normal numpy array combined with a pint.Unit :
 
@@ -34,7 +36,7 @@ Out: <Quantity([6 7], 'meter')>
 
 ## Xarray now wraps Pint
 
-- Thanks to the tireless work of xarray core developer Justus Magin, you can now enjoy this automatic unit-handling in xarray!
+- Thanks to the [tireless work](https://github.com/pydata/xarray/issues/3594) of xarray core developer Justus Magin, you can now enjoy this automatic unit-handling in xarray!
 - Once you create a unit-aware xarray object you can
 - Units are propagated through arithmetic
 - Invalid units are caught automatically
@@ -53,25 +55,33 @@ Out: DimensionalityError: Cannot convert from 'kilogram' ([mass]) to 'ampere' ([
 
 ## Quantifying with pint-xarray
 
-The easiest way to create a unit-aware xarray object is to use the helper package we made: pint-xarray. Once you import pint_xarray you can access unit-related functionality via calling .pint on any xarray DataArray or Dataset (this works via xarray's accessor interface).
+The easiest way to create a unit-aware xarray object is to use the helper package we made: [pint-xarray](https://github.com/xarray-contrib/pint-xarray). 
+Once you `import pint_xarray` you can access unit-related functionality via `.pint` on any xarray DataArray or Dataset (this works via [xarray's accessor interface](http://xarray.pydata.org/en/stable/internals/extending-xarray.html)).
 
 - Quantifying explicitly
-- Quantifying from .attrs
+- Quantifying from `.attrs`
 - This means that for scientific datasets which are stored as files with units in their attributes, using pint with xarray becomes as simple as
 
 ```python
 import pint_xarray
+
 ds = open_dataset(filepath).pint.quantify()
 ```
 
 ## Dask integration
 
-- So xarray can wrap dask arrays, and now it can wrap pint quantities… Can we use both together? Yes!
-- You can get a unit-aware, dask-backed array either by `.pint.quantify()`-ing a chunked array, or you can `.pint.chunk()` a quantified array. 
-- From there you can `.compute()` the dask-backed objects as normal, and the units will be retained.
-- What this means is that we have an `xarray.DataArray` wrapping a `pint.Quantity`, which wraps a `dask.array.Array`, which wraps a `numpy.ndarray`.
+So xarray can wrap dask arrays, and now it can wrap pint quantities… Can we use both together? Yes!
+
+- You can get a unit-aware, dask-backed array either by `.pint.quantify()`-ing a chunked array, or you can `.pint.chunk()` a quantified array.
+- (If you have dask installed, then `open_dataset(f).pint.quantity()` will already give you a dask-backed, quantified array.)
+- From there you can `.compute()` the dask-backed objects as normal, and the units will be retained. 
+
+(Under the hood we now have an `xarray.DataArray` wrapping a `pint.Quantity`, which wraps a `dask.array.Array`, which wraps a `numpy.ndarray`.
+This "multi-nested duck array" approach can be generalised to include other array libraries (e.g. `scipy.sparse`), but requires [co-ordination](https://github.com/pydata/duck-array-discussion) between the maintainers of the libraries involved.)
 
 ## Plotting
+
+- [ ] TODO: Update the plotting page in pint-xarray's docs to not require dequantifying first
 
 ## Unit-aware coordinates
 
@@ -79,7 +89,7 @@ We would love to be able to promote xarray coordinates to pint Quantities, as th
 ```python
 da.sel(x=10 * Unit('m'))
 ```
-Unfortunately this will not possible until the ongoing work to extend xarray to support explicit indexes is complete.
+Unfortunately this will not possible until the ongoing work to extend xarray to support [explicit indexes](https://github.com/pydata/xarray/issues/1603) is complete.
 
 In the meantime pint-xarray offers a workaround. If you tell `.quantify` the units you wish a coordinate to have, it will store those in `.attrs.units` instead.
 
@@ -114,15 +124,17 @@ This wrapping is necessary for any operation which needs to be aware of the unit
 
 ## CF-compliant units for geosciences with cf-xarray
 
-Different fields tend to have different niche conventions about how certain units are defined
-By default, pint doesn't understand all the unusual units we use in geosciences
-But pint is customisable, and with the help of cf-xarray we can teach it about these geoscience-specific units
-`import cf_xarray.units` (before `import pint_xarray`)
-
+- Different fields tend to have different niche conventions about how certain units are defined.
+- By default, pint doesn't understand all the unusual units we use in geosciences
+But [pint is customisable](https://pint.readthedocs.io/en/stable/defining.html), and with the help of [cf-xarray](https://github.com/xarray-contrib/cf-xarray) we can teach it about these geoscience-specific units.
+- `import cf_xarray.units` (before `import pint_xarray`)
 - Put it all together
 
+- [ ] TODO: Example which automatically interprets units of some data from a real climate data store
+
 ## Conclusion
-Have a go
-Questions
-Please tell us about any bugs you find, or documentation suggestions you have
-Watch out for unit-aware coordinates later!
+
+- Have a go
+- Questions
+- Please tell us about any bugs you find, or documentation suggestions you have
+- Watch out for unit-aware coordinates later!
