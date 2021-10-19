@@ -2,16 +2,18 @@
 
 - [ ] TODO: Add some pictures for interest
 
-TLDR: Xarray now supports unit-aware operations by wrapping [pint arrays](https://pint.readthedocs.io/en/stable/), so your code can automatically track the physical units that your numerical arrays represent, like this:
+_TLDR: Xarray now supports unit-aware operations by wrapping [pint arrays](https://pint.readthedocs.io/en/stable/), so your code can automatically track the physical units that your data represents:_
 
 ```python
-distance = xr.DataArray([10]).pint.quantify("metres")
-time = xr.DataArray([4]).pint.quantify("seconds")
-velocity = distance / time
-print(velocity.units)
+distance = xr.DataArray(10).pint.quantify("metres")
+time = xr.DataArray(4).pint.quantify("seconds")
+
+distance / time
 ```
 ```
-Out: <Unit('meter / second')>
+Out: 
+<xarray.DataArray ()>
+<Quantity(2.5, 'meter / second')>
 ```
 
 ## Units are integral to science
