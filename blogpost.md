@@ -36,9 +36,10 @@ We should take stories like this seriously: If we can automatically track units 
 
 ## Pint tracks units
 
-- There are a few packages for handling units in python (in particular [unyt](https://github.com/yt-project/unyt) and [astropy.units](https://docs.astropy.org/en/stable/units/)), but for technical reasons we started with Pint.
-- These various packages work by providing a numerical array type that acts similarly to a numpy array, and is intended to plug an and replace the raw numpy array (a so-called "duck array type")
-- Pint provides the `Quantity` object, which is a normal numpy array combined with a `pint.Unit`:
+There are a few packages for handling units in python (notably [unyt](https://github.com/yt-project/unyt) and [astropy.units](https://docs.astropy.org/en/stable/units/)), but for technical reasons we began units integration in xarray with [Pint](https://pint.readthedocs.io/en/stable/).
+These various packages work by providing a numerical array type that acts similarly to a numpy array, and is intended to plug in and replace the raw numpy array (a so-called "duck array type")
+
+Pint provides the `Quantity` object, which is a normal numpy array combined with a `pint.Unit`:
 
 ```python
 q = np.array([6, 7]) * pint.Unit('metres')
@@ -47,26 +48,81 @@ print(repr(q))
 ```
 Out: <Quantity([6 7], 'meter')>
 ```
-- pint Quantities act like numpy arrays, except that the uni
+
+Pint Quantities act like numpy arrays, except that the units are carried around with the arrays, propagated through operations, and checked during operations involving multiple quantities.
+
 
 ## Xarray now wraps Pint
 
-- Thanks to the [tireless work](https://github.com/pydata/xarray/issues/3594) of xarray core developer Justus Magin, you can now enjoy this automatic unit-handling in xarray!
-- Once you create a unit-aware xarray object you can
-- Units are propagated through arithmetic
-- Invalid units are caught automatically
+Thanks to the [tireless work](https://github.com/pydata/xarray/issues/3594) of xarray core developer Justus Magin, you can now enjoy this automatic unit-handling in xarray!
+
+Once you create a unit-aware xarray object (see below for how) you can see the units of the data variables displayed as part of the printable representation.
+You also immediately get the key benefits of pint:
+
+1) Units are propagated through arithmetic, and new quantities are built using the units of the inputs:
 
 ```python
-da1 = xr.DataArray(1000).pint.quantify("kg")
-da2 = xr.DataArray(40).pint.quantify("amperes")
-da1 + da2
+distance = xr.DataArray(10).pint.quantify("metres")
+time = xr.DataArray(4).pint.quantify("seconds")
+
+distance / time
 ```
 ```
-Out: DimensionalityError: Cannot convert from 'kilogram' ([mass]) to 'ampere' ([current])
+Out: 
+<xarray.DataArray ()>
+<Quantity(2.5, 'meter / second')>
 ```
 
-- Convert units
-- In the abstract, tracking units like this is useful in the same way that labelling dimensions with xarray is useful: it avoid errors by relieving us of the burden of remembering arbitrary information about our data.
+2) Dimensionally inconsistent units are caught automatically:
+
+```python
+apples = xr.DataArray(10).pint.quantify("kg")
+oranges = xr.DataArray(200).pint.quantify("cm^3")
+
+apples + oranges
+```
+```
+Out: 
+DimensionalityError: Cannot convert from 'kilogram' ([mass]) to 'centimeter ** 3' ([length] ** 3)
+```
+
+3) Unit conversions become simple:
+
+```python
+walk = xr.DataArray(500).pint.quantify('miles')
+
+walk.pint.to('parsecs')
+```
+```
+Out:
+<xarray.DataArray ()>
+<Quantity(2.6077643524162074e-11, 'parsec')>
+```
+
+4) You can specify that xarray functions should expect certain units:
+
+- [ ] TODO this does not work yet!
+
+```python
+
+from pint_xarray import unit_registry as ureg
+
+@ureg.wraps(args=["Newtons / second^2"])
+def jpl_trajectory_code(acceleration):
+    # do some rocket science
+    ...
+
+
+lockheed_acceleration_value = xr.DataArray(5).pint.quantify("pounds / second^2")
+
+jpl_trajectory_code(lockheed_acceleration_value)
+```
+```
+Out:
+
+```
+
+In the abstract, tracking units like this is useful in the same way that labelling dimensions with xarray is useful: it avoid errors by relieving us of the burden of remembering arbitrary information about our data.
 
 ## Quantifying with pint-xarray
 
@@ -87,9 +143,9 @@ ds = open_dataset(filepath).pint.quantify()
 
 So xarray can wrap dask arrays, and now it can wrap pint quantities… Can we use both together? Yes!
 
-- You can get a unit-aware, dask-backed array either by `.pint.quantify()`-ing a chunked array, or you can `.pint.chunk()` a quantified array.
-- (If you have dask installed, then `open_dataset(f).pint.quantity()` will already give you a dask-backed, quantified array.)
-- From there you can `.compute()` the dask-backed objects as normal, and the units will be retained. 
+You can get a unit-aware, dask-backed array either by `.pint.quantify()`-ing a chunked array, or you can `.pint.chunk()` a quantified array.
+(If you have dask installed, then `open_dataset(f).pint.quantify()` will already give you a dask-backed, quantified array.)
+From there you can `.compute()` the dask-backed objects as normal, and the units will be retained. 
 
 (Under the hood we now have an `xarray.DataArray` wrapping a `pint.Quantity`, which wraps a `dask.array.Array`, which wraps a `numpy.ndarray`.
 This "multi-nested duck array" approach can be generalised to include other array libraries (e.g. `scipy.sparse`), but requires [co-ordination](https://github.com/pydata/duck-array-discussion) between the maintainers of the libraries involved.)
@@ -122,7 +178,7 @@ print(distance.coords['time'].attrs)
 Out: {'units': <Unit('second')>}
 ```
 
-This allows us to provide conveniently wrapped versions of common xarray methods like .sel, so that you can still select subsets of data in a unit-aware fashion like this:
+This allows us to provide conveniently wrapped versions of common xarray methods like `.sel`, so that you can still select subsets of data in a unit-aware fashion like this:
 
 ```python
 distance.pint.sel(time=200 * pint.Unit('milliseconds'))
