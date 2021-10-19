@@ -1,7 +1,5 @@
 # Unit-aware arithmetic in xarray, via pint
 
-- [ ] TODO: Add some pictures for interest
-
 _TLDR: Xarray now supports unit-aware operations by wrapping [pint arrays](https://pint.readthedocs.io/en/stable/), so your code can automatically track the physical units that your data represents:_
 
 ```python
@@ -18,20 +16,35 @@ Out:
 
 ## Units are integral to science
 
-- All quantities in science have units, whether explicitly or implicitly. (And even dimensionless quantities like ratios still technically have units.)
-- Getting our units right is tricky
-- The consequences of getting them wrong can be huge!
-- If we can automatically track them we can potentially eliminate a whole class of possible errors in our scientific work…
+All quantities in science have units, whether explicitly or implicitly. (And even dimensionless quantities like ratios still technically have units.)
+
+Getting our units right is finicky, and can very easily go unnoticed in our code.
+Even worse, the consequences of getting units wrong can be huge! 
+
+The most famous example of a units error has to be NASA's $125 million [Mars Climate Orbiter](https://www.simscale.com/blog/2017/12/nasa-mars-climate-orbiter-metric/), which in 1999 burned up in the Martian atmosphere instead of successfully entering orbit around Mars.
+A trajectory course correction had gone wrong, and the error was eventually traced back to a units mismatch: the engineers at Lockheed Martin expressed acceleration in Imperial pounds per seconds squared, whereas the engineers at JPL assumed the value their part of the software recieved was in metric Newtons per second squared.
+
+<p align = "center">
+<img src = "https://clqtg10snjb14i85u49wifbv-wpengine.netdna-ssl.com/wp-content/uploads/2017/12/Customers.jpg">
+</p>
+
+<p align = "center">
+Newspaper cartoon depicting the incongruence in the units used by NASA and Lockheed Martin scientists that led to the Mars Climate Orbiter disaster.
+</p>
+
+We should take stories like this seriously: If we can automatically track units we can potentially eliminate a whole class of possible errors in our scientific work...
 
 ## Pint tracks units
 
 - There are a few packages for handling units in python (in particular [unyt](https://github.com/yt-project/unyt) and [astropy.units](https://docs.astropy.org/en/stable/units/)), but for technical reasons we started with Pint.
 - These various packages work by providing a numerical array type that acts similarly to a numpy array, and is intended to plug an and replace the raw numpy array (a so-called "duck array type")
-- Pint provides the Quantity object, which is a normal numpy array combined with a pint.Unit :
+- Pint provides the `Quantity` object, which is a normal numpy array combined with a `pint.Unit`:
 
 ```python
 q = np.array([6, 7]) * pint.Unit('metres')
 print(repr(q))
+```
+```
 Out: <Quantity([6 7], 'meter')>
 ```
 - pint Quantities act like numpy arrays, except that the uni
