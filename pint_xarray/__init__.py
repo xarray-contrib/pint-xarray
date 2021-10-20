@@ -8,6 +8,7 @@ import pint
 from . import accessors, formatting, testing  # noqa: F401
 from .accessors import default_registry as unit_registry
 from .accessors import setup_registry
+from .checking import expects  # noqa: F401
 
 try:
     __version__ = version("pint-xarray")
