@@ -154,15 +154,15 @@ This "multi-nested duck array" approach can be generalised to include other arra
 
 - [ ] TODO: Update the plotting page in pint-xarray's docs to not require dequantifying first
 
-## Unit-aware coordinates
+## Unit-aware indexes
 
-We would love to be able to promote xarray coordinates to pint Quantities, as that would allow you to select data subsets in a unit-aware manner like
+We would love to be able to promote xarray indexes to pint Quantities, as that would allow you to select data subsets in a unit-aware manner like
 ```python
 da.sel(x=10 * Unit('m'))
 ```
 Unfortunately this will not possible until the ongoing work to extend xarray to support [explicit indexes](https://github.com/pydata/xarray/issues/1603) is complete.
 
-In the meantime pint-xarray offers a workaround. If you tell `.quantify` the units you wish a coordinate to have, it will store those in `.attrs.units` instead.
+In the meantime pint-xarray offers a workaround. If you tell `.quantify` the units you wish an index to have, it will store those in `.attrs.units` instead.
 
 ```python
 time = xr.DataArray([0.1, 0.2, 0.3], dims='time')
@@ -191,7 +191,7 @@ Coordinates:
     time     float64 200.0
 ```
 Observe how the `.pint.sel` operation has first converted 200 milliseconds to 0.2 seconds, before finding the distance value that occurs at a time position of 0.2 seconds.
-This wrapping is necessary for any operation which needs to be aware of the units of the coordinates of the dataarray, such as `.integrate`:
+This wrapping is necessary for any operation which needs to be aware of the units of a dimension coordinate of the dataarray.
 
 ## CF-compliant units for geosciences with cf-xarray
 
