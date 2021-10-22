@@ -129,9 +129,27 @@ In the abstract, tracking units like this is useful in the same way that labelli
 The easiest way to create a unit-aware xarray object is to use the helper package we made: [pint-xarray](https://github.com/xarray-contrib/pint-xarray). 
 Once you `import pint_xarray` you can access unit-related functionality via `.pint` on any xarray DataArray or Dataset (this works via [xarray's accessor interface](http://xarray.pydata.org/en/stable/internals/extending-xarray.html)).
 
-- Quantifying explicitly
-- Quantifying from `.attrs`
-- This means that for scientific datasets which are stored as files with units in their attributes, using pint with xarray becomes as simple as
+Above we have seen examples of quantifying explicitly, where we specify the units in the call to `.quantify()`.
+We can do this for multiple variables too, and we can also pass `pint.Unit` instances:
+```python
+ds = xr.Dataset({'a': 2, 'b': 10})
+
+ds.pint.quantify({'a': 'kg',
+                  'b': pint.Unit('moles')})
+```
+```
+Out:
+<xarray.Dataset>
+Dimensions:  ()
+Data variables:
+    a        int64 [kg] 2
+    b        int64 [mol] 10
+```
+
+Alternatively, we can quantify from the object's `.attrs`, automatically reading the metadata which xarray objects carry around.
+If nothing is passed to `.quantify()`, it will attempt to parse the `.attrs['units']` entry for each data variable.
+
+This means that for scientific datasets which are stored as files with units in their attributes (which netCDF and Zarr can do for example), using pint with xarray becomes as simple as
 
 ```python
 import pint_xarray
