@@ -209,7 +209,8 @@ Coordinates:
     time     float64 200.0
 ```
 Observe how the `.pint.sel` operation has first converted 200 milliseconds to 0.2 seconds, before finding the distance value that occurs at a time position of 0.2 seconds.
-This wrapping is necessary for any operation which needs to be aware of the units of a dimension coordinate of the dataarray.
+
+[This wrapping is currently necessary](https://xarray.pydata.org/en/stable/user-guide/duckarrays.html#missing-features) for any operation which needs to be aware of the units of a dimension coordinate of the dataarray, or any xarray operation which relies on an external library (such as calling `scipy` in `.integrate`).
 
 ## CF-compliant units for geosciences with cf-xarray
 
