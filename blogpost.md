@@ -22,7 +22,7 @@ Getting our units right is finicky, and can very easily go unnoticed in our code
 Even worse, the consequences of getting units wrong can be huge! 
 
 The most famous example of a units error has to be NASA's $125 million [Mars Climate Orbiter](https://www.simscale.com/blog/2017/12/nasa-mars-climate-orbiter-metric/), which in 1999 burned up in the Martian atmosphere instead of successfully entering orbit around Mars.
-A trajectory course correction had gone wrong, and the error was eventually traced back to a units mismatch: the engineers at Lockheed Martin expressed acceleration in Imperial pounds per seconds squared, whereas the engineers at JPL assumed the value their part of the software recieved was in metric Newtons per second squared.
+A trajectory course correction had gone wrong, and the error was eventually traced back to a units mismatch: the engineers at Lockheed Martin expressed impulse in [pound-force](https://en.wikipedia.org/wiki/Pound_(force)) seconds, whereas the engineers at JPL assumed the impulse value their part of the software received was in SI newton seconds.
 
 <p align = "center">
 <img src = "https://clqtg10snjb14i85u49wifbv-wpengine.netdna-ssl.com/wp-content/uploads/2017/12/Customers.jpg">
@@ -99,30 +99,30 @@ Out:
 <Quantity(2.6077643524162074e-11, 'parsec')>
 ```
 
-4) You can specify that xarray functions should expect certain units:
+4) You can specify that functions should expect certain units, and convert them if needed:
 
-- [ ] TODO this does not work yet!
+- [ ] TODO this requires pint-xarray #143 to be merged
 
 ```python
+from pint_xarray import expects
 
-from pint_xarray import unit_registry as ureg
-
-@ureg.wraps(args=["Newtons / second^2"])
-def jpl_trajectory_code(acceleration):
+@expects("newton * seconds")
+def jpl_trajectory_code(impulse):
+    print(f"Received impulse in units of [{impulse.pint.units}]")
+ 
     # do some rocket science
     ...
 
+lockheed_impulse_value = xr.DataArray(5).pint.quantify("force_pounds * seconds")
 
-lockheed_acceleration_value = xr.DataArray(5).pint.quantify("pounds / second^2")
-
-jpl_trajectory_code(lockheed_acceleration_value)
+jpl_trajectory_code(lockheed_impulse_value)
 ```
 ```
 Out:
-
+Received impulse in units of [newton * second]
 ```
 
-In the abstract, tracking units like this is useful in the same way that labelling dimensions with xarray is useful: it avoid errors by relieving us of the burden of remembering arbitrary information about our data.
+In the abstract, tracking units like this is useful in the same way that labelling dimensions with xarray is useful: it helps us avoid errors by relieving us of the burden of remembering arbitrary information about our data.
 
 ## Quantifying with pint-xarray
 
