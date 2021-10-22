@@ -43,18 +43,16 @@ class TestExpects:
 
     def test_single_return_value(self):
 
-        @expects('Hz')
-        def period(freq):
-            return 1 / freq
+        @expects('kg', 'm / s^2', return_units='newtons')
+        def second_law(m, a):
+            return m * a
 
-        f = pint.Quantity(10, units='Hz')
+        m_q = pint.Quantity(0.1, units='tons')
+        a_q = pint.Quantity(10, units='feet / second^2')
+        assert second_law(m_q, a_q).pint.units == pint.Unit('newtons')
 
-        # test conversion
-        T = period(f)
-        assert f.units == 'seconds'
-
-        # test wrong dimensions for conversion
-        ...
+        m_da
+        a_da
 
     @pytest.mark.xfail
     def test_multiple_return_values(self):
