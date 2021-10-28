@@ -108,11 +108,19 @@ def expects(*args_units, return_units=None, **kwargs_units):
     return _expects_decorator
 
 
-def _check_then_convert_to(obj, units):
+def _check_then_convert_to(obj, units, magnitude):
     if isinstance(obj, Quantity):
-        return obj.to(units)
+        converted = obj.to(units)
+        if magnitude:
+            return converted.magnitude
+        else:
+            return converted
     elif isinstance(obj, DataArray):
-        return obj.pint.to(units)
+        converted = obj.pint.to(units)
+        if magnitude:
+            return converted.pint.magnitude
+        else:
+            return converted
     else:
         raise TypeError("Can only expect units for arguments of type xarray.DataArray or pint.Quantity,"
                         f"not {type(obj)}")
