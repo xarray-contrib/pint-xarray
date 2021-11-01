@@ -176,10 +176,6 @@ From there you can `.compute()` the dask-backed objects as normal, and the units
 (Under the hood we now have an `xarray.DataArray` wrapping a `pint.Quantity`, which wraps a `dask.array.Array`, which wraps a `numpy.ndarray`.
 This "multi-nested duck array" approach can be generalised to include other array libraries (e.g. `scipy.sparse`), but requires [co-ordination](https://github.com/pydata/duck-array-discussion) between the maintainers of the libraries involved.)
 
-## Plotting
-
-- [ ] TODO: Update the plotting page in pint-xarray's docs to not require dequantifying first
-
 ## Unit-aware indexes
 
 We would love to be able to promote xarray indexes to pint Quantities, as that would allow you to select data subsets in a unit-aware manner like
@@ -231,13 +227,25 @@ If we `import cf_xarray.units` (before `import pint_xarray`) then we can `quanti
 import xarray as xr
 import cf_xarray.units  # must come before import pint_xarray
 import pint_xarray
-import cartopy.crs as ccrs
-import matplotlib.pyplot as plt
 
 ds = xr.open_dataset('gs://cmip6/CMIP6/CMIP/NCAR/CESM2-FV2/historical/r2i1p1f1/Amon/sfcWind/gn/v20200226/', engine='zarr')
 ds = ds.pint.quantify()
 
 squared_wind = ds['sfcWind'] ** 2
+squared_wind.pint.units
+```
+```
+Out: <Unit('meter ** 2 / second ** 2')>
+```
+Here (thanks to `cf_xarray`) pint has successfully interpreted the CF-style units `'m s-1'`, then automatically changed them when we squared the wind speed.
+
+## Plotting
+
+We can complete our real-world example by plotting the data in its new units 
+
+```python
+import cartopy.crs as ccrs
+import matplotlib.pyplot as plt
 
 p = squared_wind.isel(time="2014-01").plot(
     subplot_kws=dict(projection=ccrs.Orthographic(-80, 35), facecolor="gray"),
@@ -249,7 +257,7 @@ plt.show()
 ```
 ![cartopy plot of a quantified dataset ](squared_wind.png)
 
-Here (thanks to `cf_xarray`) pint has successfully interpreted the CF-style units `'m s-1'`, then automatically changed them when we squared the wind speed, and xarray has read the pint units off the arrays when creating the plot.
+where `xarray.plot` has detected the pint units automatically.
 
 ## Conclusion
 
