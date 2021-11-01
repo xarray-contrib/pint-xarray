@@ -37,7 +37,7 @@ We should take stories like this seriously: If we can automatically track units 
 ## Pint tracks units
 
 There are a few packages for handling units in python (notably [unyt](https://github.com/yt-project/unyt) and [astropy.units](https://docs.astropy.org/en/stable/units/)), but for technical reasons we began units integration in xarray with [Pint](https://pint.readthedocs.io/en/stable/).
-These various packages work by providing a numerical array type that acts similarly to a numpy array, and is intended to plug in and replace the raw numpy array (a so-called "duck array type")
+These various packages work by providing a numerical array type that acts similarly to a numpy array, and is intended to plug in and replace the raw numpy array (a so-called "duck array type").
 
 Pint provides the `Quantity` object, which is a normal numpy array combined with a `pint.Unit`:
 
