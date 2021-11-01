@@ -180,7 +180,7 @@ da.sel(x=10 * Unit('m'))
 ```
 Unfortunately this will not possible until the ongoing work to extend xarray to support [explicit indexes](https://github.com/pydata/xarray/issues/1603) is complete.
 
-In the meantime pint-xarray offers a workaround. If you tell `.quantify` the units you wish an index to have, it will store those in `.attrs.units` instead.
+In the meantime pint-xarray offers a workaround. If you tell `.quantify` the units you wish an index to have, it will store those in `.attrs["units"]` instead.
 
 ```python
 time = xr.DataArray([0.1, 0.2, 0.3], dims='time')
