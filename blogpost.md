@@ -101,7 +101,7 @@ Out:
 
 4) You can specify that functions should expect certain units, and convert them if needed:
 
-- [ ] TODO this requires pint-xarray #143 to be merged
+- [ ] TODO this requires pint-xarray #143 to be merged and released
 
 ```python
 from pint_xarray import expects
