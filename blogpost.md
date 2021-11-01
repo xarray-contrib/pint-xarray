@@ -261,7 +261,10 @@ where `xarray.plot` has detected the pint units automatically.
 
 ## Conclusion
 
-- Have a go
-- Questions
-- Please tell us about any bugs you find, or documentation suggestions you have
-- Watch out for unit-aware dimension coordinates later!
+Please have a go! You will need the latest releases of both xarray (v0.20) and pint-xarray.
+
+Please also tell us about any bugs you find, or documentation suggestions you have on the [xarray](https://github.com/pydata/xarray/issues) or [pint-xarray issue trackers](https://github.com/xarray-contrib/pint-xarray/issues).
+If you have usage questions you can raise them there, on the [xarray discussions page](https://github.com/pydata/xarray/discussions), or on the [pangeo discourse forum](https://discourse.pangeo.io/).
+
+The work here to allow xarray to wrap pint objects is part of a [broader effort to generalise xarray](http://xarray.pydata.org/en/stable/roadmap.html#flexible-arrays) to handle a wide variety of data types (so-called "duck array wrapping").
+Along with the incoming [support for flexible indexes](http://xarray.pydata.org/en/stable/roadmap.html#flexible-indexes), we are excited for all the new features that this will enable for xarray users!
