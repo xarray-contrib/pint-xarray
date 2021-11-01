@@ -180,7 +180,10 @@ This "multi-nested duck array" approach can be generalised to include other arra
 
 We would love to be able to promote xarray indexes to pint Quantities, as that would allow you to select data subsets in a unit-aware manner like
 ```python
-da.sel(x=10 * Unit('m'))
+da = xr.DataArray(name='a', data=[0, 1, 2], dims='x', coords={'x': [1000, 2000, 3000]})
+da = da.pint.quantify({'a': 'Pa', 'x': 'm'})
+
+da.pint.sel(x=2 * 'km')
 ```
 Unfortunately this will not possible until the ongoing work to extend xarray to support [explicit indexes](https://github.com/pydata/xarray/issues/1603) is complete.
 
