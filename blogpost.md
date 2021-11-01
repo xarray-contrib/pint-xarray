@@ -248,4 +248,4 @@ Here (thanks to `cf_xarray`) pint has successfully interpreted the CF-style unit
 - Have a go
 - Questions
 - Please tell us about any bugs you find, or documentation suggestions you have
-- Watch out for unit-aware coordinates later!
+- Watch out for unit-aware dimension coordinates later!
