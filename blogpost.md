@@ -213,14 +213,35 @@ Observe how the `.pint.sel` operation has first converted 200 milliseconds to 0.
 [This wrapping is currently necessary](https://xarray.pydata.org/en/stable/user-guide/duckarrays.html#missing-features) for any operation which needs to be aware of the units of a dimension coordinate of the dataarray, or any xarray operation which relies on an external library (such as calling `scipy` in `.integrate`).
 
 ## CF-compliant units for geosciences with cf-xarray
-
-- Different fields tend to have different niche conventions about how certain units are defined.
-- By default, pint doesn't understand all the unusual units we use in geosciences
+Different fields tend to have different niche conventions about how certain units are defined.
+By default, pint doesn't understand all the unusual units and conventions we use in geosciences.
 But [pint is customisable](https://pint.readthedocs.io/en/stable/defining.html), and with the help of [cf-xarray](https://github.com/xarray-contrib/cf-xarray) we can teach it about these geoscience-specific units.
-- `import cf_xarray.units` (before `import pint_xarray`)
-- Put it all together
 
-- [ ] TODO: Example which automatically interprets units of some data from a real climate data store
+If we `import cf_xarray.units` (before `import pint_xarray`) then we can `quantify` example data from a pangeo climate data store :
+
+```python
+import xarray as xr
+import cf_xarray.units  # must come before import pint_xarray
+import pint_xarray
+import cartopy.crs as ccrs
+import matplotlib.pyplot as plt
+
+ds = xr.open_dataset('gs://cmip6/CMIP6/CMIP/NCAR/CESM2-FV2/historical/r2i1p1f1/Amon/sfcWind/gn/v20200226/', engine='zarr')
+ds = ds.pint.quantify()
+
+squared_wind = ds['sfcWind'] ** 2
+
+p = squared_wind.isel(time="2014-01").plot(
+    subplot_kws=dict(projection=ccrs.Orthographic(-80, 35), facecolor="gray"),
+    transform=ccrs.PlateCarree(),
+)
+p.axes.set_global()
+p.axes.coastlines()
+plt.show()
+```
+![cartopy plot of a quantified dataset ](squared_wind.png)
+
+Here (thanks to `cf_xarray`) pint has successfully interpreted the CF-style units `'m s-1'`, then automatically changed them when we squared the wind speed, and xarray has read the pint units off the arrays when creating the plot.
 
 ## Conclusion
 
