@@ -127,7 +127,7 @@ In the abstract, tracking units like this is useful in the same way that labelli
 ## Quantifying with pint-xarray
 
 The easiest way to create a unit-aware xarray object is to use the helper package we made: [pint-xarray](https://github.com/xarray-contrib/pint-xarray). 
-Once you `import pint_xarray` you can access unit-related functionality via `.pint` on any xarray DataArray or Dataset (this works via [xarray's accessor interface](http://xarray.pydata.org/en/stable/internals/extending-xarray.html)).
+Once you `import pint_xarray` you can access unit-related functionality via `.pint` on any xarray DataArray or Dataset (this works via [xarray's accessor interface](https://xarray.pydata.org/en/stable/internals/extending-xarray.html)).
 
 Above we have seen examples of quantifying explicitly, where we specify the units in the call to `.quantify()`.
 We can do this for multiple variables too, and we can also pass `pint.Unit` instances:
