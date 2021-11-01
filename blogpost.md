@@ -157,6 +157,14 @@ import pint_xarray
 ds = open_dataset(filepath).pint.quantify()
 ```
 
+
+## Dequantifying
+
+To convert our pint arrays back into numpy arrays, we can use `.dequantify`.
+This will strip the units from the arrays and replace them into the `.attrs['units']` of each variable.
+This is useful when we want to save our data back to a file, as it means that the current units will be preserved in the attributes of a netcdf file (or zarr store etc.), as long as we just do `ds.pint.dequantify().to_netcdf()`.
+
+
 ## Dask integration
 
 So xarray can wrap dask arrays, and now it can wrap pint quantities… Can we use both together? Yes!
