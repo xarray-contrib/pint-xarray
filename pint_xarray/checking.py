@@ -3,7 +3,7 @@ import functools
 from pint import Quantity
 from xarray import DataArray
 
-from .accessors import PintDataArrayAccessor
+from .accessors import PintDataArrayAccessor  # noqa
 
 
 def expects(*args_units, return_units=None, **kwargs_units):
@@ -19,15 +19,21 @@ def expects(*args_units, return_units=None, **kwargs_units):
     Parameters
     ----------
     func: function
-        Decorated function, which accepts zero or more xarray.DataArrays or pint.Quantitys as inputs,
-        and may optionally return one or more xarray.DataArrays or pint.Quantitys.
+        Function to decorate. which accepts zero or more xarray.DataArrays or numpy-like arrays as inputs,
+        and may optionally return one or more xarray.DataArrays or numpy-like arrays.
     args_units : Union[str, pint.Unit, None]
-        Unit to expect for each positional argument given to func.
+        Units to expect for each positional argument given to func.
+
+        The decorator will check that arguments passed to the decorated function possess these specific units, or will
+        attempt to convert the argument to these units.
 
         A value of None indicates not to check that argument for units (suitable for flags
         and other non-data arguments).
     return_units : Union[Union[str, pint.Unit, None, False], Sequence[Union[str, pint.Unit, None]], Optional
         The expected units of the returned value(s), either as a single unit or as an iterable of units.
+
+        The decorator will check that results returned from the decorated function possess these specific units, or will
+        attempt to convert the results to these units.
 
         A value of None indicates not to check that return value for units (suitable for flags and other
         non-data arguments). Passing False means that no return value is expected from the function at all,
@@ -35,29 +41,30 @@ def expects(*args_units, return_units=None, **kwargs_units):
     kwargs_units : Dict[str, Union[str, pint.Unit, None]], Optional
         Unit to expect for each keyword argument given to func.
 
+        The decorator will check that arguments passed to the decorated function possess these specific units, or will
+        attempt to convert the argument to these units.
+
         A value of None indicates not to check that argument for units (suitable for flags
         and other non-data arguments).
 
     Returns
     -------
-    return_values
+    return_values : Any
         Return values of the wrapped function, either a single value or a tuple of values.
 
     Raises
     ------
     TypeError
-        If an argument or return value has a specified unit, but is not an xarray.DataArray.
-
+        If an argument or return value has a specified unit, but is not an xarray.DataArray or pint.Quantity.
 
     Examples
     --------
 
     Decorating a function which takes one quantified input, but returns a non-data value (in this case a boolean).
 
-    >>> @expects('deg C')
+    >>> @expects("deg C")
     ... def above_freezing(temp):
     ...     return temp > 0
-    ...
 
 
     TODO: example where we check units of an optional weighted kwarg
@@ -67,7 +74,6 @@ def expects(*args_units, return_units=None, **kwargs_units):
     # TODO: Check number of arguments line up
 
     def _expects_decorator(func):
-
         @functools.wraps(func)
         def _unit_checking_wrapper(*args, **kwargs):
 
@@ -93,7 +99,9 @@ def expects(*args_units, return_units=None, **kwargs_units):
 
                     converted_results = []
                     for return_unit, return_value in zip(return_units, results):
-                        converted_result = _check_then_convert_to(return_value, return_unit)
+                        converted_result = _check_then_convert_to(
+                            return_value, return_unit
+                        )
                         converted_results.append(converted_result)
 
                     return tuple(converted_results)
@@ -108,19 +116,15 @@ def expects(*args_units, return_units=None, **kwargs_units):
     return _expects_decorator
 
 
-def _check_then_convert_to(obj, units, magnitude):
+def _check_then_convert_to(obj, units):
     if isinstance(obj, Quantity):
         converted = obj.to(units)
-        if magnitude:
-            return converted.magnitude
-        else:
-            return converted
+        return converted.magnitude
     elif isinstance(obj, DataArray):
         converted = obj.pint.to(units)
-        if magnitude:
-            return converted.pint.magnitude
-        else:
-            return converted
+        return converted.pint.magnitude
     else:
-        raise TypeError("Can only expect units for arguments of type xarray.DataArray or pint.Quantity,"
-                        f"not {type(obj)}")
+        raise TypeError(
+            "Can only expect units for arguments of type xarray.DataArray or pint.Quantity,"
+            f"not {type(obj)}"
+        )

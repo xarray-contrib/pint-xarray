@@ -1,7 +1,6 @@
-import pytest
 import pint
+import pytest
 import xarray as xr
-
 from pint import UnitRegistry
 
 from ..checking import expects
@@ -11,30 +10,24 @@ ureg = UnitRegistry()
 
 class TestExpects:
     def test_single_arg(self):
+        @expects("degC")
+        def above_freezing(temp):
+            return temp > 0
 
-        @expects('degC')
-        def above_freezing(temp : pint.Quantity):
-            return temp.magnitude > 0
+        f_q = pint.Quantity(20, units="degF")
+        assert not above_freezing(f_q)
 
-        f_q = pint.Quantity(20, units='degF')
-        assert above_freezing(f_q) == False
+        c_q = pint.Quantity(-2, units="degC")
+        assert not above_freezing(c_q)
 
-        c_q = pint.Quantity(-2, units='degC')
-        assert above_freezing(c_q) == False
+        f_da = xr.DataArray(20).pint.quantify(units="degF")
+        assert not above_freezing(f_da)
 
-        @expects('degC')
-        def above_freezing(temp : xr.DataArray):
-            return temp.pint.magnitude > 0
-
-        f_da = xr.DataArray(20).pint.quantify(units='degF')
-        assert above_freezing(f_da) == False
-
-        c_da = xr.DataArray(-2).pint.quantify(units='degC')
-        assert above_freezing(c_da) == False
+        c_da = xr.DataArray(-2).pint.quantify(units="degC")
+        assert not above_freezing(c_da)
 
     def test_single_kwarg(self):
-
-        @expects('meters', c='meters / second')
+        @expects("meters", c="meters / second")
         def freq(wavelength, c=None):
             if c is None:
                 c = ureg.speed_of_light
@@ -42,14 +35,13 @@ class TestExpects:
             return c / wavelength
 
     def test_single_return_value(self):
-
-        @expects('kg', 'm / s^2', return_units='newtons')
+        @expects("kg", "m / s^2", return_units="newtons")
         def second_law(m, a):
             return m * a
 
-        m_q = pint.Quantity(0.1, units='tons')
-        a_q = pint.Quantity(10, units='feet / second^2')
-        assert second_law(m_q, a_q).pint.units == pint.Unit('newtons')
+        m_q = pint.Quantity(0.1, units="tons")
+        a_q = pint.Quantity(10, units="feet / second^2")
+        assert second_law(m_q, a_q).pint.units == pint.Unit("newtons")
 
         m_da
         a_da
