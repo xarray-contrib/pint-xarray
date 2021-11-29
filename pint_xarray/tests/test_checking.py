@@ -41,10 +41,13 @@ class TestExpects:
 
         m_q = pint.Quantity(0.1, units="tons")
         a_q = pint.Quantity(10, units="feet / second^2")
-        assert second_law(m_q, a_q).pint.units == pint.Unit("newtons")
+        result_q = second_law(m_q, a_q)
+        assert result_q.units == pint.Unit("newtons")
 
-        m_da
-        a_da
+        m_da = xr.DataArray(0.1).pint.quantify(units="tons")
+        a_da = xr.DataArray(10).pint.quantify(units="feet / second^2")
+        result_da = second_law(m_da, a_da)
+        assert result_da.pint.units == pint.Unit("newtons")
 
     @pytest.mark.xfail
     def test_multiple_return_values(self):
