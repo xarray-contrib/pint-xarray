@@ -8,7 +8,7 @@ from .accessors import PintDataArrayAccessor  # noqa
 
 def expects(*args_units, return_units=None, **kwargs_units):
     """
-    Decorator which ensures the inputs and outputs of the decorated function have certain units.
+    Decorator which ensures the inputs and outputs of the decorated function are expressed in the expected units.
 
     Arguments to the decorated function are checked for the specified units, converting to those units if necessary, and
     then stripped of their units before being passed into the undecorated function. Therefore the undecorated function
@@ -133,17 +133,21 @@ def _check_or_convert_to_then_strip(obj, units):
     then strips the units from it.
     """
 
-    if isinstance(obj, Quantity):
-        converted = obj.to(units)
-        return converted.magnitude
-    elif isinstance(obj, DataArray):
-        converted = obj.pint.to(units)
-        return converted.pint.dequantify()
+    if units is None:
+        # allow for passing through non-numerical arguments
+        return obj
     else:
-        raise TypeError(
-            "Can only expect units for arguments of type xarray.DataArray or pint.Quantity,"
-            f"not {type(obj)}"
-        )
+        if isinstance(obj, Quantity):
+            converted = obj.to(units)
+            return converted.magnitude
+        elif isinstance(obj, DataArray):
+            converted = obj.pint.to(units)
+            return converted.pint.dequantify()
+        else:
+            raise TypeError(
+                "Can only expect units for arguments of type xarray.DataArray or pint.Quantity,"
+                f"not {type(obj)}"
+            )
 
 
 def _attach_units(obj, units):
