@@ -1,7 +1,7 @@
 import functools
 
 from pint import Quantity, Unit
-from xarray import DataArray
+from xarray import DataArray, Dataset
 
 from .accessors import PintDataArrayAccessor  # noqa
 
@@ -74,8 +74,6 @@ def expects(*args_units, return_units=None, **kwargs_units):
     TODO: example where we check units of an optional weighted kwarg
     """
 
-    # TODO generalise to allow for dictionaries of units for DataArray coordinates / Datasets
-
     # Check types of args_units, kwargs_units, and return_units
     all_units = list(args_units) + list(kwargs_units.values())
     if isinstance(return_units, list):
@@ -83,10 +81,11 @@ def expects(*args_units, return_units=None, **kwargs_units):
     elif return_units:
         all_units = all_units + [return_units]
     for a in all_units:
-        if not isinstance(a, (Unit, str)) and a is not None:
-            raise TypeError(
-                f"{a} is not a valid type for a unit, it is of type {type(a)}"
-            )
+        if isinstance(a, dict):
+            for u in a.values():
+                _check_valid_unit_type(u)
+        else:
+            _check_valid_unit_type(a)
 
     def _expects_decorator(func):
         @functools.wraps(func)
@@ -151,6 +150,11 @@ def expects(*args_units, return_units=None, **kwargs_units):
     return _expects_decorator
 
 
+def _check_valid_unit_type(a):
+    if not isinstance(a, (Unit, str)) and a is not None:
+        raise TypeError(f"{a} is not a valid type for a unit, it is of type {type(a)}")
+
+
 def _check_or_convert_to_then_strip(obj, units):
     """
     Checks the object is of a valid type (Quantity or DataArray), then attempts to convert it to the specified units,
@@ -164,7 +168,7 @@ def _check_or_convert_to_then_strip(obj, units):
         if isinstance(obj, Quantity):
             converted = obj.to(units)
             return converted.magnitude
-        elif isinstance(obj, DataArray):
+        elif isinstance(obj, (DataArray, Dataset)):
             converted = obj.pint.to(units)
             return converted.pint.dequantify()
         else:
