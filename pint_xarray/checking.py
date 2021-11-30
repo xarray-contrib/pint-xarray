@@ -51,13 +51,15 @@ def expects(*args_units, return_units=None, **kwargs_units):
     Returns
     -------
     return_values : Any
-        Return values of the wrapped function, either a single value or a tuple of values. These will have units
+        Return values of the wrapped function, either a single value or a tuple of values. These will be given units
         according to return_units.
 
     Raises
     ------
     TypeError
         If an argument or return value has a specified unit, but is not an xarray.DataArray or pint.Quantity.
+        Also thrown if any of the units are not a valid type, or if the number of arguments or return values does not
+        match the number of units specified.
 
     Examples
     --------
@@ -72,6 +74,8 @@ def expects(*args_units, return_units=None, **kwargs_units):
     TODO: example where we check units of an optional weighted kwarg
     """
 
+    # TODO generalise to allow for dictionaries of units for DataArray coordinates / Datasets
+
     # Check types of args_units, kwargs_units, and return_units
     all_units = list(args_units) + list(kwargs_units.values())
     if isinstance(return_units, list):
@@ -84,11 +88,19 @@ def expects(*args_units, return_units=None, **kwargs_units):
                 f"{a} is not a valid type for a unit, it is of type {type(a)}"
             )
 
-    # TODO: Check number of arguments line up
-
     def _expects_decorator(func):
         @functools.wraps(func)
         def _unit_checking_wrapper(*args, **kwargs):
+
+            # without this we get an UnboundLocalError but I have no idea why
+            # see https://stackoverflow.com/questions/5630409/
+            nonlocal return_units
+
+            # check same number of arguments were passed as expected
+            if len(args) != len(args_units):
+                raise TypeError(
+                    f"{len(args)} arguments were passed, but {len(args_units)} arguments were expected"
+                )
 
             converted_args = []
             for arg, arg_unit in zip(args, args_units):
@@ -97,36 +109,43 @@ def expects(*args_units, return_units=None, **kwargs_units):
 
             converted_kwargs = {}
             for key, val in kwargs.items():
-                kwarg_unit = kwargs_units[key]
+                kwarg_unit = kwargs_units.get(key, None)
                 converted_kwargs[key] = _check_or_convert_to_then_strip(val, kwarg_unit)
 
             results = func(*converted_args, **converted_kwargs)
 
-            if results is not None:
+            if results is None:
+                if return_units:
+                    raise TypeError(
+                        "Expected function to return something, but function returned None"
+                    )
+            else:
                 if return_units is None:
                     # ignore types and units of return values
                     return results
                 else:
-                    # TODO check something was actually returned
+                    # handle case of function returning only one result by promoting to 1-element tuple
+                    if not isinstance(results, tuple):
+                        results = (results,)
+                    if not isinstance(return_units, (tuple, list)):
+                        return_units = (return_units,)
 
-                    # TODO handle single return value vs tuple of return values
-                    if type(results) == tuple:
+                    # check same number of things were returned as expected
+                    if len(results) != len(return_units):
+                        raise TypeError(
+                            f"{len(results)} return values were received, but {len(return_units)} "
+                            "return values were expected"
+                        )
 
-                        # TODO check same number of things were returned as expected
+                    converted_results = []
+                    for return_unit, return_value in zip(return_units, results):
+                        converted_result = _attach_units(return_value, return_unit)
+                        converted_results.append(converted_result)
 
-                        converted_results = []
-                        for return_unit, return_value in zip(return_units, results):
-                            converted_result = _attach_units(return_value, return_unit)
-                            converted_results.append(converted_result)
-                        return tuple(converted_results)
+                    if len(converted_results) == 1:
+                        return tuple(converted_results)[0]
                     else:
-                        converted_result = _attach_units(results, return_units)
-                        return converted_result
-            else:
-                if return_units:
-                    raise ValueError(
-                        "Expected function to return something, but function returned None"
-                    )
+                        return tuple(converted_results)
 
         return _unit_checking_wrapper
 

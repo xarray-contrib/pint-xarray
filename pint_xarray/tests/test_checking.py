@@ -96,10 +96,6 @@ class TestExpects:
         t = pint.Quantity(0.1, units="seconds")
         finite_difference(t, "centered")
 
-    @pytest.mark.xfail
-    def test_mixed_args_kwargs_return_values(self):
-        raise NotImplementedError
-
     @pytest.mark.parametrize(
         "arg_units, return_units", [(True, None), ("seconds", 6), ("seconds", [6])]
     )
@@ -118,18 +114,34 @@ class TestExpects:
     def test_unquantified_arrays(self):
         raise NotImplementedError
 
-    @pytest.mark.xfail
     def test_wrong_number_of_args(self):
-        raise NotImplementedError
+        @expects("kg", return_units="newtons")
+        def second_law(m, a):
+            return m * a
 
-    @pytest.mark.xfail
-    def test_nonexistent_kwarg(self):
-        raise NotImplementedError
+        m_q = pint.Quantity(0.1, units="tons")
+        a_q = pint.Quantity(10, units="feet / second^2")
 
-    @pytest.mark.xfail
-    def test_expected_return_value(self):
-        raise NotImplementedError
+        with pytest.raises(TypeError, match="1 arguments were expected"):
+            second_law(m_q, a_q)
 
-    @pytest.mark.xfail
     def test_wrong_number_of_return_values(self):
-        raise NotImplementedError
+        @expects("kg", "m / s^2", return_units=["newtons", "joules"])
+        def second_law(m, a):
+            return m * a
+
+        m_q = pint.Quantity(0.1, units="tons")
+        a_q = pint.Quantity(10, units="feet / second^2")
+
+        with pytest.raises(TypeError, match="2 return values were expected"):
+            second_law(m_q, a_q)
+
+    def test_expected_return_value(self):
+        @expects("seconds", return_units="Hz")
+        def freq(period):
+            return None
+
+        p = pint.Quantity(2, units="seconds")
+
+        with pytest.raises(TypeError, match="function returned None"):
+            freq(p)
