@@ -23,7 +23,7 @@ def expects(*args_units, return_units=None, **kwargs_units):
     func : callable
         Function to decorate. which accepts zero or more xarray.DataArrays or numpy-like arrays as inputs,
         and may optionally return one or more xarray.DataArrays or numpy-like arrays.
-    *args_units : None or unit-like or mapping of None or unit-like, optional
+    *args_units : unit-like or mapping of unit-like or None, optional
         Units to expect for each positional argument given to func.
 
         The decorator will first check that arguments passed to the decorated function possess these specific units
@@ -32,13 +32,13 @@ def expects(*args_units, return_units=None, **kwargs_units):
 
         A value of None indicates not to check that argument for units (suitable for flags and other non-data
         arguments).
-    return_units : Union[Union[str, pint.Unit, None], List[Union[str, pint.Unit, None]], Optional
+    return_units : unit-like or mapping of unit-like or list of unit-like or mapping of unit-like or None, optional
         The expected units of the returned value(s), either as a single unit or as a list of units. The decorator
         will attach these units to the variables returned from the function.
 
         A value of None indicates not to attach any units to that return value (suitable for flags and other
         non-data results).
-    kwargs_units : Dict[str, Union[str, pint.Unit, None]], Optional
+    kwargs_units : mapping of unit-like or None, Optional
         Unit to expect for each keyword argument given to func.
 
         The decorator will first check that arguments passed to the decorated function possess these specific units
