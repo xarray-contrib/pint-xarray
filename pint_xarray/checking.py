@@ -1,6 +1,6 @@
 import functools
 
-from pint import Quantity
+from pint import Quantity, Unit
 from xarray import DataArray
 
 from .accessors import PintDataArrayAccessor  # noqa
@@ -32,9 +32,9 @@ def expects(*args_units, return_units=None, **kwargs_units):
 
         A value of None indicates not to check that argument for units (suitable for flags
         and other non-data arguments).
-    return_units : Union[Union[str, pint.Unit, None, False], Sequence[Union[str, pint.Unit, None]], Optional
-        The expected units of the returned value(s), either as a single unit or as an iterable of units. The decorator
-        will attach these units to the output.
+    return_units : Union[Union[str, pint.Unit, None, False], List[Union[str, pint.Unit, None]], Optional
+        The expected units of the returned value(s), either as a single unit or as a list of units. The decorator
+        will attach these units to the variables returned from the function.
 
         A value of None indicates not to attach any units to that return value (suitable for flags and other
         non-data arguments). Passing False means that no return value is expected from the function at all,
@@ -73,7 +73,18 @@ def expects(*args_units, return_units=None, **kwargs_units):
     TODO: example where we check units of an optional weighted kwarg
     """
 
-    # TODO: Check args_units, kwargs_units, and return_units types
+    # Check types of args_units, kwargs_units, and return_units
+    all_units = list(args_units) + list(kwargs_units.values())
+    if isinstance(return_units, list):
+        all_units = all_units + return_units
+    elif return_units:
+        all_units = all_units + [return_units]
+    for a in all_units:
+        if not isinstance(a, (Unit, str)) and a is not None:
+            raise TypeError(
+                f"{a} is not a valid type for a unit, it is of type {type(a)}"
+            )
+
     # TODO: Check number of arguments line up
 
     def _expects_decorator(func):

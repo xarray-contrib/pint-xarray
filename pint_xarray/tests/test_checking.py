@@ -100,9 +100,15 @@ class TestExpects:
     def test_mixed_args_kwargs_return_values(self):
         raise NotImplementedError
 
-    @pytest.mark.xfail
-    def test_invalid_input_types(self):
-        raise NotImplementedError
+    @pytest.mark.parametrize(
+        "arg_units, return_units", [(True, None), ("seconds", 6), ("seconds", [6])]
+    )
+    def test_invalid_unit_types(self, arg_units, return_units):
+        with pytest.raises(TypeError):
+
+            @expects(arg_units, return_units=return_units)
+            def freq(period):
+                ...
 
     @pytest.mark.xfail
     def test_invalid_return_types(self):
