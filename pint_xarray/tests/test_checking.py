@@ -27,12 +27,26 @@ class TestExpects:
         assert not above_freezing(c_da)
 
     def test_single_kwarg(self):
-        @expects("meters", c="meters / second")
+        @expects("meters", c="meters / second", return_units="Hz")
         def freq(wavelength, c=None):
             if c is None:
-                c = ureg.speed_of_light
+                c = (1 * ureg.speed_of_light).to("meters / second").magnitude
 
             return c / wavelength
+
+        w_q = pint.Quantity(0.02, units="inches")
+        c_q = pint.Quantity(1e6, units="feet / second")
+        f_q = freq(w_q, c=c_q)
+        assert f_q.units == pint.Unit("hertz")
+        f_q = freq(w_q)
+        assert f_q.units == pint.Unit("hertz")
+
+        w_da = xr.DataArray(0.02).pint.quantify(units="inches")
+        c_da = xr.DataArray(1e6).pint.quantify(units="feet / second")
+        f_da = freq(w_da, c=c_da)
+        assert f_da.pint.units == pint.Unit("hertz")
+        f_da = freq(w_da)
+        assert f_da.pint.units == pint.Unit("hertz")
 
     def test_single_return_value(self):
         @expects("kg", "m / s^2", return_units="newtons")
@@ -41,13 +55,15 @@ class TestExpects:
 
         m_q = pint.Quantity(0.1, units="tons")
         a_q = pint.Quantity(10, units="feet / second^2")
+        expected_q = (m_q * a_q).to("newtons")
         result_q = second_law(m_q, a_q)
-        assert result_q.units == pint.Unit("newtons")
+        assert result_q == expected_q
 
         m_da = xr.DataArray(0.1).pint.quantify(units="tons")
         a_da = xr.DataArray(10).pint.quantify(units="feet / second^2")
+        expected_da = (m_da * a_da).pint.to("newtons")
         result_da = second_law(m_da, a_da)
-        assert result_da.pint.units == pint.Unit("newtons")
+        assert result_da == expected_da
 
     @pytest.mark.xfail
     def test_multiple_return_values(self):

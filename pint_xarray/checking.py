@@ -8,9 +8,11 @@ from .accessors import PintDataArrayAccessor  # noqa
 
 def expects(*args_units, return_units=None, **kwargs_units):
     """
-    Decorator which checks the inputs and outputs of the decorated function have certain units.
+    Decorator which ensures the inputs and outputs of the decorated function have certain units.
 
-    Arguments
+    Arguments to the decorated function are checked for the specified units, converting to those units if necessary, and
+    then stripped of their units before being passed into the undecorated function. Therefore the undecorated function
+    should expect unquantified DataArrays or numpy-like arrays, but with the values expressed in specific units.
 
     Note that the coordinates of input DataArrays are not checked, only the data.
     So if your decorated function uses coordinates and you wish to check their units,
