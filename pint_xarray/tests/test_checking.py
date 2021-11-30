@@ -127,10 +127,6 @@ class TestExpects:
         raise NotImplementedError
 
     @pytest.mark.xfail
-    def test_unexpected_return_value(self):
-        raise NotImplementedError
-
-    @pytest.mark.xfail
     def test_expected_return_value(self):
         raise NotImplementedError
 

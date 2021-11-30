@@ -30,15 +30,14 @@ def expects(*args_units, return_units=None, **kwargs_units):
         (or will attempt to convert the argument to these units), then will strip the units before passing the magnitude
         to the wrapped function.
 
-        A value of None indicates not to check that argument for units (suitable for flags
-        and other non-data arguments).
-    return_units : Union[Union[str, pint.Unit, None, False], List[Union[str, pint.Unit, None]], Optional
+        A value of None indicates not to check that argument for units (suitable for flags and other non-data
+        arguments).
+    return_units : Union[Union[str, pint.Unit, None], List[Union[str, pint.Unit, None]], Optional
         The expected units of the returned value(s), either as a single unit or as a list of units. The decorator
         will attach these units to the variables returned from the function.
 
         A value of None indicates not to attach any units to that return value (suitable for flags and other
-        non-data arguments). Passing False means that no return value is expected from the function at all,
-        and an error will be raised if a return value is found.
+        non-data results).
     kwargs_units : Dict[str, Union[str, pint.Unit, None]], Optional
         Unit to expect for each keyword argument given to func.
 
@@ -46,8 +45,8 @@ def expects(*args_units, return_units=None, **kwargs_units):
         (or will attempt to convert the argument to these units), then will strip the units before passing the magnitude
         to the wrapped function.
 
-        A value of None indicates not to check that argument for units (suitable for flags
-        and other non-data arguments).
+        A value of None indicates not to check that argument for units (suitable for flags and other non-data
+        arguments).
 
     Returns
     -------
@@ -104,11 +103,10 @@ def expects(*args_units, return_units=None, **kwargs_units):
             results = func(*converted_args, **converted_kwargs)
 
             if results is not None:
-                if return_units is False:
-                    raise ValueError(
-                        f"Did not expect function to return anything, but function returned {results}"
-                    )
-                elif return_units is not None:
+                if return_units is None:
+                    # ignore types and units of return values
+                    return results
+                else:
                     # TODO check something was actually returned
 
                     # TODO handle single return value vs tuple of return values
@@ -124,9 +122,6 @@ def expects(*args_units, return_units=None, **kwargs_units):
                     else:
                         converted_result = _attach_units(results, return_units)
                         return converted_result
-                else:
-                    # ignore types and units of return values
-                    return results
             else:
                 if return_units:
                     raise ValueError(
