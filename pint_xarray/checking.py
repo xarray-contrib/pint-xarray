@@ -20,7 +20,7 @@ def expects(*args_units, return_units=None, **kwargs_units):
 
     Parameters
     ----------
-    func: function
+    func : callable
         Function to decorate. which accepts zero or more xarray.DataArrays or numpy-like arrays as inputs,
         and may optionally return one or more xarray.DataArrays or numpy-like arrays.
     args_units : Union[str, pint.Unit, None]
