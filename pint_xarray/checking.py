@@ -92,10 +92,6 @@ def expects(*args_units, return_units=None, **kwargs_units):
         @functools.wraps(func)
         def _unit_checking_wrapper(*args, **kwargs):
 
-            # without this we get an UnboundLocalError but I have no idea why
-            # see https://stackoverflow.com/questions/5630409/
-            nonlocal return_units
-
             # check same number of arguments were passed as expected
             if len(args) != len(args_units):
                 raise TypeError(
@@ -127,18 +123,21 @@ def expects(*args_units, return_units=None, **kwargs_units):
                     # handle case of function returning only one result by promoting to 1-element tuple
                     if not isinstance(results, tuple):
                         results = (results,)
-                    if not isinstance(return_units, (tuple, list)):
-                        return_units = (return_units,)
+                    if isinstance(return_units, (tuple, list)):
+                        # avoid mutating return_units because that would change the variables' scope
+                        return_units_list = return_units
+                    else:
+                        return_units_list = [return_units]
 
                     # check same number of things were returned as expected
-                    if len(results) != len(return_units):
+                    if len(results) != len(return_units_list):
                         raise TypeError(
-                            f"{len(results)} return values were received, but {len(return_units)} "
+                            f"{len(results)} return values were received, but {len(return_units_list)} "
                             "return values were expected"
                         )
 
                     converted_results = []
-                    for return_unit, return_value in zip(return_units, results):
+                    for return_unit, return_value in zip(return_units_list, results):
                         converted_result = _attach_units(return_value, return_unit)
                         converted_results.append(converted_result)
 
