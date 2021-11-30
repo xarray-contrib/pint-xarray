@@ -3,6 +3,12 @@
 What's new
 ==========
 
+0.2.2 (unreleased)
+------------------
+
+- Added the :py:func:`pint_xarray.expects` decorator (:pull:`143`).
+  By `Tom Nicholas <https://github.com/TomNicholas>`_
+
 0.2.1 (26 Jul 2021)
 -------------------
 - allow special "no unit" values in :py:meth:`Dataset.pint.quantify` and
