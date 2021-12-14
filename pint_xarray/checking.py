@@ -158,18 +158,17 @@ def _check_or_convert_to_then_strip(obj, units):
     if units is None:
         # allow for passing through non-numerical arguments
         return obj
+    elif isinstance(obj, Quantity):
+        converted = obj.to(units)
+        return converted.magnitude
+    elif isinstance(obj, (DataArray, Dataset)):
+        converted = obj.pint.to(units)
+        return converted.pint.dequantify()
     else:
-        if isinstance(obj, Quantity):
-            converted = obj.to(units)
-            return converted.magnitude
-        elif isinstance(obj, (DataArray, Dataset)):
-            converted = obj.pint.to(units)
-            return converted.pint.dequantify()
-        else:
-            raise TypeError(
-                "Can only expect units for arguments of type xarray.DataArray or pint.Quantity,"
-                f"not {type(obj)}"
-            )
+        raise TypeError(
+            "Can only expect units for arguments of type xarray.DataArray,"
+            f" xarray.Dataset, or pint.Quantity, not {type(obj)}"
+        )
 
 
 def _attach_units(obj, units):
