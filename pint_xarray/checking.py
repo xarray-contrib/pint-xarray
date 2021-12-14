@@ -132,10 +132,13 @@ def expects(*args_units, return_units=None, **kwargs_units):
                     results_iterable, return_units_iterable
                 )
 
-                if len(converted_results) == 1:
-                    return tuple(converted_results)[0]
+                if isinstance(results, tuple):
+                    return converted_results
                 else:
-                    return tuple(converted_results)
+                    if len(converted_results) == 1:
+                        return converted_results[0]
+                    else:
+                        return converted_results
 
         return _unit_checking_wrapper
 
