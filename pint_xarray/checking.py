@@ -120,25 +120,19 @@ def expects(*args_units, return_units=None, **kwargs_units):
                     return results
                 else:
                     # handle case of function returning only one result by promoting to 1-element tuple
-                    if not isinstance(results, tuple):
-                        results = (results,)
-                    if isinstance(return_units, (tuple, list)):
-                        # avoid mutating return_units because that would change the variables' scope
-                        return_units_list = return_units
-                    else:
-                        return_units_list = [return_units]
+                    return_units_iterable = tuple(always_iterable(return_units))
+                    results_iterable = tuple(always_iterable(results))
 
                     # check same number of things were returned as expected
-                    if len(results) != len(return_units_list):
+                    if len(results_iterable) != len(return_units_iterable):
                         raise TypeError(
-                            f"{len(results)} return values were received, but {len(return_units_list)} "
+                            f"{len(results_iterable)} return values were received, but {len(return_units_iterable)} "
                             "return values were expected"
                         )
 
-                    converted_results = []
-                    for return_unit, return_value in zip(return_units_list, results):
-                        converted_result = _attach_units(return_value, return_unit)
-                        converted_results.append(converted_result)
+                    converted_results = _attach_multiple_units(
+                        results_iterable, return_units_iterable
+                    )
 
                     if len(converted_results) == 1:
                         return tuple(converted_results)[0]
@@ -184,3 +178,32 @@ def _attach_units(obj, units):
         return obj.pint.quantify(units)
     else:
         return Quantity(obj, units=units)
+
+
+def _attach_multiple_units(objects, units):
+    """Attaches list of units to list of objects elementwise"""
+    converted_objects = [_attach_units(obj, unit) for obj, unit in zip(objects, units)]
+    return converted_objects
+
+
+def always_iterable(obj, base_type=(str, bytes)):
+    """
+    If *obj* is iterable, return an iterator over its items,
+    If *obj* is not iterable, return a one-item iterable containing *obj*,
+    If *obj* is ``None``, return an empty iterable.
+    If *base_type* is set, objects for which ``isinstance(obj, base_type)``
+    returns ``True`` won't be considered iterable.
+
+    Copied from more_itertools.
+    """
+
+    if obj is None:
+        return iter(())
+
+    if (base_type is not None) and isinstance(obj, base_type):
+        return iter((obj,))
+
+    try:
+        return iter(obj)
+    except TypeError:
+        return iter((obj,))
