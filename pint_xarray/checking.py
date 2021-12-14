@@ -97,10 +97,10 @@ def expects(*args_units, return_units=None, **kwargs_units):
                     f"{len(args)} arguments were passed, but {len(args_units)} arguments were expected"
                 )
 
-            converted_args = []
-            for arg, arg_unit in zip(args, args_units):
-                converted_arg = _check_or_convert_to_then_strip(arg, arg_unit)
-                converted_args.append(converted_arg)
+            converted_args = [
+                _check_or_convert_to_then_strip(arg, arg_unit)
+                for arg, arg_unit in zip(args, args_units)
+            ]
 
             converted_kwargs = {
                 key: _check_or_convert_to_then_strip(val, kwargs_units.get(key, None)
