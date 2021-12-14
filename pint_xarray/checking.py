@@ -32,7 +32,7 @@ def expects(*args_units, return_units=None, **kwargs_units):
 
         A value of None indicates not to check that argument for units (suitable for flags and other non-data
         arguments).
-    return_units : unit-like or mapping of unit-like or list of unit-like or mapping of unit-like or None, optional
+   return_units : unit-like or mapping of hashable to unit-like or list of unit-like or list of mapping of hashable to unit-like, optional
         The expected units of the returned value(s), either as a single unit or as a list of units. The decorator
         will attach these units to the variables returned from the function.
 
