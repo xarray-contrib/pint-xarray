@@ -38,7 +38,7 @@ def expects(*args_units, return_units=None, **kwargs_units):
 
         A value of None indicates not to attach any units to that return value (suitable for flags and other
         non-data results).
-    kwargs_units : mapping of unit-like or None, Optional
+    kwargs_units : mapping of hashable to unit-like, optional
         Unit to expect for each keyword argument given to func.
 
         The decorator will first check that arguments passed to the decorated function possess these specific units
