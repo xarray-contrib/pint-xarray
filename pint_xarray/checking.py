@@ -102,10 +102,10 @@ def expects(*args_units, return_units=None, **kwargs_units):
                 converted_arg = _check_or_convert_to_then_strip(arg, arg_unit)
                 converted_args.append(converted_arg)
 
-            converted_kwargs = {}
-            for key, val in kwargs.items():
-                kwarg_unit = kwargs_units.get(key, None)
-                converted_kwargs[key] = _check_or_convert_to_then_strip(val, kwarg_unit)
+            converted_kwargs = {
+                key: _check_or_convert_to_then_strip(val, kwargs_units.get(key, None)
+                for key, val in kwargs.items()
+            }
 
             results = func(*converted_args, **converted_kwargs)
 
