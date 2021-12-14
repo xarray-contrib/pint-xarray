@@ -103,7 +103,7 @@ def expects(*args_units, return_units=None, **kwargs_units):
             ]
 
             converted_kwargs = {
-                key: _check_or_convert_to_then_strip(val, kwargs_units.get(key, None)
+                key: _check_or_convert_to_then_strip(val, kwargs_units.get(key, None))
                 for key, val in kwargs.items()
             }
 
