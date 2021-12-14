@@ -12,7 +12,7 @@ def expects(*args_units, return_units=None, **kwargs_units):
 
      Arguments to the decorated function are checked for the specified units, converting to those units if necessary, and
      then stripped of their units before being passed into the undecorated function. Therefore the undecorated function
-     should expect unquantified DataArrays or numpy-like arrays, but with the values expressed in specific units.
+     should expect unquantified DataArrays, Datasets, or numpy-like arrays, but with the values expressed in specific units.
 
      Note that the coordinates of input DataArrays are not checked, only the data.
      So if your decorated function uses coordinates and you wish to check their units,
@@ -118,8 +118,12 @@ def expects(*args_units, return_units=None, **kwargs_units):
                 )
             else:
                 # handle case of function returning only one result by promoting to 1-element tuple
-                return_units_iterable = tuple(always_iterable(return_units))
-                results_iterable = tuple(always_iterable(results))
+                return_units_iterable = tuple(
+                    always_iterable(return_units, base_type=(str, dict))
+                )
+                results_iterable = tuple(
+                    always_iterable(results, base_type=(str, Dataset))
+                )
 
                 # check same number of things were returned as expected
                 if len(results_iterable) != len(return_units_iterable):
@@ -174,7 +178,7 @@ def _check_or_convert_to_then_strip(obj, units):
 
 def _attach_units(obj, units):
     """Attaches units, but can also create pint.Quantity objects from numpy scalars"""
-    if isinstance(obj, DataArray):
+    if isinstance(obj, (DataArray, Dataset)):
         return obj.pint.quantify(units)
     else:
         return Quantity(obj, units=units)

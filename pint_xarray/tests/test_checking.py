@@ -146,7 +146,7 @@ class TestExpects:
         with pytest.raises(TypeError, match="function returned None"):
             freq(p)
 
-    def test_unit_dict(self):
+    def test_input_unit_dict(self):
         @expects({"m": "kg", "a": "m / s^2"}, return_units="newtons")
         def second_law(ds):
             return ds["m"] * ds["a"]
@@ -158,3 +158,18 @@ class TestExpects:
         expected_da = (m_da * a_da).pint.to("newtons")
         result_da = second_law(ds)
         assert result_da == expected_da
+
+    def test_return_dataset(self):
+        @expects({"m": "kg", "a": "m / s^2"}, return_units=[{"f": "newtons"}])
+        def second_law(ds):
+            f_da = ds["m"] * ds["a"]
+            return xr.Dataset({"f": f_da})
+
+        m_da = xr.DataArray(0.1).pint.quantify(units="tons")
+        a_da = xr.DataArray(10).pint.quantify(units="feet / second^2")
+        ds = xr.Dataset({"m": m_da, "a": a_da})
+
+        expected_da = m_da * a_da
+        expected_ds = xr.Dataset({"f": expected_da}).pint.to({"f": "newtons"})
+        result_ds = second_law(ds)
+        assert result_ds == expected_ds
