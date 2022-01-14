@@ -1,4 +1,6 @@
 import functools
+import inspect
+from inspect import Parameter
 
 from pint import Quantity, Unit
 from xarray import DataArray, Dataset
@@ -69,10 +71,9 @@ def expects(*args_units, return_units=None, **kwargs_units):
     >>> @expects("deg C")
     ... def above_freezing(temp):
     ...     return temp > 0
-
-
-    TODO: example where we check units of an optional weighted kwarg
     """
+
+    # TODO: example where we check units of an optional weighted kwarg
 
     # Check types of args_units, kwargs_units, and return_units
     all_units = list(args_units) + list(kwargs_units.values())
@@ -88,14 +89,29 @@ def expects(*args_units, return_units=None, **kwargs_units):
             _check_valid_unit_type(a)
 
     def _expects_decorator(func):
+
+        # check same number of arguments were passed as expected
+        sig = inspect.signature(func)
+        positional_args = (
+            Parameter.POSITIONAL_ONLY,
+            Parameter.VAR_POSITIONAL,
+            Parameter.POSITIONAL_OR_KEYWORD,
+        )
+        n_args = len(
+            [
+                param
+                for param in sig.parameters.values()
+                if param.kind in positional_args and param.default is param.empty
+            ]
+        )
+        if n_args != len(args_units):
+            raise TypeError(
+                f"The `expects` decorator used expects {len(args_units)} arguments, but a function expecting {n_args} "
+                f"arguments was wrapped"
+            )
+
         @functools.wraps(func)
         def _unit_checking_wrapper(*args, **kwargs):
-
-            # check same number of arguments were passed as expected
-            if len(args) != len(args_units):
-                raise TypeError(
-                    f"{len(args)} arguments were passed, but {len(args_units)} arguments were expected"
-                )
 
             converted_args = [
                 _check_or_convert_to_then_strip(arg, arg_unit)

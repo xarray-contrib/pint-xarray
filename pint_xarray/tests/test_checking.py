@@ -115,15 +115,14 @@ class TestExpects:
         raise NotImplementedError
 
     def test_wrong_number_of_args(self):
-        @expects("kg", return_units="newtons")
-        def second_law(m, a):
-            return m * a
+        with pytest.raises(
+            TypeError,
+            match="expects 1 arguments, but a function expecting 2 arguments was wrapped",
+        ):
 
-        m_q = pint.Quantity(0.1, units="tons")
-        a_q = pint.Quantity(10, units="feet / second^2")
-
-        with pytest.raises(TypeError, match="1 arguments were expected"):
-            second_law(m_q, a_q)
+            @expects("kg", return_units="newtons")
+            def second_law(m, a):
+                return m * a
 
     def test_wrong_number_of_return_values(self):
         @expects("kg", "m / s^2", return_units=["newtons", "joules"])
