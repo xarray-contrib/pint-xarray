@@ -66,7 +66,7 @@ DataArray
    xarray.DataArray.pint.interpolate_na
 
 Checking
--------
+--------
 
 .. autosummary::
    :toctree: generated/
