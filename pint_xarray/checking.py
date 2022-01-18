@@ -154,11 +154,10 @@ def expects(*args_units, return_units=None, **kwargs_units):
 
                 if isinstance(results, tuple):
                     return converted_results
+                elif len(converted_results) == 1:
+                    return converted_results[0]
                 else:
-                    if len(converted_results) == 1:
-                        return converted_results[0]
-                    else:
-                        return converted_results
+                    return converted_results
 
         return _unit_checking_wrapper
 
