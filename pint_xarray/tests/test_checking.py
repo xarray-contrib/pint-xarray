@@ -111,10 +111,6 @@ class TestExpects:
             freq(q)
 
     @pytest.mark.xfail
-    def test_invalid_return_types(self):
-        raise NotImplementedError
-
-    @pytest.mark.xfail
     def test_unquantified_arrays(self):
         raise NotImplementedError
 
