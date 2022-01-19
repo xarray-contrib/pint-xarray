@@ -2,7 +2,7 @@ import functools
 import inspect
 from inspect import Parameter
 
-from pint import Quantity, Unit
+from pint import Quantity
 from xarray import DataArray, Dataset
 
 from .accessors import PintDataArrayAccessor  # noqa
@@ -93,19 +93,6 @@ def expects(*args_units, return_units=None, **kwargs_units):
 
     # TODO: example where we check units of an optional weighted kwarg
 
-    # Check types of args_units, kwargs_units, and return_units
-    all_units = list(args_units) + list(kwargs_units.values())
-    if isinstance(return_units, list):
-        all_units = all_units + return_units
-    elif return_units:
-        all_units = all_units + [return_units]
-    for a in all_units:
-        if isinstance(a, dict):
-            for u in a.values():
-                _check_valid_unit_type(u)
-        else:
-            _check_valid_unit_type(a)
-
     def _expects_decorator(func):
 
         # check same number of arguments were passed as expected
@@ -180,11 +167,6 @@ def expects(*args_units, return_units=None, **kwargs_units):
         return _unit_checking_wrapper
 
     return _expects_decorator
-
-
-def _check_valid_unit_type(a):
-    if not isinstance(a, (Unit, str)) and a is not None:
-        raise TypeError(f"{a} is not a valid type for a unit, it is of type {type(a)}")
 
 
 def _check_or_convert_to_then_strip(obj, units):

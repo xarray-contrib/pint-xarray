@@ -97,14 +97,18 @@ class TestExpects:
         finite_difference(t, "centered")
 
     @pytest.mark.parametrize(
-        "arg_units, return_units", [(True, None), ("seconds", 6), ("seconds", [6])]
+        "arg_units, return_units",
+        [("nonsense", "Hertz"), ("seconds", 6), ("seconds", [6])],
     )
     def test_invalid_unit_types(self, arg_units, return_units):
-        with pytest.raises(TypeError):
+        @expects(arg_units, return_units=return_units)
+        def freq(period):
+            return 1 / period
 
-            @expects(arg_units, return_units=return_units)
-            def freq(period):
-                ...
+        q = pint.Quantity(1.0, units="seconds")
+
+        with pytest.raises((TypeError, pint.errors.UndefinedUnitError)):
+            freq(q)
 
     @pytest.mark.xfail
     def test_invalid_return_types(self):
