@@ -110,9 +110,18 @@ class TestExpects:
         with pytest.raises((TypeError, pint.errors.UndefinedUnitError)):
             freq(q)
 
-    @pytest.mark.xfail
     def test_unquantified_arrays(self):
-        raise NotImplementedError
+        @expects("seconds", return_units="Hertz")
+        def freq(period):
+            return 1 / period
+
+        da = xr.DataArray(10)
+
+        with pytest.raises(
+            ValueError,
+            match="cannot convert a non-quantity",
+        ):
+            freq(da)
 
     def test_wrong_number_of_args(self):
         with pytest.raises(
