@@ -89,9 +89,18 @@ def expects(*args_units, return_units=None, **kwargs_units):
     >>> @expects("deg C")
     ... def above_freezing(temp):
     ...     return temp > 0
-    """
 
-    # TODO: example where we check units of an optional weighted kwarg
+    Decorating a function which allows any dimensions for the array, but also
+    accepts an optional `weights` keyword argument, which must be dimensionless.
+
+    >>> @expects(None, weights="dimensionless")
+    ... def mean(da, weights=None):
+    ...     if weights:
+    ...         return da.weighted(weights=weights).mean()
+    ...     else:
+    ...         return da.mean()
+
+    """
 
     def _expects_decorator(func):
 

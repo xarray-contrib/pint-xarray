@@ -48,6 +48,21 @@ class TestExpects:
         f_da = freq(w_da)
         assert f_da.pint.units == pint.Unit("hertz")
 
+    def test_weighted_kwarg(self):
+        @expects(None, weights="dimensionless")
+        def mean(da, weights=None):
+            if weights is not None:
+                return da.weighted(weights=weights).mean()
+            else:
+                return da.mean()
+
+        d = xr.DataArray([1, 2, 3]).pint.quantify(units="metres")
+        w = xr.DataArray([0.1, 0.7, 0.2]).pint.quantify(units="dimensionless")
+
+        result = mean(d, weights=w)
+        expected = xr.DataArray(0.21).pint.quantify("metres")
+        assert result.pint.units == expected.pint.units
+
     def test_single_return_value(self):
         @expects("kg", "m / s^2", return_units="newtons")
         def second_law(m, a):
