@@ -1,3 +1,6 @@
+ci:
+  autoupdate_schedule: weekly
+
 # https://pre-commit.com/
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -8,7 +11,7 @@ repos:
       - id: check-docstring-first
       - id: check-yaml
   # isort should run before black as black sometimes tweaks the isort output
-  - repo: https://github.com/timothycrosley/isort
+  - repo: https://github.com/pycqa/isort
     rev: 5.10.1
     hooks:
       - id: isort
@@ -17,11 +20,12 @@ repos:
     rev: 22.1.0
     hooks:
       - id: black
+      - id: black-jupyter
   - repo: https://github.com/keewis/blackdoc
     rev: v0.3.4
     hooks:
       - id: blackdoc
-  - repo: https://gitlab.com/pycqa/flake8
-    rev: 3.9.2
+  - repo: https://github.com/pycqa/flake8
+    rev: 4.0.1
     hooks:
       - id: flake8
