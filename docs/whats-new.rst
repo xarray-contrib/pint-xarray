@@ -2,6 +2,12 @@
 
 What's new
 ==========
+0.3 (*unreleased*)
+------------------
+- drop support for python 3.7 (:pull:`153`)
+  By `Justus Magin <https://github.com/keewis>`_.
+- add support for python 3.10 (:pull:`155`)
+  By `Justus Magin <https://github.com/keewis>`_.
 
 0.2.2 (unreleased)
 ------------------
