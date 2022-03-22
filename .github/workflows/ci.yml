@@ -8,6 +8,10 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   detect-skip-ci-trigger:
     name: "Detect CI Trigger: [skip-ci]"
@@ -43,11 +47,6 @@ jobs:
         python-version: ["3.8", "3.9", "3.10"]
 
     steps:
-    - name: cancel previous runs
-      uses: styfle/cancel-workflow-action@0.6.0
-      with:
-        access_token: ${{ github.token }}
-
     - name: checkout the repository
       uses: actions/checkout@v2
       with:

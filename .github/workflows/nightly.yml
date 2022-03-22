@@ -10,6 +10,10 @@ on:
     - cron: "0 0 * * *"  # Daily "At 00:00" UTC
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   detect-test-upstream-trigger:
     name: "Detect CI Trigger: [test-upstream]"
@@ -49,11 +53,6 @@ jobs:
       artifacts_availability: ${{ steps.status.outputs.ARTIFACTS_AVAILABLE }}
 
     steps:
-    - name: cancel previous runs
-      uses: styfle/cancel-workflow-action@0.6.0
-      with:
-        access_token: ${{ github.token }}
-
     - name: checkout the repository
       uses: actions/checkout@v2
       with:
