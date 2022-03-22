@@ -90,10 +90,10 @@ jobs:
         python -m pytest --cov=pint_xarray --cov-report=xml
 
     - name: Upload code coverage to Codecov
-      uses: codecov/codecov-action@v1
+      uses: codecov/codecov-action@v2.1.0
       with:
         file: ./coverage.xml
         flags: unittests
-        env_vars: PYTHON_VERSION
+        env_vars: RUNNER_OS,PYTHON_VERSION
         name: codecov-umbrella
         fail_ci_if_error: false
