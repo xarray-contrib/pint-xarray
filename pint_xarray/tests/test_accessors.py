@@ -1081,18 +1081,6 @@ def test_chunk(obj):
             id="Dataset-incompatible units",
         ),
         pytest.param(
-            xr.Dataset(
-                {
-                    "a": ("x", [10, 20, 30], {"units": unit_registry.Unit("dm")}),
-                    "b": ("y", [60, 120], {"units": unit_registry.Unit("s")}),
-                }
-            ),
-            {"a": Quantity([1, 3], "s"), "b": Quantity([1], "m")},
-            None,
-            ValueError,
-            id="Dataset-incompatible units-invalid dims",
-        ),
-        pytest.param(
             xr.DataArray(
                 [[0, 1], [2, 3], [4, 5]],
                 dims=("x", "y"),
@@ -1147,20 +1135,6 @@ def test_chunk(obj):
             None,
             ValueError,
             id="DataArray-incompatible units",
-        ),
-        pytest.param(
-            xr.DataArray(
-                [[0, 1], [2, 3], [4, 5]],
-                dims=("x", "y"),
-                coords={
-                    "x": ("x", [10, 20, 30], {"units": unit_registry.Unit("dm")}),
-                    "y": ("y", [60, 120], {"units": unit_registry.Unit("s")}),
-                },
-            ),
-            {"x": Quantity([10, 30], "s"), "y": Quantity([60], "m")},
-            None,
-            ValueError,
-            id="DataArray-incompatible units-invalid dims",
         ),
     ),
 )
@@ -1374,18 +1348,6 @@ def test_reindex_like(obj, other, expected, error):
         pytest.param(
             xr.Dataset(
                 {
-                    "a": ("x", [10, 20, 30], {"units": unit_registry.Unit("dm")}),
-                    "b": ("y", [60, 120], {"units": unit_registry.Unit("s")}),
-                }
-            ),
-            {"a": Quantity([1, 3], "s"), "b": Quantity([1], "m")},
-            None,
-            ValueError,
-            id="Dataset-incompatible units-invalid dims",
-        ),
-        pytest.param(
-            xr.Dataset(
-                {
                     "a": (("x", "y"), Quantity([[0, 1], [2, 3], [4, 5]], "kg")),
                     "x": [10, 20, 30],
                     "y": [60, 120],
@@ -1484,20 +1446,6 @@ def test_reindex_like(obj, other, expected, error):
             ),
             None,
             id="DataArray-data units",
-        ),
-        pytest.param(
-            xr.DataArray(
-                [[0, 1], [2, 3], [4, 5]],
-                dims=("x", "y"),
-                coords={
-                    "x": ("x", [10, 20, 30], {"units": unit_registry.Unit("dm")}),
-                    "y": ("y", [60, 120], {"units": unit_registry.Unit("s")}),
-                },
-            ),
-            {"x": Quantity([10, 30], "s"), "y": Quantity([60], "m")},
-            None,
-            ValueError,
-            id="DataArray-incompatible units-invalid dims",
         ),
     ),
 )
