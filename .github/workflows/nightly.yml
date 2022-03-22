@@ -22,7 +22,7 @@ jobs:
     outputs:
       triggered: ${{ steps.detect-trigger.outputs.trigger-found }}
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         fetch-depth: 2
     - uses: keewis/ci-trigger@v1.1
@@ -54,7 +54,7 @@ jobs:
 
     steps:
     - name: checkout the repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         # need to fetch all tags to get a correct version
         fetch-depth: 0  # fetch all branches and tags
@@ -115,7 +115,7 @@ jobs:
       && needs.upstream-dev.outputs.artifacts_availability == 'true'
     steps:
     - name: checkout the repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: setup python
       uses: actions/setup-python@v2
       with:
