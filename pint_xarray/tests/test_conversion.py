@@ -9,7 +9,6 @@ from .utils import (
     assert_array_equal,
     assert_array_units_equal,
     assert_identical,
-    assert_indexer_equal,
     assert_indexer_units_equal,
     assert_indexers_equal,
 )
@@ -671,8 +670,8 @@ class TestIndexerFunctions:
                 conversion.convert_indexer_units(indexers, units)
         else:
             actual = conversion.convert_indexer_units(indexers, units)
-            assert_indexer_equal(actual["x"], expected["x"])
-            assert_indexer_units_equal(actual["x"], expected["x"])
+            assert_indexers_equal(actual, expected)
+            assert_indexer_units_equal(actual, expected)
 
     @pytest.mark.parametrize(
         ["indexers", "expected"],

@@ -160,10 +160,9 @@ class DatasetLocIndexer:
             raise NotImplementedError("pandas-style indexing is not supported, yet")
 
         dims = self.ds.dims
+        indexer_units = conversion.extract_indexer_units(indexers)
         indexer_units = {
-            name: conversion.extract_indexer_units(indexer)
-            for name, indexer in indexers.items()
-            if name in dims
+            name: indexer for name, indexer in indexer_units.items() if name in dims
         }
 
         # convert the indexes to the indexer's units
@@ -188,10 +187,9 @@ class DataArrayLocIndexer:
             raise NotImplementedError("pandas-style indexing is not supported, yet")
 
         dims = self.da.dims
+        indexer_units = conversion.extract_indexer_units(indexers)
         indexer_units = {
-            name: conversion.extract_indexer_units(indexer)
-            for name, indexer in indexers.items()
-            if name in dims
+            name: indexer for name, indexer in indexer_units.items() if name in dims
         }
 
         # convert the indexes to the indexer's units
@@ -610,10 +608,9 @@ class PintDataArrayAccessor:
         indexers = either_dict_or_kwargs(indexers, indexers_kwargs, "reindex")
 
         dims = self.da.dims
+        indexer_units = conversion.extract_indexer_units(indexers)
         indexer_units = {
-            name: conversion.extract_indexer_units(indexer)
-            for name, indexer in indexers.items()
-            if name in dims
+            name: indexer for name, indexer in indexer_units.items() if name in dims
         }
 
         # TODO: handle tolerance
@@ -760,10 +757,9 @@ class PintDataArrayAccessor:
         indexers = either_dict_or_kwargs(indexers, indexers_kwargs, "sel")
 
         dims = self.da.dims
+        indexer_units = conversion.extract_indexer_units(indexers)
         indexer_units = {
-            name: conversion.extract_indexer_units(indexer)
-            for name, indexer in indexers.items()
-            if name in dims
+            name: indexer for name, indexer in indexer_units.items() if name in dims
         }
 
         # TODO: handle tolerance
@@ -1321,10 +1317,9 @@ class PintDatasetAccessor:
         indexers = either_dict_or_kwargs(indexers, indexers_kwargs, "reindex")
 
         dims = self.ds.dims
+        indexer_units = conversion.extract_indexer_units(indexers)
         indexer_units = {
-            name: conversion.extract_indexer_units(indexer)
-            for name, indexer in indexers.items()
-            if name in dims
+            name: indexer for name, indexer in indexer_units.items() if name in dims
         }
 
         # TODO: handle tolerance
@@ -1401,10 +1396,9 @@ class PintDatasetAccessor:
         indexers = either_dict_or_kwargs(coords, coords_kwargs, "interp")
 
         dims = self.ds.dims
+        indexer_units = conversion.extract_indexer_units(indexers)
         indexer_units = {
-            name: conversion.extract_indexer_units(indexer)
-            for name, indexer in indexers.items()
-            if name in dims
+            name: indexer for name, indexer in indexer_units.items() if name in dims
         }
 
         # convert the indexes to the indexer's units
@@ -1471,10 +1465,9 @@ class PintDatasetAccessor:
         indexers = either_dict_or_kwargs(indexers, indexers_kwargs, "sel")
 
         dims = self.ds.dims
+        indexer_units = conversion.extract_indexer_units(indexers)
         indexer_units = {
-            name: conversion.extract_indexer_units(indexer)
-            for name, indexer in indexers.items()
-            if name in dims
+            name: indexer for name, indexer in indexer_units.items() if name in dims
         }
 
         # TODO: handle tolerance
