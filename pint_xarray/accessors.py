@@ -687,10 +687,9 @@ class PintDataArrayAccessor:
         indexers = either_dict_or_kwargs(coords, coords_kwargs, "interp")
 
         dims = self.da.dims
+        indexer_units = conversion.extract_indexer_units(indexers)
         indexer_units = {
-            name: conversion.extract_indexer_units(indexer)
-            for name, indexer in indexers.items()
-            if name in dims
+            name: indexer for name, indexer in indexer_units.items() if name in dims
         }
 
         # convert the indexes to the indexer's units
