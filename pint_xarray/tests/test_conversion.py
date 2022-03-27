@@ -675,57 +675,65 @@ class TestIndexerFunctions:
             assert_indexer_units_equal(actual["x"], expected["x"])
 
     @pytest.mark.parametrize(
-        ["indexer", "expected"],
+        ["indexers", "expected"],
         (
-            pytest.param(1, None, id="scalar-no units"),
-            pytest.param(Quantity(1, "m"), Unit("m"), id="scalar-units"),
-            pytest.param(np.array([1, 2]), None, id="array-no units"),
-            pytest.param(Quantity([1, 2], "s"), Unit("s"), id="array-units"),
-            pytest.param(Variable("x", [1, 2]), None, id="Variable-no units"),
+            pytest.param({"x": 1}, {"x": None}, id="scalar-no units"),
+            pytest.param({"x": Quantity(1, "m")}, {"x": Unit("m")}, id="scalar-units"),
+            pytest.param({"x": np.array([1, 2])}, {"x": None}, id="array-no units"),
             pytest.param(
-                Variable("x", Quantity([1, 2], "m")), Unit("m"), id="Variable-units"
+                {"x": Quantity([1, 2], "s")}, {"x": Unit("s")}, id="array-units"
             ),
-            pytest.param(DataArray([1, 2], dims="x"), None, id="DataArray-no units"),
             pytest.param(
-                DataArray(Quantity([1, 2], "s"), dims="x"),
-                Unit("s"),
+                {"x": Variable("x", [1, 2])}, {"x": None}, id="Variable-no units"
+            ),
+            pytest.param(
+                {"x": Variable("x", Quantity([1, 2], "m"))},
+                {"x": Unit("m")},
+                id="Variable-units",
+            ),
+            pytest.param(
+                {"x": DataArray([1, 2], dims="x")}, {"x": None}, id="DataArray-no units"
+            ),
+            pytest.param(
+                {"x": DataArray(Quantity([1, 2], "s"), dims="x")},
+                {"x": Unit("s")},
                 id="DataArray-units",
             ),
-            pytest.param(slice(None), None, id="empty slice-no units"),
-            pytest.param(slice(1, None), None, id="slice-no units"),
+            pytest.param({"x": slice(None)}, {"x": None}, id="empty slice-no units"),
+            pytest.param({"x": slice(1, None)}, {"x": None}, id="slice-no units"),
             pytest.param(
-                slice(Quantity(1, "m"), Quantity(2, "m")),
-                Unit("m"),
+                {"x": slice(Quantity(1, "m"), Quantity(2, "m"))},
+                {"x": Unit("m")},
                 id="slice-identical units",
             ),
             pytest.param(
-                slice(Quantity(1, "m"), Quantity(2000, "mm")),
-                Unit("m"),
+                {"x": slice(Quantity(1, "m"), Quantity(2000, "mm"))},
+                {"x": Unit("m")},
                 id="slice-compatible units",
             ),
             pytest.param(
-                slice(Quantity(1, "m"), Quantity(2, "ms")),
+                {"x": slice(Quantity(1, "m"), Quantity(2, "ms"))},
                 ValueError,
                 id="slice-incompatible units",
             ),
             pytest.param(
-                slice(1, Quantity(2, "ms")),
+                {"x": slice(1, Quantity(2, "ms"))},
                 ValueError,
                 id="slice-incompatible units-mixed",
             ),
             pytest.param(
-                slice(1, Quantity(2, "rad")),
-                Unit("rad"),
+                {"x": slice(1, Quantity(2, "rad"))},
+                {"x": Unit("rad")},
                 id="slice-incompatible units-mixed-dimensionless",
             ),
         ),
     )
-    def test_extract_indexer_units(self, indexer, expected):
-        if expected is not None and not isinstance(expected, Unit):
+    def test_extract_indexer_units(self, indexers, expected):
+        if isinstance(expected, type) and issubclass(expected, Exception):
             with pytest.raises(expected):
-                conversion.extract_indexer_units(indexer)
+                conversion.extract_indexer_units(indexers)
         else:
-            actual = conversion.extract_indexer_units(indexer)
+            actual = conversion.extract_indexer_units(indexers)
             assert actual == expected
 
     @pytest.mark.parametrize(

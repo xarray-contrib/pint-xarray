@@ -381,13 +381,16 @@ def convert_indexer_units(indexers, units):
     return converted
 
 
-def extract_indexer_units(indexer):
-    if isinstance(indexer, slice):
-        return slice_extract_units(indexer)
-    elif isinstance(indexer, (DataArray, Variable)):
-        return array_extract_units(indexer.data)
-    else:
-        return array_extract_units(indexer)
+def extract_indexer_units(indexers):
+    def extract(indexer):
+        if isinstance(indexer, slice):
+            return slice_extract_units(indexer)
+        elif isinstance(indexer, (DataArray, Variable)):
+            return array_extract_units(indexer.data)
+        else:
+            return array_extract_units(indexer)
+
+    return {name: extract(indexer) for name, indexer in indexers.items()}
 
 
 def strip_indexer_units(indexers):
