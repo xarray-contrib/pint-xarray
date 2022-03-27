@@ -1,3 +1,5 @@
+from textwrap import indent
+
 import numpy as np
 import pint
 import pytest
@@ -46,6 +48,36 @@ def strip_quantity(q):
         return q.magnitude
     except AttributeError:
         return q
+
+
+def assert_indexers_equal(first, second):
+    __tracebackhide__ = True
+    # same keys
+    assert first.keys() == second.keys(), "different keys"
+
+    errors = {}
+    for name in first:
+        first_value = first[name]
+        second_value = second[name]
+
+        try:
+            if isinstance(first_value, DataArray):
+                assert_identical(first_value, second_value)
+            else:
+                assert_array_equal(first_value, second_value)
+        except AssertionError as e:
+            errors[name] = e
+
+    if errors:
+        message = "\n".join(
+            ["indexers are not equal:"]
+            + [
+                f" - {name}:\n{indent(str(error), ' ' * 4)}"
+                for name, error in errors.items()
+            ]
+        )
+
+        raise AssertionError(message)
 
 
 class TestArrayFunctions:
