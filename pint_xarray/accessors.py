@@ -173,10 +173,7 @@ class DatasetLocIndexer:
             raise KeyError(*e.args) from e
 
         # index
-        stripped_indexers = {
-            name: conversion.strip_indexer_units(indexer)
-            for name, indexer in indexers.items()
-        }
+        stripped_indexers = conversion.strip_indexer_units(indexers)
         return converted.loc[stripped_indexers]
 
 
@@ -204,10 +201,7 @@ class DataArrayLocIndexer:
             raise KeyError(*e.args) from e
 
         # index
-        stripped_indexers = {
-            name: conversion.strip_indexer_units(indexer)
-            for name, indexer in indexers.items()
-        }
+        stripped_indexers = conversion.strip_indexer_units(indexers)
         return converted.loc[stripped_indexers]
 
     def __setitem__(self, indexers, values):
@@ -227,10 +221,7 @@ class DataArrayLocIndexer:
             raise KeyError(*e.args) from e
 
         # index
-        stripped_indexers = {
-            name: conversion.strip_indexer_units(indexer)
-            for name, indexer in converted.items()
-        }
+        stripped_indexers = conversion.strip_indexer_units(converted)
         self.da.loc[stripped_indexers] = values
 
 
@@ -632,10 +623,7 @@ class PintDataArrayAccessor:
         converted = conversion.convert_units(self.da, indexer_units)
 
         # index
-        stripped_indexers = {
-            name: conversion.strip_indexer_units(indexer)
-            for name, indexer in indexers.items()
-        }
+        stripped_indexers = conversion.strip_indexer_units(indexers)
         indexed = converted.reindex(
             stripped_indexers,
             method=method,
@@ -714,10 +702,7 @@ class PintDataArrayAccessor:
         stripped = conversion.strip_units(converted)
 
         # index
-        stripped_indexers = {
-            name: conversion.strip_indexer_units(indexer)
-            for name, indexer in indexers.items()
-        }
+        stripped_indexers = conversion.strip_indexer_units(indexers)
         interpolated = stripped.interp(
             stripped_indexers,
             method=method,
@@ -790,10 +775,7 @@ class PintDataArrayAccessor:
             raise KeyError(*e.args) from e
 
         # index
-        stripped_indexers = {
-            name: conversion.strip_indexer_units(indexer)
-            for name, indexer in indexers.items()
-        }
+        stripped_indexers = conversion.strip_indexer_units(indexers)
         indexed = converted.sel(
             stripped_indexers,
             method=method,
@@ -843,10 +825,7 @@ class PintDataArrayAccessor:
             raise KeyError(*e.args) from e
 
         # index
-        stripped_indexers = {
-            name: conversion.strip_indexer_units(indexer)
-            for name, indexer in converted_indexers.items()
-        }
+        stripped_indexers = conversion.strip_indexer_units(converted_indexers)
         indexed = self.da.drop_sel(
             stripped_indexers,
             errors=errors,
@@ -1355,10 +1334,7 @@ class PintDatasetAccessor:
         converted = conversion.convert_units(self.ds, indexer_units)
 
         # index
-        stripped_indexers = {
-            name: conversion.strip_indexer_units(indexer)
-            for name, indexer in indexers.items()
-        }
+        stripped_indexers = conversion.strip_indexer_units(indexers)
         indexed = converted.reindex(
             stripped_indexers,
             method=method,
@@ -1437,10 +1413,7 @@ class PintDatasetAccessor:
         stripped = conversion.strip_units(converted)
 
         # index
-        stripped_indexers = {
-            name: conversion.strip_indexer_units(indexer)
-            for name, indexer in indexers.items()
-        }
+        stripped_indexers = conversion.strip_indexer_units(indexers)
         interpolated = stripped.interp(
             stripped_indexers,
             method=method,
@@ -1513,10 +1486,7 @@ class PintDatasetAccessor:
             raise KeyError(*e.args) from e
 
         # index
-        stripped_indexers = {
-            name: conversion.strip_indexer_units(indexer)
-            for name, indexer in indexers.items()
-        }
+        stripped_indexers = conversion.strip_indexer_units(indexers)
         indexed = converted.sel(
             stripped_indexers,
             method=method,
@@ -1568,10 +1538,7 @@ class PintDatasetAccessor:
             raise KeyError(*e.args) from e
 
         # index
-        stripped_indexers = {
-            name: conversion.strip_indexer_units(indexer)
-            for name, indexer in converted_indexers.items()
-        }
+        stripped_indexers = conversion.strip_indexer_units(converted_indexers)
         indexed = self.ds.drop_sel(
             stripped_indexers,
             errors=errors,

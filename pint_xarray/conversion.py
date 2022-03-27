@@ -390,16 +390,19 @@ def extract_indexer_units(indexer):
         return array_extract_units(indexer)
 
 
-def strip_indexer_units(indexer):
-    if isinstance(indexer, slice):
-        return slice(
-            array_strip_units(indexer.start),
-            array_strip_units(indexer.stop),
-            array_strip_units(indexer.step),
-        )
-    elif isinstance(indexer, DataArray):
-        return strip_units(indexer)
-    elif isinstance(indexer, Variable):
-        return strip_units_variable(indexer)
-    else:
-        return array_strip_units(indexer)
+def strip_indexer_units(indexers):
+    def strip(indexer):
+        if isinstance(indexer, slice):
+            return slice(
+                array_strip_units(indexer.start),
+                array_strip_units(indexer.stop),
+                array_strip_units(indexer.step),
+            )
+        elif isinstance(indexer, DataArray):
+            return strip_units(indexer)
+        elif isinstance(indexer, Variable):
+            return strip_units_variable(indexer)
+        else:
+            return array_strip_units(indexer)
+
+    return {name: strip(indexer) for name, indexer in indexers.items()}
