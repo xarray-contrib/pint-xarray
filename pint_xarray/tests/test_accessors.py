@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import pint
 import pytest
 import xarray as xr
@@ -173,6 +174,17 @@ class TestDequantifyDataArray:
         quantified = orig.pint.quantify()
         result = quantified.pint.dequantify()
         assert_equal(result, orig)
+
+    def test_multiindex(self):
+        mindex = pd.MultiIndex.from_product([["a", "b"], [1, 2]], names=("lat", "lon"))
+
+        da = xr.DataArray(
+            np.arange(len(mindex)), dims="multi", coords={"multi": mindex}
+        )
+        result = da.pint.dequantify()
+
+        xr.testing.assert_identical(da, result)
+        assert isinstance(result.indexes["multi"], pd.MultiIndex)
 
 
 class TestPropertiesDataArray:
