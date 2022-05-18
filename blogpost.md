@@ -61,66 +61,67 @@ You also immediately get the key benefits of pint:
 
 1) Units are propagated through arithmetic, and new quantities are built using the units of the inputs:
 
-```python
-distance = xr.DataArray(10).pint.quantify("metres")
-time = xr.DataArray(4).pint.quantify("seconds")
-
-distance / time
-```
-```
-Out: 
-<xarray.DataArray ()>
-<Quantity(2.5, 'meter / second')>
-```
+    ```python
+    distance = xr.DataArray(10).pint.quantify("metres")
+    time = xr.DataArray(4).pint.quantify("seconds")
+    
+    distance / time
+    ```
+    ```
+    Out: 
+    <xarray.DataArray ()>
+    <Quantity(2.5, 'meter / second')>
+    ```
 
 2) Dimensionally inconsistent units are caught automatically:
 
-```python
-apples = xr.DataArray(10).pint.quantify("kg")
-oranges = xr.DataArray(200).pint.quantify("cm^3")
-
-apples + oranges
-```
-```
-Out: 
-DimensionalityError: Cannot convert from 'kilogram' ([mass]) to 'centimeter ** 3' ([length] ** 3)
-```
+    ```python
+    apples = xr.DataArray(10).pint.quantify("kg")
+    oranges = xr.DataArray(200).pint.quantify("cm^3")
+    
+    apples + oranges
+    ```
+    ```
+    Out: 
+    DimensionalityError: Cannot convert from 'kilogram' ([mass]) to 'centimeter ** 3' ([length] ** 3)
+    ```
 
 3) Unit conversions become simple:
 
-```python
-walk = xr.DataArray(500).pint.quantify('miles')
+    ```python
+    walk = xr.DataArray(500).pint.quantify('miles')
+    
+    walk.pint.to('parsecs')
+    ```
+    ```
+    Out:
+    <xarray.DataArray ()>
+    <Quantity(2.6077643524162074e-11, 'parsec')>
+    ```
 
-walk.pint.to('parsecs')
-```
-```
-Out:
-<xarray.DataArray ()>
-<Quantity(2.6077643524162074e-11, 'parsec')>
-```
+4) You can specify that custom functions should expect certain units, and convert them if needed:
 
-4) You can specify that functions should expect certain units, and convert them if needed:
+    ```python   
+    def jpl_trajectory_code(impulse):
+        """This function will only compute the correct result if supplied input in units of Newton-seconds."""
+    
+        if impulse.pint.units != "newton * second":
+            impulse = impulse.pint.to("Newton * seconds")
 
-- [ ] TODO this requires pint-xarray #143 to be merged and released
+        # do some rocket science
+        ...
+    
+    lockheed_impulse_value = xr.DataArray(5).pint.quantify("force_pounds * seconds")
+    
+    jpl_trajectory_code(lockheed_impulse_value)
+    ```
+    ```
+    Out:
+    pint.DimensionalityError
+    ```
 
-```python
-from pint_xarray import expects
+    (Note: We are adding [new features](https://github.com/xarray-contrib/pint-xarray/pull/143) to make unit specification of function arguments more slick.)
 
-@expects("newton * seconds")
-def jpl_trajectory_code(impulse):
-    print(f"Received impulse in units of [{impulse.pint.units}]")
- 
-    # do some rocket science
-    ...
-
-lockheed_impulse_value = xr.DataArray(5).pint.quantify("force_pounds * seconds")
-
-jpl_trajectory_code(lockheed_impulse_value)
-```
-```
-Out:
-Received impulse in units of [newton * second]
-```
 
 In the abstract, tracking units like this is useful in the same way that labelling dimensions with xarray is useful: it helps us avoid errors by relieving us of the burden of remembering arbitrary information about our data.
 
