@@ -8,6 +8,10 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   detect-skip-ci-trigger:
     name: "Detect CI Trigger: [skip-ci]"
@@ -16,7 +20,7 @@ jobs:
     outputs:
       triggered: ${{ steps.detect-trigger.outputs.trigger-found }}
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         fetch-depth: 2
     - uses: keewis/ci-trigger@v1.1
@@ -25,8 +29,8 @@ jobs:
         keyword: "[skip-ci]"
 
   ci:
-    name: py${{ matrix.python-version }}
-    runs-on: ubuntu-latest
+    name: ${{ matrix.os }} py${{ matrix.python-version }}
+    runs-on: ${{ matrix.os }}
     needs: detect-skip-ci-trigger
 
     if: |
@@ -40,16 +44,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.7, 3.8, 3.9]
+        python-version: ["3.8", "3.9", "3.10"]
+        os: ["ubuntu-latest", "macos-latest", "windows-latest"]
 
     steps:
-    - name: cancel previous runs
-      uses: styfle/cancel-workflow-action@0.6.0
-      with:
-        access_token: ${{ github.token }}
-
     - name: checkout the repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         # need to fetch all tags to get a correct version
         fetch-depth: 0  # fetch all branches and tags
@@ -63,7 +63,7 @@ jobs:
           pip-
 
     - name: setup python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v3
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -91,10 +91,10 @@ jobs:
         python -m pytest --cov=pint_xarray --cov-report=xml
 
     - name: Upload code coverage to Codecov
-      uses: codecov/codecov-action@v1
+      uses: codecov/codecov-action@v2.1.0
       with:
         file: ./coverage.xml
         flags: unittests
-        env_vars: PYTHON_VERSION
+        env_vars: RUNNER_OS,PYTHON_VERSION
         name: codecov-umbrella
         fail_ci_if_error: false

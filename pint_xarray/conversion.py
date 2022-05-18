@@ -282,6 +282,9 @@ def extract_unit_attributes(obj, attr="units"):
 
 
 def strip_units_variable(var):
+    if not isinstance(var.data, pint.Quantity):
+        return var
+
     data = array_strip_units(var.data)
     return var.copy(data=data)
 
