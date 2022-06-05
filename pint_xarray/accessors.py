@@ -2,8 +2,7 @@
 import itertools
 
 import pint
-from pint.quantity import Quantity
-from pint.unit import Unit
+from pint import Quantity, Unit
 from xarray import register_dataarray_accessor, register_dataset_accessor
 from xarray.core.dtypes import NA
 
