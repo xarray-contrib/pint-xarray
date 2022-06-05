@@ -81,7 +81,6 @@ jobs:
       run: python -m pip list
 
     - name: run tests
-      if: success()
       id: status
       run: |
         set -euo pipefail
