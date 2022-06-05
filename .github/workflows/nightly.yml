@@ -80,16 +80,14 @@ jobs:
     - name: show versions
       run: python -m pip list
 
-    - name: import pint-xarray
-      run: |
-        python -c 'import pint_xarray'
-
     - name: run tests
-      if: success()
       id: status
       run: |
         set -euo pipefail
-        python -m pytest -rf | tee output-${{ matrix.python-version }}-log || (
+        python -c 'import pint_xarray' | tee output-${{ matrix.python-version }}-log || (
+          echo '::set-output name=ARTIFACTS_AVAILABLE::true' && false
+        )
+        python -m pytest -rf | tee -a output-${{ matrix.python-version }}-log || (
           echo '::set-output name=ARTIFACTS_AVAILABLE::true' && false
         )
 
