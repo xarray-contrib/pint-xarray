@@ -149,8 +149,6 @@ def test_units_to_str_or_none(formatter, modifier):
     assert expected == actual
     assert units == {key: unit_registry.Unit(value) for key, value in actual.items()}
 
-    units.abc
-
     expected = {None: None}
     assert expected == accessors.units_to_str_or_none(expected, unit_format)
 
