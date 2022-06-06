@@ -70,6 +70,7 @@ jobs:
     - name: install dependencies
       run: |
         python -m pip install -r ci/requirements.txt
+        python -m pip install pytest-reportlog
 
     - name: install upstream-dev dependencies
       run: bash ci/install-upstream-dev.sh
