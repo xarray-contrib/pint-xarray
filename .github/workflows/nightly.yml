@@ -85,7 +85,7 @@ jobs:
       id: status
       run: |
         set -euo pipefail
-        python -m pytest -rf --reportlog output-${{ matrix.python-version }}-log.jsonl || (
+        python -m pytest -rf --report-log output-${{ matrix.python-version }}-log.jsonl || (
             echo '::set-output name=ARTIFACTS_AVAILABLE::true' && false
         )
 
