@@ -1,3 +1,6 @@
+import invalid_package_name  # noqa: F401
+
+
 def format_error_message(mapping, op):
     sep = "\n    " if len(mapping) == 1 else "\n -- "
     if op == "attach":
