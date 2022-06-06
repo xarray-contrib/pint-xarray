@@ -105,6 +105,8 @@ jobs:
         && steps.status.outcome == 'failure'
       run: |
         cat output-${{ matrix.python-version }}-log.jsonl
+        python .github/workflows/parse_logs.py logs/**/*-log.jsonl
+        cat pytest-logs.txt
 
   report:
     name: Report
