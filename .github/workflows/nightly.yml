@@ -70,6 +70,7 @@ jobs:
     - name: install dependencies
       run: |
         python -m pip install -r ci/requirements.txt
+        python -m pip install pytest-reportlog
 
     - name: install upstream-dev dependencies
       run: bash ci/install-upstream-dev.sh
@@ -84,11 +85,8 @@ jobs:
       id: status
       run: |
         set -euo pipefail
-        python -c 'import pint_xarray' | tee output-${{ matrix.python-version }}-log || (
-          echo '::set-output name=ARTIFACTS_AVAILABLE::true' && false
-        )
-        python -m pytest -rf | tee -a output-${{ matrix.python-version }}-log || (
-          echo '::set-output name=ARTIFACTS_AVAILABLE::true' && false
+        python -m pytest -rf --report-log output-${{ matrix.python-version }}-log.jsonl || (
+            echo '::set-output name=ARTIFACTS_AVAILABLE::true' && false
         )
 
     - name: Upload artifacts
@@ -98,8 +96,8 @@ jobs:
         && github.event_name == 'schedule'
       uses: actions/upload-artifact@v2
       with:
-        name: output-${{ matrix.python-version }}-log
-        path: output-${{ matrix.python-version }}-log
+        name: output-${{ matrix.python-version }}-log.jsonl
+        path: output-${{ matrix.python-version }}-log.jsonl
         retention-days: 5
 
   report:
@@ -114,21 +112,31 @@ jobs:
     steps:
     - name: checkout the repository
       uses: actions/checkout@v3
+
     - name: setup python
       uses: actions/setup-python@v3
       with:
         python-version: "3.x"
+
+    - name: setup environment
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install pytest
+
     - uses: actions/download-artifact@v2
       with:
         path: /tmp/workspace/logs
+
     - name: Move all log files into a single directory
       run: |
         rsync -a /tmp/workspace/logs/output-*/ ./logs
         ls -R ./logs
+
     - name: Parse logs
       run: |
         shopt -s globstar
-        python .github/workflows/parse_logs.py logs/**/*-log
+        python .github/workflows/parse_logs.py logs/**/*-log.jsonl
+
     - name: Report failures
       uses: actions/github-script@v6
       with:
