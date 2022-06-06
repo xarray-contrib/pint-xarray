@@ -92,7 +92,6 @@ jobs:
       if: |
         failure()
         && steps.status.outcome == 'failure'
-        # && github.event_name == 'schedule'
       uses: actions/upload-artifact@v2
       with:
         name: output-${{ matrix.python-version }}-log.jsonl
