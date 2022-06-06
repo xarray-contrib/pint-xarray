@@ -84,11 +84,8 @@ jobs:
       id: status
       run: |
         set -euo pipefail
-        python -c 'import pint_xarray' | tee output-${{ matrix.python-version }}-log || (
-          echo '::set-output name=ARTIFACTS_AVAILABLE::true' && false
-        )
-        python -m pytest -rf | tee -a output-${{ matrix.python-version }}-log || (
-          echo '::set-output name=ARTIFACTS_AVAILABLE::true' && false
+        python -m pytest -rf --reportlog output-${{ matrix.python-version }}-log.jsonl || (
+            echo '::set-output name=ARTIFACTS_AVAILABLE::true' && false
         )
 
     - name: Upload artifacts
@@ -98,8 +95,8 @@ jobs:
         && github.event_name == 'schedule'
       uses: actions/upload-artifact@v2
       with:
-        name: output-${{ matrix.python-version }}-log
-        path: output-${{ matrix.python-version }}-log
+        name: output-${{ matrix.python-version }}-log.jsonl
+        path: output-${{ matrix.python-version }}-log.jsonl
         retention-days: 5
 
   report:
@@ -128,7 +125,7 @@ jobs:
     - name: Parse logs
       run: |
         shopt -s globstar
-        python .github/workflows/parse_logs.py logs/**/*-log
+        python .github/workflows/parse_logs.py logs/**/*-log.jsonl
     - name: Report failures
       uses: actions/github-script@v6
       with:
