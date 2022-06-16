@@ -435,8 +435,7 @@ class PintDataArrayAccessor:
     @property
     def magnitude(self):
         """the magnitude of the data or the data itself if not a quantity."""
-        data = self.da.data
-        return getattr(data, "magnitude", data)
+        return self.dequantify()
 
     @property
     def units(self):

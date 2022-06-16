@@ -10,6 +10,8 @@ What's new
   By `Justus Magin <https://github.com/keewis>`_.
 - preserve :py:class:`pandas.MultiIndex` objects (:issue:`164`, :pull:`168`).
   By `Justus Magin <https://github.com/keewis>`_.
+- return a :py:class:`DataArray` from :py:attr:`DataArray.pint.magnitude` (:issue:`151`, :pull:`172`)
+  By `Justus Magin <https://github.com/keewis>`_.
 
 0.2.1 (26 Jul 2021)
 -------------------
