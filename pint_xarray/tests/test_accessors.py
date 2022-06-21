@@ -135,6 +135,15 @@ class TestQuantifyDataArray:
         result = da.pint.quantify()
         assert result.pint.units == Unit("1 / meter")
 
+    def test_dimension_coordinate(self):
+        ds = xr.Dataset(coords={"x": ("x", [10], {"units": "m"})})
+        arr = ds.x
+
+        # does not actually quantify because `arr` wraps a IndexVariable
+        # but we still get a `Unit` in the attrs
+        q = arr.pint.quantify()
+        assert isinstance(q.attrs["units"], Unit)
+
 
 @pytest.mark.parametrize("formatter", ("", "P", "C"))
 @pytest.mark.parametrize("modifier", ("", "~"))
