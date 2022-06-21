@@ -142,7 +142,10 @@ def _decide_units(units, registry, unit_attribute):
     elif units is _default:
         if unit_attribute in no_unit_values:
             return unit_attribute
-        units = registry.parse_units(unit_attribute)
+        if isinstance(unit_attribute, Unit):
+            units = unit_attribute
+        else:
+            units = registry.parse_units(unit_attribute)
     else:
         units = registry.parse_units(units)
     return units
