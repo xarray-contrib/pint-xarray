@@ -329,6 +329,20 @@ class TestQuantifyDataSet:
         with pytest.raises(ValueError, match="'users'"):
             ds.pint.quantify(units={"users": "aecjhbav"})
 
+    def test_existing_units(self, example_quantity_ds):
+        ds = example_quantity_ds.copy()
+        ds.t.attrs["units"] = unit_registry.Unit("m")
+
+        with pytest.raises(ValueError, match="Cannot attach"):
+            ds.pint.quantify({"funds": "kg"})
+
+    def test_existing_units_dimension(self, example_quantity_ds):
+        ds = example_quantity_ds.copy()
+        ds.t.attrs["units"] = unit_registry.Unit("m")
+
+        with pytest.raises(ValueError, match="Cannot attach"):
+            ds.pint.quantify({"t": "s"})
+
 
 class TestDequantifyDataSet:
     def test_strip_units(self, example_quantity_ds):
