@@ -363,6 +363,31 @@ class PintDataArrayAccessor:
         if invalid_units:
             raise ValueError(format_error_message(invalid_units, "parse"))
 
+        existing_units = {
+            name: unit
+            for name, unit in conversion.extract_units(self.da).items()
+            if isinstance(unit, Unit)
+        }
+        overwritten_units = {
+            name: (old, new)
+            for name, (old, new) in zip_mappings(
+                existing_units, new_units, fill_value=_default
+            ).items()
+            if old is not _default and new is not _default
+        }
+        if overwritten_units:
+            errors = {
+                name: (
+                    new,
+                    ValueError(
+                        f"Cannot attach unit {repr(new)} to quantity: data "
+                        f"already has units {repr(old)}"
+                    ),
+                )
+                for name, (old, new) in overwritten_units.items()
+            }
+            raise ValueError(format_error_message(errors, "attach"))
+
         return self.da.pipe(conversion.strip_unit_attributes).pipe(
             conversion.attach_units, new_units
         )
@@ -1052,6 +1077,31 @@ class PintDatasetAccessor:
 
         if invalid_units:
             raise ValueError(format_error_message(invalid_units, "parse"))
+
+        existing_units = {
+            name: unit
+            for name, unit in conversion.extract_units(self.ds).items()
+            if isinstance(unit, Unit)
+        }
+        overwritten_units = {
+            name: (old, new)
+            for name, (old, new) in zip_mappings(
+                existing_units, new_units, fill_value=_default
+            ).items()
+            if old is not _default and new is not _default
+        }
+        if overwritten_units:
+            errors = {
+                name: (
+                    new,
+                    ValueError(
+                        f"Cannot attach unit {repr(new)} to quantity: data "
+                        f"already has units {repr(old)}"
+                    ),
+                )
+                for name, (old, new) in overwritten_units.items()
+            }
+            raise ValueError(format_error_message(errors, "attach"))
 
         return self.ds.pipe(conversion.strip_unit_attributes).pipe(
             conversion.attach_units, new_units
