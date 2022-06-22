@@ -144,6 +144,13 @@ class TestQuantifyDataArray:
         q = arr.pint.quantify()
         assert isinstance(q.attrs["units"], Unit)
 
+    def test_dimension_coordinate_already_quantified(self):
+        ds = xr.Dataset(coords={"x": ("x", [10], {"units": unit_registry.Unit("m")})})
+        arr = ds.x
+
+        with pytest.raises(ValueError):
+            arr.pint.quantify({"x": "s"})
+
 
 @pytest.mark.parametrize("formatter", ("", "P", "C"))
 @pytest.mark.parametrize("modifier", ("", "~"))
