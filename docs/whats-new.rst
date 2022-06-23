@@ -10,6 +10,8 @@ What's new
   By `Justus Magin <https://github.com/keewis>`_.
 - preserve :py:class:`pandas.MultiIndex` objects (:issue:`164`, :pull:`168`).
   By `Justus Magin <https://github.com/keewis>`_.
+- fix "quantifying" dimension coordinates (:issue:`105`, :pull:`174`).
+  By `Justus Magin <https://github.com/keewis>`_.
 
 0.2.1 (26 Jul 2021)
 -------------------

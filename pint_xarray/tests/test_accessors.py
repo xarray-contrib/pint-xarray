@@ -135,6 +135,22 @@ class TestQuantifyDataArray:
         result = da.pint.quantify()
         assert result.pint.units == Unit("1 / meter")
 
+    def test_dimension_coordinate(self):
+        ds = xr.Dataset(coords={"x": ("x", [10], {"units": "m"})})
+        arr = ds.x
+
+        # does not actually quantify because `arr` wraps a IndexVariable
+        # but we still get a `Unit` in the attrs
+        q = arr.pint.quantify()
+        assert isinstance(q.attrs["units"], Unit)
+
+    def test_dimension_coordinate_already_quantified(self):
+        ds = xr.Dataset(coords={"x": ("x", [10], {"units": unit_registry.Unit("m")})})
+        arr = ds.x
+
+        with pytest.raises(ValueError):
+            arr.pint.quantify({"x": "s"})
+
 
 @pytest.mark.parametrize("formatter", ("", "P", "C"))
 @pytest.mark.parametrize("modifier", ("", "~"))
@@ -312,6 +328,20 @@ class TestQuantifyDataSet:
         ds = example_unitless_ds
         with pytest.raises(ValueError, match="'users'"):
             ds.pint.quantify(units={"users": "aecjhbav"})
+
+    def test_existing_units(self, example_quantity_ds):
+        ds = example_quantity_ds.copy()
+        ds.t.attrs["units"] = unit_registry.Unit("m")
+
+        with pytest.raises(ValueError, match="Cannot attach"):
+            ds.pint.quantify({"funds": "kg"})
+
+    def test_existing_units_dimension(self, example_quantity_ds):
+        ds = example_quantity_ds.copy()
+        ds.t.attrs["units"] = unit_registry.Unit("m")
+
+        with pytest.raises(ValueError, match="Cannot attach"):
+            ds.pint.quantify({"t": "s"})
 
 
 class TestDequantifyDataSet:
