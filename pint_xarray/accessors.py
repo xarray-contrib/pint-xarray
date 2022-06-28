@@ -2,7 +2,7 @@
 import itertools
 
 import pint
-from pint import Quantity, Unit
+from pint import Unit
 from xarray import register_dataarray_accessor, register_dataset_accessor
 from xarray.core.dtypes import NA
 
@@ -321,13 +321,6 @@ class PintDataArrayAccessor:
         array([0.4, 0.9])
         Dimensions without coordinates: wavelength
         """
-
-        if isinstance(self.da.data, Quantity):
-            raise ValueError(
-                f"Cannot attach unit {units} to quantity: data "
-                f"already has units {self.da.data.units}"
-            )
-
         if units is None or isinstance(units, (str, pint.Unit)):
             if self.da.name in unit_kwargs:
                 raise ValueError(
