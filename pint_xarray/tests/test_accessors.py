@@ -11,7 +11,6 @@ from .utils import (
     assert_equal,
     assert_identical,
     assert_units_equal,
-    raises_regex,
     requires_bottleneck,
     requires_dask_array,
     requires_scipy,
@@ -336,8 +335,28 @@ class TestQuantifyDataSet:
         )
 
     def test_error_when_already_units(self, example_quantity_ds):
-        with raises_regex(ValueError, "already has units"):
-            example_quantity_ds.pint.quantify({"funds": "pounds"})
+        with pytest.raises(ValueError, match="already has units"):
+            example_quantity_ds.pint.quantify({"funds": "kg"})
+
+    def test_attach_no_units(self):
+        ds = xr.Dataset({"a": ("x", [1, 2, 3])})
+        quantified = ds.pint.quantify()
+        assert_identical(ds, quantified)
+
+    def test_attach_no_new_units(self):
+        ds = xr.Dataset({"a": ("x", unit_registry.Quantity([1, 2, 3], "m"))})
+        assert_identical(ds.pint.quantify(), ds)
+
+    def test_attach_same_units(self):
+        ds = xr.Dataset({"a": ("x", unit_registry.Quantity([1, 2, 3], "m"))})
+        assert_identical(ds.pint.quantify({"a": "m"}), ds)
+
+    def test_error_when_changing_units_dimension_coordinates(self):
+        ds = xr.Dataset(
+            coords={"x": ("x", [-1, 0, 1], {"units": unit_registry.Unit("m")})},
+        )
+        with pytest.raises(ValueError, match="already has units"):
+            ds.pint.quantify({"x": "s"})
 
     def test_error_on_nonsense_units(self, example_unitless_ds):
         ds = example_unitless_ds

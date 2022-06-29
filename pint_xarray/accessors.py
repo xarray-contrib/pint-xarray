@@ -1045,7 +1045,7 @@ class PintDatasetAccessor:
         new_units = {}
         invalid_units = {}
         for name, (unit, attr) in possible_new_units.items():
-            if unit is not _default or attr is not _default:
+            if unit is not _default or attr not in (None, _default):
                 try:
                     new_units[name] = _decide_units(unit, registry, attr)
                 except (ValueError, pint.UndefinedUnitError) as e:
@@ -1071,7 +1071,7 @@ class PintDatasetAccessor:
             for name, (old, new) in zip_mappings(
                 existing_units, new_units, fill_value=_default
             ).items()
-            if old is not _default and new is not _default
+            if old is not _default and new is not _default and old != new
         }
         if overwritten_units:
             errors = {
