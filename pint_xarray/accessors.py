@@ -123,7 +123,7 @@ def get_registry(unit_registry, new_units, existing_units):
 
 
 def _decide_units(units, registry, unit_attribute):
-    if units is _default and unit_attribute is _default:
+    if units is _default and unit_attribute in (None, _default):
         # or warn and return None?
         raise ValueError("no units given")
     elif units in no_unit_values or isinstance(units, Unit):
@@ -330,11 +330,11 @@ class PintDataArrayAccessor:
         new_units = {}
         invalid_units = {}
         for name, (unit, attr) in possible_new_units.items():
-            if unit is not _default or attr is not _default:
+            if unit not in (_default, None) or attr not in (_default, None):
                 try:
                     new_units[name] = _decide_units(unit, registry, attr)
                 except (ValueError, pint.UndefinedUnitError) as e:
-                    if unit is not _default:
+                    if unit not in (_default, None):
                         type = "parameter"
                         reported_unit = unit
                     else:
