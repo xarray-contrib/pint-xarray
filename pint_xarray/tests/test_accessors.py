@@ -111,10 +111,54 @@ class TestQuantifyDataArray:
         with pytest.raises(AttributeError):
             result["u"].data.units
 
-    def test_error_when_already_units(self, example_quantity_da):
+    def test_error_when_changing_units(self, example_quantity_da):
         da = example_quantity_da
-        with raises_regex(ValueError, "already has units"):
-            da.pint.quantify()
+        with pytest.raises(ValueError, match="already has units"):
+            da.pint.quantify("s")
+
+    def test_attach_no_units(self):
+        arr = xr.DataArray([1, 2, 3], dims="x")
+        quantified = arr.pint.quantify()
+        assert_identical(arr, quantified)
+
+    def test_attach_no_new_units(self):
+        da = xr.DataArray(unit_registry.Quantity([1, 2, 3], "m"), dims="x")
+        assert_identical(da.pint.quantify(), da)
+
+    def test_attach_same_units(self):
+        da = xr.DataArray(unit_registry.Quantity([1, 2, 3], "m"), dims="x")
+        assert_identical(da.pint.quantify("m"), da)
+
+    def test_error_when_changing_units_dimension_coordinates(self):
+        arr = xr.DataArray(
+            [1, 2, 3],
+            dims="x",
+            coords={"x": ("x", [-1, 0, 1], {"units": unit_registry.Unit("m")})},
+        )
+        with pytest.raises(ValueError, match="already has units"):
+            arr.pint.quantify({"x": "s"})
+
+    def test_dimension_coordinate_array(self):
+        ds = xr.Dataset(coords={"x": ("x", [10], {"units": "m"})})
+        arr = ds.x
+
+        # does not actually quantify because `arr` wraps a IndexVariable
+        # but we still get a `Unit` in the attrs
+        q = arr.pint.quantify()
+        assert isinstance(q.attrs["units"], Unit)
+
+    def test_dimension_coordinate_array_already_quantified(self):
+        ds = xr.Dataset(coords={"x": ("x", [10], {"units": unit_registry.Unit("m")})})
+        arr = ds.x
+
+        with pytest.raises(ValueError):
+            arr.pint.quantify({"x": "s"})
+
+    def test_dimension_coordinate_array_already_quantified_same_units(self):
+        ds = xr.Dataset(coords={"x": ("x", [10], {"units": unit_registry.Unit("m")})})
+        arr = ds.x
+
+        assert_identical(arr.pint.quantify({"x": "m"}), arr)
 
     def test_error_on_nonsense_units(self, example_unitless_da):
         da = example_unitless_da
@@ -134,22 +178,6 @@ class TestQuantifyDataArray:
         da = xr.DataArray([10], attrs={"units": "m^-1"})
         result = da.pint.quantify()
         assert result.pint.units == Unit("1 / meter")
-
-    def test_dimension_coordinate(self):
-        ds = xr.Dataset(coords={"x": ("x", [10], {"units": "m"})})
-        arr = ds.x
-
-        # does not actually quantify because `arr` wraps a IndexVariable
-        # but we still get a `Unit` in the attrs
-        q = arr.pint.quantify()
-        assert isinstance(q.attrs["units"], Unit)
-
-    def test_dimension_coordinate_already_quantified(self):
-        ds = xr.Dataset(coords={"x": ("x", [10], {"units": unit_registry.Unit("m")})})
-        arr = ds.x
-
-        with pytest.raises(ValueError):
-            arr.pint.quantify({"x": "s"})
 
 
 @pytest.mark.parametrize("formatter", ("", "P", "C"))
