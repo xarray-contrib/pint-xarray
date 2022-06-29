@@ -71,16 +71,6 @@ def zip_mappings(*mappings, fill_value=None):
     return zipped
 
 
-def merge_mappings(first, *mappings):
-    result = first.copy()
-    for mapping in mappings:
-        result.update(
-            {key: value for key, value in mapping.items() if value is not None}
-        )
-
-    return result
-
-
 def units_to_str_or_none(mapping, unit_format):
     formatter = str if not unit_format else lambda v: unit_format.format(v)
 
@@ -109,8 +99,8 @@ def either_dict_or_kwargs(positional, keywords, method_name):
 
 
 def get_registry(unit_registry, new_units, existing_units):
-    units = merge_mappings(existing_units, new_units)
-    registries = {unit._REGISTRY for unit in units.values() if isinstance(unit, Unit)}
+    units = itertools.chain(new_units.values(), existing_units.values())
+    registries = {unit._REGISTRY for unit in units if isinstance(unit, Unit)}
 
     if unit_registry is None:
         if not registries:
