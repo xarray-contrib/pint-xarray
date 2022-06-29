@@ -118,15 +118,20 @@ class TestQuantifyDataArray:
     def test_attach_no_units(self):
         arr = xr.DataArray([1, 2, 3], dims="x")
         quantified = arr.pint.quantify()
-        assert_identical(arr, quantified)
+        assert_identical(quantified, arr)
+        assert_units_equal(quantified, arr)
 
     def test_attach_no_new_units(self):
         da = xr.DataArray(unit_registry.Quantity([1, 2, 3], "m"), dims="x")
-        assert_identical(da.pint.quantify(), da)
+        quantified = da.pint.quantify()
+        assert_identical(quantified, da)
+        assert_units_equal(quantified, da)
 
     def test_attach_same_units(self):
         da = xr.DataArray(unit_registry.Quantity([1, 2, 3], "m"), dims="x")
-        assert_identical(da.pint.quantify("m"), da)
+        quantified = da.pint.quantify("m")
+        assert_identical(quantified, da)
+        assert_units_equal(quantified, da)
 
     def test_error_when_changing_units_dimension_coordinates(self):
         arr = xr.DataArray(
@@ -157,7 +162,10 @@ class TestQuantifyDataArray:
         ds = xr.Dataset(coords={"x": ("x", [10], {"units": unit_registry.Unit("m")})})
         arr = ds.x
 
-        assert_identical(arr.pint.quantify({"x": "m"}), arr)
+        quantified = arr.pint.quantify({"x": "m"})
+
+        assert_identical(quantified, arr)
+        assert_units_equal(quantified, arr)
 
     def test_error_on_nonsense_units(self, example_unitless_da):
         da = example_unitless_da
@@ -341,15 +349,22 @@ class TestQuantifyDataSet:
     def test_attach_no_units(self):
         ds = xr.Dataset({"a": ("x", [1, 2, 3])})
         quantified = ds.pint.quantify()
-        assert_identical(ds, quantified)
+        assert_identical(quantified, ds)
+        assert_units_equal(quantified, ds)
 
     def test_attach_no_new_units(self):
         ds = xr.Dataset({"a": ("x", unit_registry.Quantity([1, 2, 3], "m"))})
-        assert_identical(ds.pint.quantify(), ds)
+        quantified = ds.pint.quantify()
+
+        assert_identical(quantified, ds)
+        assert_units_equal(quantified, ds)
 
     def test_attach_same_units(self):
         ds = xr.Dataset({"a": ("x", unit_registry.Quantity([1, 2, 3], "m"))})
-        assert_identical(ds.pint.quantify({"a": "m"}), ds)
+        quantified = ds.pint.quantify({"a": "m"})
+
+        assert_identical(quantified, ds)
+        assert_units_equal(quantified, ds)
 
     def test_error_when_changing_units_dimension_coordinates(self):
         ds = xr.Dataset(
