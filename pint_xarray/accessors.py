@@ -356,7 +356,7 @@ class PintDataArrayAccessor:
             for name, (old, new) in zip_mappings(
                 existing_units, new_units, fill_value=_default
             ).items()
-            if old is not _default and new is not _default
+            if old is not _default and new is not _default and old != new
         }
         if overwritten_units:
             errors = {
