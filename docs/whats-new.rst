@@ -12,6 +12,9 @@ What's new
   By `Justus Magin <https://github.com/keewis>`_.
 - fix "quantifying" dimension coordinates (:issue:`105`, :pull:`174`).
   By `Justus Magin <https://github.com/keewis>`_.
+- allow using :py:meth:`DataArray.pint.quantify` and :py:meth:`Dataset.pint.quantify`
+  as identity operators (:issue:`47`, :pull:`175`).
+  By `Justus Magin <https://github.com/keewis>`_.
 
 0.2.1 (26 Jul 2021)
 -------------------

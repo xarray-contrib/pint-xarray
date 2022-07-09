@@ -2,7 +2,7 @@
 import itertools
 
 import pint
-from pint import Quantity, Unit
+from pint import Unit
 from xarray import register_dataarray_accessor, register_dataset_accessor
 from xarray.core.dtypes import NA
 
@@ -71,16 +71,6 @@ def zip_mappings(*mappings, fill_value=None):
     return zipped
 
 
-def merge_mappings(first, *mappings):
-    result = first.copy()
-    for mapping in mappings:
-        result.update(
-            {key: value for key, value in mapping.items() if value is not None}
-        )
-
-    return result
-
-
 def units_to_str_or_none(mapping, unit_format):
     formatter = str if not unit_format else lambda v: unit_format.format(v)
 
@@ -109,8 +99,8 @@ def either_dict_or_kwargs(positional, keywords, method_name):
 
 
 def get_registry(unit_registry, new_units, existing_units):
-    units = merge_mappings(existing_units, new_units)
-    registries = {unit._REGISTRY for unit in units.values() if isinstance(unit, Unit)}
+    units = itertools.chain(new_units.values(), existing_units.values())
+    registries = {unit._REGISTRY for unit in units if isinstance(unit, Unit)}
 
     if unit_registry is None:
         if not registries:
@@ -133,7 +123,7 @@ def get_registry(unit_registry, new_units, existing_units):
 
 
 def _decide_units(units, registry, unit_attribute):
-    if units is _default and unit_attribute is _default:
+    if units is _default and unit_attribute in (None, _default):
         # or warn and return None?
         raise ValueError("no units given")
     elif units in no_unit_values or isinstance(units, Unit):
@@ -321,13 +311,6 @@ class PintDataArrayAccessor:
         array([0.4, 0.9])
         Dimensions without coordinates: wavelength
         """
-
-        if isinstance(self.da.data, Quantity):
-            raise ValueError(
-                f"Cannot attach unit {units} to quantity: data "
-                f"already has units {self.da.data.units}"
-            )
-
         if units is None or isinstance(units, (str, pint.Unit)):
             if self.da.name in unit_kwargs:
                 raise ValueError(
@@ -347,11 +330,11 @@ class PintDataArrayAccessor:
         new_units = {}
         invalid_units = {}
         for name, (unit, attr) in possible_new_units.items():
-            if unit is not _default or attr is not _default:
+            if unit not in (_default, None) or attr not in (_default, None):
                 try:
                     new_units[name] = _decide_units(unit, registry, attr)
                 except (ValueError, pint.UndefinedUnitError) as e:
-                    if unit is not _default:
+                    if unit not in (_default, None):
                         type = "parameter"
                         reported_unit = unit
                     else:
@@ -373,7 +356,7 @@ class PintDataArrayAccessor:
             for name, (old, new) in zip_mappings(
                 existing_units, new_units, fill_value=_default
             ).items()
-            if old is not _default and new is not _default
+            if old is not _default and new is not _default and old != new
         }
         if overwritten_units:
             errors = {
@@ -1062,7 +1045,7 @@ class PintDatasetAccessor:
         new_units = {}
         invalid_units = {}
         for name, (unit, attr) in possible_new_units.items():
-            if unit is not _default or attr is not _default:
+            if unit is not _default or attr not in (None, _default):
                 try:
                     new_units[name] = _decide_units(unit, registry, attr)
                 except (ValueError, pint.UndefinedUnitError) as e:
@@ -1088,7 +1071,7 @@ class PintDatasetAccessor:
             for name, (old, new) in zip_mappings(
                 existing_units, new_units, fill_value=_default
             ).items()
-            if old is not _default and new is not _default
+            if old is not _default and new is not _default and old != new
         }
         if overwritten_units:
             errors = {
