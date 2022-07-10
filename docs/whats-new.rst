@@ -35,10 +35,10 @@ What's new
 -----------------
 - rewrite :py:meth:`Dataset.pint.quantify` and :py:meth:`DataArray.pint.quantify`, to
   use pint's ``UnitRegistry.parse_units`` instead of ``UnitRegistry.parse_expression``
-  (:pull:`40`)
+  (:issue:`40`)
   By `Tom Nicholas <https://github.com/TomNicholas>`_.
 - ensure the variables which causes the error is explicit if an error occurs in
-  :py:meth:`Dataset.pint.quantify` and other methods (:pull:`43`, :pull:`91`)
+  :py:meth:`Dataset.pint.quantify` and other methods (:pull:`43`, :issue:`91`)
   By `Tom Nicholas <https://github.com/TomNicholas>`_ and `Justus Magin <https://github.com/keewis>`_.
 - refactor the internal conversion functions (:pull:`56`)
   By `Justus Magin <https://github.com/keewis>`_.
