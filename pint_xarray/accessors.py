@@ -245,7 +245,7 @@ class PintDataArrayAccessor:
         parsed by the given unit registry. If no units are specified then the
         units will be parsed from the `'units'` entry of the DataArray's
         `.attrs`. Will raise a ValueError if the DataArray already contains a
-        unit-aware array.
+        unit-aware array with a different unit.
 
         .. note::
             Be aware that unless you're using ``dask`` this will load
@@ -309,6 +309,18 @@ class PintDataArrayAccessor:
         >>> da.pint.quantify(units=None)
         <xarray.DataArray (wavelength: 2)>
         array([0.4, 0.9])
+        Dimensions without coordinates: wavelength
+
+        Quantify with the same unit:
+
+        >>> q = da.pint.quantify()
+        >>> q
+        <xarray.DataArray (wavelength: 2)>
+        <Quantity([0.4 0.9], 'hertz')>
+        Dimensions without coordinates: wavelength
+        >>> q.pint.quantify("Hz")
+        <xarray.DataArray (wavelength: 2)>
+        <Quantity([0.4 0.9], 'hertz')>
         Dimensions without coordinates: wavelength
         """
         if units is None or isinstance(units, (str, pint.Unit)):
