@@ -245,7 +245,7 @@ class PintDataArrayAccessor:
         parsed by the given unit registry. If no units are specified then the
         units will be parsed from the `'units'` entry of the DataArray's
         `.attrs`. Will raise a ValueError if the DataArray already contains a
-        unit-aware array.
+        unit-aware array with a different unit.
 
         .. note::
             Be aware that unless you're using ``dask`` this will load
@@ -309,6 +309,18 @@ class PintDataArrayAccessor:
         >>> da.pint.quantify(units=None)
         <xarray.DataArray (wavelength: 2)>
         array([0.4, 0.9])
+        Dimensions without coordinates: wavelength
+
+        Quantify with the same unit:
+
+        >>> q = da.pint.quantify()
+        >>> q
+        <xarray.DataArray (wavelength: 2)>
+        <Quantity([0.4 0.9], 'hertz')>
+        Dimensions without coordinates: wavelength
+        >>> q.pint.quantify("Hz")
+        <xarray.DataArray (wavelength: 2)>
+        <Quantity([0.4 0.9], 'hertz')>
         Dimensions without coordinates: wavelength
         """
         if units is None or isinstance(units, (str, pint.Unit)):
@@ -397,7 +409,8 @@ class PintDataArrayAccessor:
 
         See Also
         --------
-        https://pint.readthedocs.io/en/stable/tutorial.html#string-formatting
+        :doc:`pint:formatting`
+            pint's string formatting guide
 
         Examples
         --------
@@ -958,7 +971,7 @@ class PintDatasetAccessor:
         units are specified then the units will be parsed from the
         ``"units"`` entry of the Dataset variable's ``.attrs``. Will
         raise a ValueError if any of the variables already contain a
-        unit-aware array.
+        unit-aware array with a different unit.
 
         .. note::
             Be aware that unless you're using ``dask`` this will load
@@ -1035,6 +1048,28 @@ class PintDatasetAccessor:
         Data variables:
             a        (x) int64 0 3 2
             b        (x) int64 5 -2 1
+
+        Quantify with the same unit:
+
+        >>> q = ds.pint.quantify()
+        >>> q
+        <xarray.Dataset>
+        Dimensions:  (x: 3)
+        Coordinates:
+          * x        (x) int64 0 1 2
+            u        (x) int64 [s] -1 0 1
+        Data variables:
+            a        (x) int64 [m] 0 3 2
+            b        (x) int64 5 -2 1
+        >>> q.pint.quantify({"a": "m"})
+        <xarray.Dataset>
+        Dimensions:  (x: 3)
+        Coordinates:
+          * x        (x) int64 0 1 2
+            u        (x) int64 [s] -1 0 1
+        Data variables:
+            a        (x) int64 [m] 0 3 2
+            b        (x) int64 5 -2 1
         """
         units = either_dict_or_kwargs(units, unit_kwargs, "quantify")
         registry = get_registry(unit_registry, units, conversion.extract_units(self.ds))
@@ -1100,8 +1135,8 @@ class PintDatasetAccessor:
         Parameters
         ----------
         format : str, default: None
-            The format specification (as accepted by pint) used for the string
-            representations. If ``None``, the registry's default
+            The format specification (as accepted by pint's unit formatter) used for the
+            string representations. If ``None``, the registry's default
             (:py:attr:`pint.UnitRegistry.default_format`) is used instead.
 
         Returns
@@ -1112,7 +1147,8 @@ class PintDatasetAccessor:
 
         See Also
         --------
-        https://pint.readthedocs.io/en/stable/tutorial.html#string-formatting
+        :doc:`pint:formatting`
+            pint's string formatting guide
 
         Examples
         --------
