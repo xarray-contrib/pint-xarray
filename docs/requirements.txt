@@ -4,7 +4,6 @@ pooch
 netCDF4
 cf-xarray>=0.6
 sphinx<4
-ipython_genutils  # remove once there's a new `nbconvert` release
 sphinx_rtd_theme
 ipython
 ipykernel
