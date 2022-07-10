@@ -3,7 +3,7 @@ xarray>=0.16.0
 pooch
 netCDF4
 cf-xarray>=0.6
-sphinx<4
+sphinx
 sphinx_rtd_theme
 ipython
 ipykernel
