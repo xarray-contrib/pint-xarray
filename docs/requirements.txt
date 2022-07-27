@@ -4,7 +4,7 @@ pooch
 netCDF4
 cf-xarray>=0.6
 sphinx
-sphinx_rtd_theme
+sphinx_rtd_theme>=1.0
 ipython
 ipykernel
 jupyter_client
