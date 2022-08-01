@@ -22,10 +22,10 @@ repos:
       - id: black
       - id: black-jupyter
   - repo: https://github.com/keewis/blackdoc
-    rev: v0.3.4
+    rev: v0.3.5
     hooks:
       - id: blackdoc
   - repo: https://github.com/pycqa/flake8
-    rev: 4.0.1
+    rev: 5.0.2
     hooks:
       - id: flake8
