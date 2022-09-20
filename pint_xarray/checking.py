@@ -8,6 +8,119 @@ from xarray import DataArray, Dataset
 from .accessors import PintDataArrayAccessor  # noqa
 
 
+def detect_missing_params(params, units):
+    """detect parameters for which no units were specified"""
+    variable_params = {
+        Parameter.VAR_POSITIONAL,
+        Parameter.VAR_KEYWORD,
+    }
+
+    return {
+        name
+        for name, param in params.items()
+        if name not in units.arguments and param.kind not in variable_params
+    }
+
+
+def convert_and_strip_args(args, units):
+    pass
+
+
+def convert_and_strip_kwargs(kwargs, units):
+    pass
+
+
+def attach_return_units(results, units):
+    if units is None:
+        # ignore types and units of return values
+        return results
+    elif results is None:
+        raise TypeError(
+            "Expected function to return something, but function returned None"
+        )
+    else:
+        # handle case of function returning only one result by promoting to 1-element tuple
+        return_units_iterable = tuple(always_iterable(units, base_type=(str, dict)))
+        results_iterable = tuple(always_iterable(results, base_type=(str, Dataset)))
+
+        # check same number of things were returned as expected
+        if len(results_iterable) != len(return_units_iterable):
+            raise TypeError(
+                f"{len(results_iterable)} return values were received, but {len(return_units_iterable)} "
+                "return values were expected"
+            )
+
+        converted_results = _attach_multiple_units(
+            results_iterable, return_units_iterable
+        )
+
+        if isinstance(results, tuple):
+            return converted_results
+        elif len(converted_results) == 1:
+            return converted_results[0]
+        else:
+            return converted_results
+
+
+def _check_or_convert_to_then_strip(obj, units):
+    """
+    Checks the object is of a valid type (Quantity or DataArray), then attempts to convert it to the specified units,
+    then strips the units from it.
+    """
+
+    if units is None:
+        # allow for passing through non-numerical arguments
+        return obj
+    elif isinstance(obj, Quantity):
+        converted = obj.to(units)
+        return converted.magnitude
+    elif isinstance(obj, (DataArray, Dataset)):
+        converted = obj.pint.to(units)
+        return converted.pint.dequantify()
+    else:
+        raise TypeError(
+            "Can only expect units for arguments of type xarray.DataArray,"
+            f" xarray.Dataset, or pint.Quantity, not {type(obj)}"
+        )
+
+
+def _attach_units(obj, units):
+    """Attaches units, but can also create pint.Quantity objects from numpy scalars"""
+    if isinstance(obj, (DataArray, Dataset)):
+        return obj.pint.quantify(units)
+    else:
+        return Quantity(obj, units=units)
+
+
+def _attach_multiple_units(objects, units):
+    """Attaches list of units to list of objects elementwise"""
+    converted_objects = [_attach_units(obj, unit) for obj, unit in zip(objects, units)]
+    return converted_objects
+
+
+def always_iterable(obj, base_type=(str, bytes)):
+    """
+    If *obj* is iterable, return an iterator over its items,
+    If *obj* is not iterable, return a one-item iterable containing *obj*,
+    If *obj* is ``None``, return an empty iterable.
+    If *base_type* is set, objects for which ``isinstance(obj, base_type)``
+    returns ``True`` won't be considered iterable.
+
+    Copied from more_itertools.
+    """
+
+    if obj is None:
+        return iter(())
+
+    if (base_type is not None) and isinstance(obj, base_type):
+        return iter((obj,))
+
+    try:
+        return iter(obj)
+    except TypeError:
+        return iter((obj,))
+
+
 def expects(*args_units, return_units=None, **kwargs_units):
     """
     Decorator which ensures the inputs and outputs of the decorated
@@ -106,132 +219,28 @@ def expects(*args_units, return_units=None, **kwargs_units):
 
         # check same number of arguments were passed as expected
         sig = inspect.signature(func)
-        positional_args = (
-            Parameter.POSITIONAL_ONLY,
-            Parameter.VAR_POSITIONAL,
-            Parameter.POSITIONAL_OR_KEYWORD,
-        )
-        n_args = len(
-            [
-                param
-                for param in sig.parameters.values()
-                if param.kind in positional_args and param.default is param.empty
-            ]
-        )
-        if n_args != len(args_units):
-            raise TypeError(
-                f"The `expects` decorator used expects {len(args_units)} arguments, but a function expecting {n_args} "
-                f"arguments was wrapped"
-            )
+
+        params = sig.parameters
+
+        bound_units = sig.bind_partial(*args_units, **kwargs_units)
+
+        missing_params = detect_missing_params(params, bound_units)
+        if missing_params:
+            raise ValueError(f"no units for {missing_params}")
 
         @functools.wraps(func)
         def _unit_checking_wrapper(*args, **kwargs):
+            bound = sig.bind(*args, **kwargs)
 
-            converted_args = [
-                _check_or_convert_to_then_strip(arg, arg_unit)
-                for arg, arg_unit in zip(args, args_units)
-            ]
-
-            converted_kwargs = {
-                key: _check_or_convert_to_then_strip(val, kwargs_units.get(key, None))
-                for key, val in kwargs.items()
-            }
+            converted_args = convert_and_strip_args(bound.args, bound_units.args)
+            converted_kwargs = convert_and_strip_kwargs(
+                bound.kwargs, bound_units.kwargs
+            )
 
             results = func(*converted_args, **converted_kwargs)
 
-            if return_units is None:
-                # ignore types and units of return values
-                return results
-            elif results is None:
-                raise TypeError(
-                    "Expected function to return something, but function returned None"
-                )
-            else:
-                # handle case of function returning only one result by promoting to 1-element tuple
-                return_units_iterable = tuple(
-                    always_iterable(return_units, base_type=(str, dict))
-                )
-                results_iterable = tuple(
-                    always_iterable(results, base_type=(str, Dataset))
-                )
-
-                # check same number of things were returned as expected
-                if len(results_iterable) != len(return_units_iterable):
-                    raise TypeError(
-                        f"{len(results_iterable)} return values were received, but {len(return_units_iterable)} "
-                        "return values were expected"
-                    )
-
-                converted_results = _attach_multiple_units(
-                    results_iterable, return_units_iterable
-                )
-
-                if isinstance(results, tuple):
-                    return converted_results
-                elif len(converted_results) == 1:
-                    return converted_results[0]
-                else:
-                    return converted_results
+            return attach_return_units(results, return_units)
 
         return _unit_checking_wrapper
 
     return _expects_decorator
-
-
-def _check_or_convert_to_then_strip(obj, units):
-    """
-    Checks the object is of a valid type (Quantity or DataArray), then attempts to convert it to the specified units,
-    then strips the units from it.
-    """
-
-    if units is None:
-        # allow for passing through non-numerical arguments
-        return obj
-    elif isinstance(obj, Quantity):
-        converted = obj.to(units)
-        return converted.magnitude
-    elif isinstance(obj, (DataArray, Dataset)):
-        converted = obj.pint.to(units)
-        return converted.pint.dequantify()
-    else:
-        raise TypeError(
-            "Can only expect units for arguments of type xarray.DataArray,"
-            f" xarray.Dataset, or pint.Quantity, not {type(obj)}"
-        )
-
-
-def _attach_units(obj, units):
-    """Attaches units, but can also create pint.Quantity objects from numpy scalars"""
-    if isinstance(obj, (DataArray, Dataset)):
-        return obj.pint.quantify(units)
-    else:
-        return Quantity(obj, units=units)
-
-
-def _attach_multiple_units(objects, units):
-    """Attaches list of units to list of objects elementwise"""
-    converted_objects = [_attach_units(obj, unit) for obj, unit in zip(objects, units)]
-    return converted_objects
-
-
-def always_iterable(obj, base_type=(str, bytes)):
-    """
-    If *obj* is iterable, return an iterator over its items,
-    If *obj* is not iterable, return a one-item iterable containing *obj*,
-    If *obj* is ``None``, return an empty iterable.
-    If *base_type* is set, objects for which ``isinstance(obj, base_type)``
-    returns ``True`` won't be considered iterable.
-
-    Copied from more_itertools.
-    """
-
-    if obj is None:
-        return iter(())
-
-    if (base_type is not None) and isinstance(obj, base_type):
-        return iter((obj,))
-
-    try:
-        return iter(obj)
-    except TypeError:
-        return iter((obj,))
