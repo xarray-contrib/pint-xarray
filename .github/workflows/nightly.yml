@@ -10,6 +10,10 @@ on:
     - cron: "0 0 * * *"  # Daily "At 00:00" UTC
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   detect-test-upstream-trigger:
     name: "Detect CI Trigger: [test-upstream]"
@@ -18,7 +22,7 @@ jobs:
     outputs:
       triggered: ${{ steps.detect-trigger.outputs.trigger-found }}
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         fetch-depth: 2
     - uses: keewis/ci-trigger@v1.1
@@ -49,19 +53,14 @@ jobs:
       artifacts_availability: ${{ steps.status.outputs.ARTIFACTS_AVAILABLE }}
 
     steps:
-    - name: cancel previous runs
-      uses: styfle/cancel-workflow-action@0.6.0
-      with:
-        access_token: ${{ github.token }}
-
     - name: checkout the repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         # need to fetch all tags to get a correct version
         fetch-depth: 0  # fetch all branches and tags
 
     - name: setup python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v3
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -71,6 +70,7 @@ jobs:
     - name: install dependencies
       run: |
         python -m pip install -r ci/requirements.txt
+        python -m pip install pytest-reportlog
 
     - name: install upstream-dev dependencies
       run: bash ci/install-upstream-dev.sh
@@ -81,17 +81,12 @@ jobs:
     - name: show versions
       run: python -m pip list
 
-    - name: import pint-xarray
-      run: |
-        python -c 'import pint_xarray'
-
     - name: run tests
-      if: success()
       id: status
       run: |
         set -euo pipefail
-        python -m pytest -rf | tee output-${{ matrix.python-version }}-log || (
-          echo '::set-output name=ARTIFACTS_AVAILABLE::true' && false
+        python -m pytest -rf --report-log output-${{ matrix.python-version }}-log.jsonl || (
+            echo '::set-output name=ARTIFACTS_AVAILABLE::true' && false
         )
 
     - name: Upload artifacts
@@ -101,8 +96,8 @@ jobs:
         && github.event_name == 'schedule'
       uses: actions/upload-artifact@v2
       with:
-        name: output-${{ matrix.python-version }}-log
-        path: output-${{ matrix.python-version }}-log
+        name: output-${{ matrix.python-version }}-log.jsonl
+        path: output-${{ matrix.python-version }}-log.jsonl
         retention-days: 5
 
   report:
@@ -116,72 +111,81 @@ jobs:
       && needs.upstream-dev.outputs.artifacts_availability == 'true'
     steps:
     - name: checkout the repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
+
     - name: setup python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v3
       with:
         python-version: "3.x"
+
+    - name: setup environment
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install pytest
+
     - uses: actions/download-artifact@v2
       with:
         path: /tmp/workspace/logs
+
     - name: Move all log files into a single directory
       run: |
         rsync -a /tmp/workspace/logs/output-*/ ./logs
         ls -R ./logs
+
     - name: Parse logs
       run: |
         shopt -s globstar
-        python .github/workflows/parse_logs.py logs/**/*-log
+        python .github/workflows/parse_logs.py logs/**/*-log.jsonl
+
     - name: Report failures
-      uses: actions/github-script@v3
+      uses: actions/github-script@v6
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
-          const fs = require('fs');
-          const pytest_logs = fs.readFileSync('pytest-logs.txt', 'utf8');
-          const title = "⚠️ Nightly upstream-dev CI failed ⚠️"
-          const workflow_url = `https://github.com/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`
-          const issue_body = `[Workflow Run URL](${workflow_url})\n${pytest_logs}`
+            const fs = require('fs');
+            const pytest_logs = fs.readFileSync('pytest-logs.txt', 'utf8');
+            const title = "⚠️ Nightly upstream-dev CI failed ⚠️"
+            const workflow_url = `https://github.com/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`
+            const issue_body = `[Workflow Run URL](${workflow_url})\n${pytest_logs}`
 
-          // Run GraphQL query against GitHub API to find the most recent open issue used for reporting failures
-          const query = `query($owner:String!, $name:String!, $creator:String!, $label:String!){
-            repository(owner: $owner, name: $name) {
-              issues(first: 1, states: OPEN, filterBy: {createdBy: $creator, labels: [$label]}, orderBy: {field: CREATED_AT, direction: DESC}) {
-                edges {
-                  node {
-                    body
-                    id
-                    number
+            // Run GraphQL query against GitHub API to find the most recent open issue used for reporting failures
+            const query = `query($owner:String!, $name:String!, $creator:String!, $label:String!){
+              repository(owner: $owner, name: $name) {
+                issues(first: 1, states: OPEN, filterBy: {createdBy: $creator, labels: [$label]}, orderBy: {field: CREATED_AT, direction: DESC}) {
+                  edges {
+                    node {
+                      body
+                      id
+                      number
+                    }
                   }
                 }
               }
+            }`;
+
+            const variables = {
+                owner: context.repo.owner,
+                name: context.repo.repo,
+                label: 'CI',
+                creator: "github-actions[bot]"
             }
-          }`;
+            const result = await github.graphql(query, variables)
 
-          const variables = {
-              owner: context.repo.owner,
-              name: context.repo.repo,
-              label: 'CI',
-              creator: "github-actions[bot]"
-          }
-          const result = await github.graphql(query, variables)
-
-          // If no issue is open, create a new issue,
-          // else update the body of the existing issue.
-          if (result.repository.issues.edges.length === 0) {
-              github.issues.create({
-                  owner: variables.owner,
-                  repo: variables.name,
-                  body: issue_body,
-                  title: title,
-                  labels: [variables.label]
-              })
-          } else {
-              github.issues.update({
-                  owner: variables.owner,
-                  repo: variables.name,
-                  issue_number: issue_info.number,
-                  issue_number: result.repository.issues.edges[0].node.number,
-                  body: issue_body
-              })
-          }
+            // If no issue is open, create a new issue,
+            // else update the body of the existing issue.
+            if (result.repository.issues.edges.length === 0) {
+                github.rest.issues.create({
+                    owner: variables.owner,
+                    repo: variables.name,
+                    body: issue_body,
+                    title: title,
+                    labels: [variables.label]
+                })
+            } else {
+                github.rest.issues.update({
+                    owner: variables.owner,
+                    repo: variables.name,
+                    issue_number: result.repository.issues.edges[0].node.number,
+                    body: issue_body
+                })
+            }

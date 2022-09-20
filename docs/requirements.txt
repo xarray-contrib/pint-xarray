@@ -3,9 +3,8 @@ xarray>=0.16.0
 pooch
 netCDF4
 cf-xarray>=0.6
-sphinx<4
-ipython_genutils  # remove once there's a new `nbconvert` release
-sphinx_rtd_theme
+sphinx
+sphinx_rtd_theme>=1.0
 ipython
 ipykernel
 jupyter_client

@@ -75,8 +75,8 @@ html_theme = "sphinx_rtd_theme"
 
 # extlinks
 extlinks = {
-    "issue": (f"{github_url}/issues/%s", "GH"),
-    "pull": (f"{github_url}/pull/%s", "PR"),
+    "issue": (f"{github_url}/issues/%s", "GH%s"),
+    "pull": (f"{github_url}/pull/%s", "PR%s"),
 }
 
 # autosummary

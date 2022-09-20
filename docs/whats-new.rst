@@ -2,11 +2,18 @@
 
 What's new
 ==========
-0.3 (*unreleased*)
-------------------
+0.3 (27 Jul 2022)
+-----------------
 - drop support for python 3.7 (:pull:`153`)
   By `Justus Magin <https://github.com/keewis>`_.
 - add support for python 3.10 (:pull:`155`)
+  By `Justus Magin <https://github.com/keewis>`_.
+- preserve :py:class:`pandas.MultiIndex` objects (:issue:`164`, :pull:`168`).
+  By `Justus Magin <https://github.com/keewis>`_.
+- fix "quantifying" dimension coordinates (:issue:`105`, :pull:`174`).
+  By `Justus Magin <https://github.com/keewis>`_.
+- allow using :py:meth:`DataArray.pint.quantify` and :py:meth:`Dataset.pint.quantify`
+  as identity operators (:issue:`47`, :pull:`175`).
   By `Justus Magin <https://github.com/keewis>`_.
 
 0.2.2 (unreleased)
@@ -34,10 +41,10 @@ What's new
 -----------------
 - rewrite :py:meth:`Dataset.pint.quantify` and :py:meth:`DataArray.pint.quantify`, to
   use pint's ``UnitRegistry.parse_units`` instead of ``UnitRegistry.parse_expression``
-  (:pull:`40`)
+  (:issue:`40`)
   By `Tom Nicholas <https://github.com/TomNicholas>`_.
 - ensure the variables which causes the error is explicit if an error occurs in
-  :py:meth:`Dataset.pint.quantify` and other methods (:pull:`43`, :pull:`91`)
+  :py:meth:`Dataset.pint.quantify` and other methods (:pull:`43`, :issue:`91`)
   By `Tom Nicholas <https://github.com/TomNicholas>`_ and `Justus Magin <https://github.com/keewis>`_.
 - refactor the internal conversion functions (:pull:`56`)
   By `Justus Magin <https://github.com/keewis>`_.

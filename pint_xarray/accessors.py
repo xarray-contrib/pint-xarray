@@ -2,8 +2,7 @@
 import itertools
 
 import pint
-from pint.quantity import Quantity
-from pint.unit import Unit
+from pint import Unit
 from xarray import register_dataarray_accessor, register_dataset_accessor
 from xarray.core.dtypes import NA
 
@@ -72,16 +71,6 @@ def zip_mappings(*mappings, fill_value=None):
     return zipped
 
 
-def merge_mappings(first, *mappings):
-    result = first.copy()
-    for mapping in mappings:
-        result.update(
-            {key: value for key, value in mapping.items() if value is not None}
-        )
-
-    return result
-
-
 def units_to_str_or_none(mapping, unit_format):
     formatter = str if not unit_format else lambda v: unit_format.format(v)
 
@@ -110,8 +99,8 @@ def either_dict_or_kwargs(positional, keywords, method_name):
 
 
 def get_registry(unit_registry, new_units, existing_units):
-    units = merge_mappings(existing_units, new_units)
-    registries = {unit._REGISTRY for unit in units.values() if isinstance(unit, Unit)}
+    units = itertools.chain(new_units.values(), existing_units.values())
+    registries = {unit._REGISTRY for unit in units if isinstance(unit, Unit)}
 
     if unit_registry is None:
         if not registries:
@@ -134,7 +123,7 @@ def get_registry(unit_registry, new_units, existing_units):
 
 
 def _decide_units(units, registry, unit_attribute):
-    if units is _default and unit_attribute is _default:
+    if units is _default and unit_attribute in (None, _default):
         # or warn and return None?
         raise ValueError("no units given")
     elif units in no_unit_values or isinstance(units, Unit):
@@ -143,7 +132,10 @@ def _decide_units(units, registry, unit_attribute):
     elif units is _default:
         if unit_attribute in no_unit_values:
             return unit_attribute
-        units = registry.parse_units(unit_attribute)
+        if isinstance(unit_attribute, Unit):
+            units = unit_attribute
+        else:
+            units = registry.parse_units(unit_attribute)
     else:
         units = registry.parse_units(units)
     return units
@@ -253,7 +245,7 @@ class PintDataArrayAccessor:
         parsed by the given unit registry. If no units are specified then the
         units will be parsed from the `'units'` entry of the DataArray's
         `.attrs`. Will raise a ValueError if the DataArray already contains a
-        unit-aware array.
+        unit-aware array with a different unit.
 
         .. note::
             Be aware that unless you're using ``dask`` this will load
@@ -318,14 +310,19 @@ class PintDataArrayAccessor:
         <xarray.DataArray (wavelength: 2)>
         array([0.4, 0.9])
         Dimensions without coordinates: wavelength
+
+        Quantify with the same unit:
+
+        >>> q = da.pint.quantify()
+        >>> q
+        <xarray.DataArray (wavelength: 2)>
+        <Quantity([0.4 0.9], 'hertz')>
+        Dimensions without coordinates: wavelength
+        >>> q.pint.quantify("Hz")
+        <xarray.DataArray (wavelength: 2)>
+        <Quantity([0.4 0.9], 'hertz')>
+        Dimensions without coordinates: wavelength
         """
-
-        if isinstance(self.da.data, Quantity):
-            raise ValueError(
-                f"Cannot attach unit {units} to quantity: data "
-                f"already has units {self.da.data.units}"
-            )
-
         if units is None or isinstance(units, (str, pint.Unit)):
             if self.da.name in unit_kwargs:
                 raise ValueError(
@@ -345,11 +342,11 @@ class PintDataArrayAccessor:
         new_units = {}
         invalid_units = {}
         for name, (unit, attr) in possible_new_units.items():
-            if unit is not _default or attr is not _default:
+            if unit not in (_default, None) or attr not in (_default, None):
                 try:
                     new_units[name] = _decide_units(unit, registry, attr)
                 except (ValueError, pint.UndefinedUnitError) as e:
-                    if unit is not _default:
+                    if unit not in (_default, None):
                         type = "parameter"
                         reported_unit = unit
                     else:
@@ -360,6 +357,31 @@ class PintDataArrayAccessor:
 
         if invalid_units:
             raise ValueError(format_error_message(invalid_units, "parse"))
+
+        existing_units = {
+            name: unit
+            for name, unit in conversion.extract_units(self.da).items()
+            if isinstance(unit, Unit)
+        }
+        overwritten_units = {
+            name: (old, new)
+            for name, (old, new) in zip_mappings(
+                existing_units, new_units, fill_value=_default
+            ).items()
+            if old is not _default and new is not _default and old != new
+        }
+        if overwritten_units:
+            errors = {
+                name: (
+                    new,
+                    ValueError(
+                        f"Cannot attach unit {repr(new)} to quantity: data "
+                        f"already has units {repr(old)}"
+                    ),
+                )
+                for name, (old, new) in overwritten_units.items()
+            }
+            raise ValueError(format_error_message(errors, "attach"))
 
         return self.da.pipe(conversion.strip_unit_attributes).pipe(
             conversion.attach_units, new_units
@@ -387,7 +409,8 @@ class PintDataArrayAccessor:
 
         See Also
         --------
-        https://pint.readthedocs.io/en/stable/tutorial.html#string-formatting
+        :doc:`pint:formatting`
+            pint's string formatting guide
 
         Examples
         --------
@@ -948,7 +971,7 @@ class PintDatasetAccessor:
         units are specified then the units will be parsed from the
         ``"units"`` entry of the Dataset variable's ``.attrs``. Will
         raise a ValueError if any of the variables already contain a
-        unit-aware array.
+        unit-aware array with a different unit.
 
         .. note::
             Be aware that unless you're using ``dask`` this will load
@@ -1025,6 +1048,28 @@ class PintDatasetAccessor:
         Data variables:
             a        (x) int64 0 3 2
             b        (x) int64 5 -2 1
+
+        Quantify with the same unit:
+
+        >>> q = ds.pint.quantify()
+        >>> q
+        <xarray.Dataset>
+        Dimensions:  (x: 3)
+        Coordinates:
+          * x        (x) int64 0 1 2
+            u        (x) int64 [s] -1 0 1
+        Data variables:
+            a        (x) int64 [m] 0 3 2
+            b        (x) int64 5 -2 1
+        >>> q.pint.quantify({"a": "m"})
+        <xarray.Dataset>
+        Dimensions:  (x: 3)
+        Coordinates:
+          * x        (x) int64 0 1 2
+            u        (x) int64 [s] -1 0 1
+        Data variables:
+            a        (x) int64 [m] 0 3 2
+            b        (x) int64 5 -2 1
         """
         units = either_dict_or_kwargs(units, unit_kwargs, "quantify")
         registry = get_registry(unit_registry, units, conversion.extract_units(self.ds))
@@ -1035,7 +1080,7 @@ class PintDatasetAccessor:
         new_units = {}
         invalid_units = {}
         for name, (unit, attr) in possible_new_units.items():
-            if unit is not _default or attr is not _default:
+            if unit is not _default or attr not in (None, _default):
                 try:
                     new_units[name] = _decide_units(unit, registry, attr)
                 except (ValueError, pint.UndefinedUnitError) as e:
@@ -1051,6 +1096,31 @@ class PintDatasetAccessor:
         if invalid_units:
             raise ValueError(format_error_message(invalid_units, "parse"))
 
+        existing_units = {
+            name: unit
+            for name, unit in conversion.extract_units(self.ds).items()
+            if isinstance(unit, Unit)
+        }
+        overwritten_units = {
+            name: (old, new)
+            for name, (old, new) in zip_mappings(
+                existing_units, new_units, fill_value=_default
+            ).items()
+            if old is not _default and new is not _default and old != new
+        }
+        if overwritten_units:
+            errors = {
+                name: (
+                    new,
+                    ValueError(
+                        f"Cannot attach unit {repr(new)} to quantity: data "
+                        f"already has units {repr(old)}"
+                    ),
+                )
+                for name, (old, new) in overwritten_units.items()
+            }
+            raise ValueError(format_error_message(errors, "attach"))
+
         return self.ds.pipe(conversion.strip_unit_attributes).pipe(
             conversion.attach_units, new_units
         )
@@ -1065,8 +1135,8 @@ class PintDatasetAccessor:
         Parameters
         ----------
         format : str, default: None
-            The format specification (as accepted by pint) used for the string
-            representations. If ``None``, the registry's default
+            The format specification (as accepted by pint's unit formatter) used for the
+            string representations. If ``None``, the registry's default
             (:py:attr:`pint.UnitRegistry.default_format`) is used instead.
 
         Returns
@@ -1077,7 +1147,8 @@ class PintDatasetAccessor:
 
         See Also
         --------
-        https://pint.readthedocs.io/en/stable/tutorial.html#string-formatting
+        :doc:`pint:formatting`
+            pint's string formatting guide
 
         Examples
         --------

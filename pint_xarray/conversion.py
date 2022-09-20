@@ -33,6 +33,9 @@ def array_attach_units(data, unit):
         raise ValueError(f"cannot use {unit!r} as a unit")
 
     if isinstance(data, pint.Quantity):
+        if data.units == unit:
+            return data
+
         raise ValueError(
             f"Cannot attach unit {unit!r} to quantity: data "
             f"already has units {data.units}"
@@ -282,6 +285,9 @@ def extract_unit_attributes(obj, attr="units"):
 
 
 def strip_units_variable(var):
+    if not isinstance(var.data, pint.Quantity):
+        return var
+
     data = array_strip_units(var.data)
     return var.copy(data=data)
 

@@ -130,6 +130,6 @@ This will get the string representation of a :py:class:`pint.Unit` instance and
 attach it as a ``units`` attribute. The data of the variable will now be
 whatever `pint`_ wrapped.
 
-.. _pint: https://pint.readthedocs.org/en/stable
-.. _xarray: https://xarray.pydata.org/en/stable
+.. _pint: https://pint.readthedocs.io/en/stable/
+.. _xarray: https://docs.xarray.dev/en/stable/
 .. _units in indexes: https://github.com/pydata/xarray/issues/1603
