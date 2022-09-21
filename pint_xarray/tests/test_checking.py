@@ -83,13 +83,13 @@ class TestExpects:
     def test_multiple_return_values(self):
         @expects("kg", "m / s", return_units=["J", "newton seconds"])
         def energy_and_momentum(m, v):
-            ke = 0.5 * m * v ** 2
+            ke = 0.5 * m * v**2
             p = m * v
             return ke, p
 
         m = pint.Quantity(0.1, units="tons")
         v = pint.Quantity(10, units="feet / second")
-        expected_ke = (0.5 * m * v ** 2).to("J")
+        expected_ke = (0.5 * m * v**2).to("J")
         expected_p = (m * v).to("newton seconds")
         result_ke, result_p = energy_and_momentum(m, v)
         assert result_ke.units == expected_ke.units
@@ -97,7 +97,7 @@ class TestExpects:
 
         m = xr.DataArray(0.1).pint.quantify(units="tons")
         v = xr.DataArray(10).pint.quantify(units="feet / second")
-        expected_ke = (0.5 * m * v ** 2).pint.to("J")
+        expected_ke = (0.5 * m * v**2).pint.to("J")
         expected_p = (m * v).pint.to("newton seconds")
         result_ke, result_p = energy_and_momentum(m, v)
         assert result_ke.pint.units == expected_ke.pint.units
