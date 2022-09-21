@@ -44,6 +44,29 @@ def convert_and_strip_kwargs(kwargs, units):
     return {name: convert_and_strip(kwargs[name], units[name]) for name in kwargs}
 
 
+def always_iterable(obj, base_type=(str, bytes)):
+    """
+    If *obj* is iterable, return an iterator over its items,
+    If *obj* is not iterable, return a one-item iterable containing *obj*,
+    If *obj* is ``None``, return an empty iterable.
+    If *base_type* is set, objects for which ``isinstance(obj, base_type)``
+    returns ``True`` won't be considered iterable.
+
+    Copied from more_itertools.
+    """
+
+    if obj is None:
+        return iter(())
+
+    if (base_type is not None) and isinstance(obj, base_type):
+        return iter((obj,))
+
+    try:
+        return iter(obj)
+    except TypeError:
+        return iter((obj,))
+
+
 def attach_return_units(results, units):
     if units is None:
         # ignore types and units of return values
@@ -108,29 +131,6 @@ def _attach_multiple_units(objects, units):
     """Attaches list of units to list of objects elementwise"""
     converted_objects = [_attach_units(obj, unit) for obj, unit in zip(objects, units)]
     return converted_objects
-
-
-def always_iterable(obj, base_type=(str, bytes)):
-    """
-    If *obj* is iterable, return an iterator over its items,
-    If *obj* is not iterable, return a one-item iterable containing *obj*,
-    If *obj* is ``None``, return an empty iterable.
-    If *base_type* is set, objects for which ``isinstance(obj, base_type)``
-    returns ``True`` won't be considered iterable.
-
-    Copied from more_itertools.
-    """
-
-    if obj is None:
-        return iter(())
-
-    if (base_type is not None) and isinstance(obj, base_type):
-        return iter((obj,))
-
-    try:
-        return iter(obj)
-    except TypeError:
-        return iter((obj,))
 
 
 def expects(*args_units, return_units=None, **kwargs_units):
