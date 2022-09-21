@@ -49,7 +49,7 @@ class TestExpects:
         assert f_da.pint.units == pint.Unit("hertz")
 
     def test_weighted_kwarg(self):
-        @expects(None, weights="dimensionless")
+        @expects(None, weights="dimensionless", return_units="metres")
         def mean(da, weights=None):
             if weights is not None:
                 return da.weighted(weights=weights).mean()
