@@ -223,7 +223,9 @@ def convert_units_dataset(obj, units):
 
 
 def convert_units(obj, units):
-    if not isinstance(obj, (DataArray, Dataset)):
+    if isinstance(obj, Variable):
+        return convert_units_variable(obj, units)
+    elif not isinstance(obj, (DataArray, Dataset)):
         raise ValueError(f"cannot convert object: {obj!r}: unknown type")
 
     if isinstance(obj, DataArray):
@@ -299,7 +301,9 @@ def strip_units_dataset(obj):
 
 
 def strip_units(obj):
-    if not isinstance(obj, (DataArray, Dataset)):
+    if isinstance(obj, Variable):
+        return strip_units_variable(obj)
+    elif not isinstance(obj, (DataArray, Dataset)):
         raise ValueError("cannot strip units from {obj!r}: unknown type")
 
     return call_on_dataset(strip_units_dataset, obj, name=temporary_name)
