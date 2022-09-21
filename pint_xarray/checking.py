@@ -145,12 +145,6 @@ def expects(*args_units, return_units=None, **kwargs_units):
     unquantified DataArrays, Datasets, or numpy-like arrays, but with
     the values expressed in specific units.
 
-    .. note::
-        The coordinates of input DataArrays are not checked, only the
-        data. So if your decorated function uses coordinates and you
-        wish to check their units, you should pass the coordinates of
-        interest as separate arguments.
-
     Parameters
     ----------
     func : callable
