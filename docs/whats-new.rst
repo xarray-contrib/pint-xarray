@@ -2,6 +2,12 @@
 
 What's new
 ==========
+0.4 (unreleased)
+----------------
+
+- Added the :py:func:`pint_xarray.expects` decorator (:pull:`143`).
+  By `Tom Nicholas <https://github.com/TomNicholas>`_ and `Justus Magin <https://github.com/keewis>`_.
+
 0.3 (27 Jul 2022)
 -----------------
 - drop support for python 3.7 (:pull:`153`)
@@ -15,12 +21,6 @@ What's new
 - allow using :py:meth:`DataArray.pint.quantify` and :py:meth:`Dataset.pint.quantify`
   as identity operators (:issue:`47`, :pull:`175`).
   By `Justus Magin <https://github.com/keewis>`_.
-
-0.2.2 (unreleased)
-------------------
-
-- Added the :py:func:`pint_xarray.expects` decorator (:pull:`143`).
-  By `Tom Nicholas <https://github.com/TomNicholas>`_
 
 0.2.1 (26 Jul 2021)
 -------------------
