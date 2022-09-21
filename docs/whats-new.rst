@@ -2,8 +2,8 @@
 
 What's new
 ==========
-0.4 (unreleased)
-----------------
+0.4 (*unreleased*)
+------------------
 
 - Added the :py:func:`pint_xarray.expects` decorator (:pull:`143`).
   By `Tom Nicholas <https://github.com/TomNicholas>`_ and `Justus Magin <https://github.com/keewis>`_.
