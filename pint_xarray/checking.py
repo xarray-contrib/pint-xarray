@@ -232,7 +232,10 @@ def expects(*args_units, return_units=None, **kwargs_units):
 
         missing_params = detect_missing_params(params, bound_units)
         if missing_params:
-            raise ValueError(f"no units for {missing_params}")
+            raise TypeError(
+                "Some parameters of the decorated function are missing units:"
+                f" {', '.join(sorted(missing_params))}"
+            )
 
         @functools.wraps(func)
         def _unit_checking_wrapper(*args, **kwargs):

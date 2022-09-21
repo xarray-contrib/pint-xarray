@@ -141,7 +141,7 @@ class TestExpects:
     def test_wrong_number_of_args(self):
         with pytest.raises(
             TypeError,
-            match="expects 1 arguments, but a function expecting 2 arguments was wrapped",
+            match="Some parameters of the decorated function are missing units",
         ):
 
             @expects("kg", return_units="newtons")
