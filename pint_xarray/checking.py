@@ -3,8 +3,9 @@ import inspect
 from inspect import Parameter
 
 from pint import Quantity
-from xarray import DataArray, Dataset
+from xarray import DataArray, Dataset, Variable
 
+from . import conversion
 from .accessors import PintDataArrayAccessor  # noqa
 
 
@@ -22,12 +23,25 @@ def detect_missing_params(params, units):
     }
 
 
+def convert_and_strip(obj, units):
+    if isinstance(obj, (DataArray, Dataset, Variable)):
+        if not isinstance(units, dict):
+            units = {None: units}
+        return conversion.strip_units(conversion.convert_units(obj, units))
+    elif isinstance(obj, Quantity):
+        return obj.m_as(units)
+    elif units is None:
+        return obj
+    else:
+        raise ValueError(f"unknown type: {type(obj)}")
+
+
 def convert_and_strip_args(args, units):
-    pass
+    return [convert_and_strip(obj, units_) for obj, units_ in zip(args, units)]
 
 
 def convert_and_strip_kwargs(kwargs, units):
-    pass
+    return {name: convert_and_strip(kwargs[name], units[name]) for name in kwargs}
 
 
 def attach_return_units(results, units):
