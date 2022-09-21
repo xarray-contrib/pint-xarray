@@ -2,6 +2,10 @@
 
 What's new
 ==========
+0.4 (*unreleased*)
+------------------
+
+
 0.3 (27 Jul 2022)
 -----------------
 - drop support for python 3.7 (:pull:`153`)
