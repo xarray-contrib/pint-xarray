@@ -68,12 +68,10 @@ def attach_return_units(results, units):
             results_iterable, return_units_iterable
         )
 
-        if isinstance(results, tuple):
+        if isinstance(results, tuple) or len(converted_results) != 1:
             return converted_results
-        elif len(converted_results) == 1:
-            return converted_results[0]
         else:
-            return converted_results
+            return converted_results[0]
 
 
 def _check_or_convert_to_then_strip(obj, units):
