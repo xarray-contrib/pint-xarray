@@ -409,7 +409,7 @@ class PintDataArrayAccessor:
 
         See Also
         --------
-        :doc:`pint:formatting`
+        :doc:`pint:user/formatting`
             pint's string formatting guide
 
         Examples
@@ -1147,7 +1147,7 @@ class PintDatasetAccessor:
 
         See Also
         --------
-        :doc:`pint:formatting`
+        :doc:`pint:user/formatting`
             pint's string formatting guide
 
         Examples
