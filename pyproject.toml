@@ -1,5 +1,43 @@
+[project]
+name = "pint-xarray"
+authors = [
+    {name = "Tom Nicholas", email = "tomnicholas1@googlemail.com"}
+]
+description = "Physical units interface to xarray using Pint"
+license = {text = "Apache-2"}
+readme = "README.md"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Topic :: Scientific/Engineering",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "numpy >= 1.17",
+    "xarray >= 0.16.1",
+    "pint >= 0.16",
+]
+dynamic = ["version"]
+
+[project.urls]
+Home = "https://github.com/xarray-contrib/pint-xarray"
+Documentation = "https://pint-xarray.readthedocs.io/en/stable"
+
+[tool.setuptools.packages.find]
+include = [
+    "pint_xarray",
+    "pint_xarray.tests",
+]
+
 [build-system]
-requires = ["setuptools >= 42", "wheel", "setuptools_scm[toml] >= 3.4"]
+requires = ["setuptools >= 64", "setuptools_scm >= 7.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools_scm]
