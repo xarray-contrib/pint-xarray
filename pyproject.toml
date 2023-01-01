@@ -26,7 +26,6 @@ dependencies = [
 ]
 dynamic = ["version"]
 
-
 [project.urls]
 Home = "https://github.com/xarray-contrib/pint-xarray"
 Documentation = "https://pint-xarray.readthedocs.io/en/stable"
@@ -49,7 +48,7 @@ junit_family = "xunit2"
 
 [tool.isort]
 profile = "black"
-skip_gitignore = true
-force_to_top = true
+skip_gitignore = "true"
+force_to_top = "true"
 default_section = "THIRDPARTY"
 known_first_party = "pint_xarray"
