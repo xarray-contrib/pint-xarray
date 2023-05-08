@@ -25,7 +25,7 @@ jobs:
         run: |
           twine check dist/*
       - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@0bf742be3ebe032c25dd15117957dc15d0cfc38d
+        uses: pypa/gh-action-pypi-publish@a56da0b891b3dc519c7ee3284aff1fad93cc8598
         with:
           user: __token__
           password: ${{ secrets.pypi_password }}
