@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import pint
 import pytest
 import xarray as xr
@@ -10,7 +11,6 @@ from .utils import (
     assert_equal,
     assert_identical,
     assert_units_equal,
-    raises_regex,
     requires_bottleneck,
     requires_dask_array,
     requires_scipy,
@@ -110,10 +110,62 @@ class TestQuantifyDataArray:
         with pytest.raises(AttributeError):
             result["u"].data.units
 
-    def test_error_when_already_units(self, example_quantity_da):
+    def test_error_when_changing_units(self, example_quantity_da):
         da = example_quantity_da
-        with raises_regex(ValueError, "already has units"):
-            da.pint.quantify()
+        with pytest.raises(ValueError, match="already has units"):
+            da.pint.quantify("s")
+
+    def test_attach_no_units(self):
+        arr = xr.DataArray([1, 2, 3], dims="x")
+        quantified = arr.pint.quantify()
+        assert_identical(quantified, arr)
+        assert_units_equal(quantified, arr)
+
+    def test_attach_no_new_units(self):
+        da = xr.DataArray(unit_registry.Quantity([1, 2, 3], "m"), dims="x")
+        quantified = da.pint.quantify()
+        assert_identical(quantified, da)
+        assert_units_equal(quantified, da)
+
+    def test_attach_same_units(self):
+        da = xr.DataArray(unit_registry.Quantity([1, 2, 3], "m"), dims="x")
+        quantified = da.pint.quantify("m")
+        assert_identical(quantified, da)
+        assert_units_equal(quantified, da)
+
+    def test_error_when_changing_units_dimension_coordinates(self):
+        arr = xr.DataArray(
+            [1, 2, 3],
+            dims="x",
+            coords={"x": ("x", [-1, 0, 1], {"units": unit_registry.Unit("m")})},
+        )
+        with pytest.raises(ValueError, match="already has units"):
+            arr.pint.quantify({"x": "s"})
+
+    def test_dimension_coordinate_array(self):
+        ds = xr.Dataset(coords={"x": ("x", [10], {"units": "m"})})
+        arr = ds.x
+
+        # does not actually quantify because `arr` wraps a IndexVariable
+        # but we still get a `Unit` in the attrs
+        q = arr.pint.quantify()
+        assert isinstance(q.attrs["units"], Unit)
+
+    def test_dimension_coordinate_array_already_quantified(self):
+        ds = xr.Dataset(coords={"x": ("x", [10], {"units": unit_registry.Unit("m")})})
+        arr = ds.x
+
+        with pytest.raises(ValueError):
+            arr.pint.quantify({"x": "s"})
+
+    def test_dimension_coordinate_array_already_quantified_same_units(self):
+        ds = xr.Dataset(coords={"x": ("x", [10], {"units": unit_registry.Unit("m")})})
+        arr = ds.x
+
+        quantified = arr.pint.quantify({"x": "m"})
+
+        assert_identical(quantified, arr)
+        assert_units_equal(quantified, arr)
 
     def test_error_on_nonsense_units(self, example_unitless_da):
         da = example_unitless_da
@@ -173,6 +225,17 @@ class TestDequantifyDataArray:
         quantified = orig.pint.quantify()
         result = quantified.pint.dequantify()
         assert_equal(result, orig)
+
+    def test_multiindex(self):
+        mindex = pd.MultiIndex.from_product([["a", "b"], [1, 2]], names=("lat", "lon"))
+
+        da = xr.DataArray(
+            np.arange(len(mindex)), dims="multi", coords={"multi": mindex}
+        )
+        result = da.pint.dequantify()
+
+        xr.testing.assert_identical(da, result)
+        assert isinstance(result.indexes["multi"], pd.MultiIndex)
 
 
 class TestPropertiesDataArray:
@@ -280,8 +343,35 @@ class TestQuantifyDataSet:
         )
 
     def test_error_when_already_units(self, example_quantity_ds):
-        with raises_regex(ValueError, "already has units"):
-            example_quantity_ds.pint.quantify({"funds": "pounds"})
+        with pytest.raises(ValueError, match="already has units"):
+            example_quantity_ds.pint.quantify({"funds": "kg"})
+
+    def test_attach_no_units(self):
+        ds = xr.Dataset({"a": ("x", [1, 2, 3])})
+        quantified = ds.pint.quantify()
+        assert_identical(quantified, ds)
+        assert_units_equal(quantified, ds)
+
+    def test_attach_no_new_units(self):
+        ds = xr.Dataset({"a": ("x", unit_registry.Quantity([1, 2, 3], "m"))})
+        quantified = ds.pint.quantify()
+
+        assert_identical(quantified, ds)
+        assert_units_equal(quantified, ds)
+
+    def test_attach_same_units(self):
+        ds = xr.Dataset({"a": ("x", unit_registry.Quantity([1, 2, 3], "m"))})
+        quantified = ds.pint.quantify({"a": "m"})
+
+        assert_identical(quantified, ds)
+        assert_units_equal(quantified, ds)
+
+    def test_error_when_changing_units_dimension_coordinates(self):
+        ds = xr.Dataset(
+            coords={"x": ("x", [-1, 0, 1], {"units": unit_registry.Unit("m")})},
+        )
+        with pytest.raises(ValueError, match="already has units"):
+            ds.pint.quantify({"x": "s"})
 
     def test_error_on_nonsense_units(self, example_unitless_ds):
         ds = example_unitless_ds
@@ -300,6 +390,20 @@ class TestQuantifyDataSet:
         ds = example_unitless_ds
         with pytest.raises(ValueError, match="'users'"):
             ds.pint.quantify(units={"users": "aecjhbav"})
+
+    def test_existing_units(self, example_quantity_ds):
+        ds = example_quantity_ds.copy()
+        ds.t.attrs["units"] = unit_registry.Unit("m")
+
+        with pytest.raises(ValueError, match="Cannot attach"):
+            ds.pint.quantify({"funds": "kg"})
+
+    def test_existing_units_dimension(self, example_quantity_ds):
+        ds = example_quantity_ds.copy()
+        ds.t.attrs["units"] = unit_registry.Unit("m")
+
+        with pytest.raises(ValueError, match="Cannot attach"):
+            ds.pint.quantify({"t": "s"})
 
 
 class TestDequantifyDataSet:

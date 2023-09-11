@@ -78,6 +78,20 @@ class TestArrayFunctions:
                 "already has units",
                 id="unit object on quantity",
             ),
+            pytest.param(
+                Unit("m"),
+                Quantity(np.array([0, 1]), "m"),
+                Quantity(np.array([0, 1]), "m"),
+                None,
+                id="unit object on quantity with same unit",
+            ),
+            pytest.param(
+                Unit("mm"),
+                Quantity(np.array([0, 1]), "m"),
+                None,
+                "already has units",
+                id="unit object on quantity with similar unit",
+            ),
         ),
     )
     def test_array_attach_units(self, data, unit, expected, match):
