@@ -1,4 +1,5 @@
-from xarray.core.indexes import Index
+from xarray import Variable
+from xarray.core.indexes import Index, PandasIndex
 
 from . import conversion
 
@@ -18,7 +19,22 @@ class PintMetaIndex(Index):
         self.index = index
         self.units = units
 
-    # don't need `from_variables`: we're always *wrapping* an existing index
+    def create_variables(self, variables=None):
+        index_vars = self.index.create_variables(variables)
+
+        index_vars_units = {}
+        for name, var in index_vars.items():
+            data = conversion.array_attach_units(var.data, self.units[name])
+            var_units = Variable(var.dims, data, attrs=var.attrs, encoding=var.encoding)
+            index_vars_units[name] = var_units
+
+        return index_vars_units
+
+    @classmethod
+    def from_variables(cls, variables, options):
+        index = PandasIndex.from_variables(variables)
+        units_dict = {index.index.name: options.get("units")}
+        return cls(index, units_dict)
 
     def sel(self, labels):
         converted_labels = conversion.convert_indexer_units(labels, self.units)
