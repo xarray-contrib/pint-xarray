@@ -1,10 +1,11 @@
 import itertools
 
 import pint
-from xarray import DataArray, Dataset, IndexVariable, Variable
+from xarray import Coordinates, DataArray, Dataset, IndexVariable, Variable
 
 from .compat import call_on_dataset
 from .errors import format_error_message
+from .index import PintMetaIndex
 
 no_unit_values = ("none", None)
 unit_attribute_name = "units"
@@ -122,7 +123,12 @@ def dataset_from_variables(variables, coords, attrs):
 def attach_units_dataset(obj, units):
     attached = {}
     rejected_vars = {}
+
+    indexed_variables = obj.xindexes.variables
     for name, var in obj.variables.items():
+        if name in indexed_variables:
+            continue
+
         unit = units.get(name)
         try:
             converted = attach_units_variable(var, unit)
@@ -130,10 +136,23 @@ def attach_units_dataset(obj, units):
         except ValueError as e:
             rejected_vars[name] = (unit, e)
 
+    ds_xindexes = obj.xindexes
+    new_indexes, new_index_vars = ds_xindexes.copy_indexes()
+
+    for idx, idx_vars in ds_xindexes.group_by_index():
+        idx_units = {name: units.get(name) for name in idx_vars.keys()}
+        new_idx = PintMetaIndex(index=idx, units=idx_units)
+        new_indexes.update({k: new_idx for k in idx_vars})
+        new_index_vars.update(new_idx.create_variables(idx_vars))
+
+    new_coords = Coordinates(new_index_vars, new_indexes)
+
     if rejected_vars:
         raise ValueError(rejected_vars)
 
-    return dataset_from_variables(attached, obj._coord_names, obj.attrs)
+    return dataset_from_variables(attached, obj._coord_names, obj.attrs).assign_coords(
+        new_coords
+    )
 
 
 def attach_units(obj, units):
