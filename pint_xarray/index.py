@@ -38,9 +38,6 @@ class PintMetaIndex(Index):
 
     def sel(self, labels):
         converted_labels = conversion.convert_indexer_units(labels, self.units)
-        stripped_labels = {
-            name: conversion.strip_indexer_units(indexer)
-            for name, indexer in converted_labels.items()
-        }
+        stripped_labels = conversion.strip_indexer_units(converted_labels)
 
         return self.index.sel(stripped_labels)
