@@ -20,7 +20,7 @@ jobs:
     outputs:
       triggered: ${{ steps.detect-trigger.outputs.trigger-found }}
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 2
     - uses: xarray-contrib/ci-trigger@v1
@@ -49,7 +49,7 @@ jobs:
 
     steps:
     - name: checkout the repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         # need to fetch all tags to get a correct version
         fetch-depth: 0  # fetch all branches and tags
@@ -91,7 +91,7 @@ jobs:
         python -m pytest --cov=pint_xarray --cov-report=xml
 
     - name: Upload code coverage to Codecov
-      uses: codecov/codecov-action@v3.1.1
+      uses: codecov/codecov-action@v3.1.4
       with:
         file: ./coverage.xml
         flags: unittests
