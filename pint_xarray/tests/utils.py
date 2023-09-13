@@ -76,7 +76,7 @@ def assert_slice_equal(a, b):
 def assert_indexer_equal(a, b):
     __tracebackhide__ = True
 
-    assert type(a) == type(b)
+    assert type(a) is type(b)
     if isinstance(a, slice):
         assert_slice_equal(a, b)
     elif isinstance(a, DataArray):
