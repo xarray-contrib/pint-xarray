@@ -145,7 +145,7 @@ def attach_units_dataset(obj, units):
         new_indexes.update({k: new_idx for k in idx_vars})
         new_index_vars.update(new_idx.create_variables(idx_vars))
 
-    new_coords = Coordinates(new_index_vars, new_indexes)
+    new_coords = Coordinates._construct_direct(new_index_vars, new_indexes)
 
     if rejected_vars:
         raise ValueError(rejected_vars)
