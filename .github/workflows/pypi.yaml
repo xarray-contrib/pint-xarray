@@ -9,9 +9,9 @@ jobs:
     runs-on: ubuntu-latest
     if: github.repository == 'xarray-contrib/pint-xarray'
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
         with:
           python-version: '3.x'
       - name: Install dependencies
@@ -25,7 +25,7 @@ jobs:
         run: |
           twine check dist/*
       - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@c7f29f7adef1a245bd91520e94867e5c6eedddcc
+        uses: pypa/gh-action-pypi-publish@b7f401de30cb6434a1e19f805ff006643653240e
         with:
           user: __token__
           password: ${{ secrets.pypi_password }}
