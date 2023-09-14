@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 python -m pip install \
-  -i https://pypi.anaconda.org/scipy-wheels-nightly/simple \
+  -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple \
   --no-deps \
   --pre \
   --upgrade \
