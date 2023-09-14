@@ -41,3 +41,10 @@ class PintMetaIndex(Index):
         stripped_labels = conversion.strip_indexer_units(converted_labels)
 
         return self.index.sel(stripped_labels)
+
+    def isel(self, indexers):
+        subset = self.index.isel(indexers)
+        if subset is None:
+            return None
+
+        return type(self)(index=subset, units=self.units)
