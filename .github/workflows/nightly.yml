@@ -39,14 +39,13 @@ jobs:
 
     if: |
       always()
-      && github.repository_owner == 'xarray-contrib/pint-xarray'
+      && github.repository_owner == 'xarray-contrib'
       && (
-        github.event_name == 'schedule'
-        || github.event_name == 'workflow_dispatch'
+        (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
         || needs.detect-test-upstream-trigger.outputs.triggered == 'true'
         || (
           github.event_name == 'pull_request'
-          && contains(github.event.pull_request.labels.*.name == 'run-upstream')
+          && contains(github.event.pull_request.labels.*.name, 'run-upstream')
         )
       )
 
