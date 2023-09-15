@@ -13,16 +13,16 @@ classifiers = [
     "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
     "Programming Language :: Python",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
     "Topic :: Scientific/Engineering",
 ]
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 dependencies = [
-    "numpy >= 1.17",
-    "xarray >= 0.16.1",
-    "pint >= 0.16",
+    "numpy >= 1.22",
+    "xarray >= 0.20",
+    "pint >= 0.19",
 ]
 dynamic = ["version"]
 

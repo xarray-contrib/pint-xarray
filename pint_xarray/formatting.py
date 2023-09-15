@@ -77,8 +77,10 @@ def format_item(x, quote_strings=True):
     """Returns a succinct summary of an object as a string"""
     if isinstance(x, (str, bytes)):
         return repr(x) if quote_strings else x
-    elif isinstance(x, (float, np.float_)):
+    elif isinstance(x, float):
         return f"{x:.4}"
+    elif hasattr(x, "dtype") and np.issubdtype(x.dtype, np.floating):
+        return f"{x.item():.4}"
     else:
         return str(x)
 
