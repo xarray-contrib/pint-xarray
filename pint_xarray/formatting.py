@@ -78,9 +78,9 @@ def format_item(x, quote_strings=True):
     if isinstance(x, (str, bytes)):
         return repr(x) if quote_strings else x
     elif isinstance(x, float):
-        return f"{x:.4f}"
+        return f"{x:.4}"
     elif hasattr(x, "dtype") and np.issubdtype(x.dtype, np.floating):
-        return f"{x.item():.4f}"
+        return f"{x.item():.4}"
     else:
         return str(x)
 
