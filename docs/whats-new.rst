@@ -4,7 +4,22 @@ What's new
 ==========
 0.4 (*unreleased*)
 ------------------
+- adopt `SPEC0 <https://scientific-python.org/specs/spec-0000>`_ (:pull:`228`)
+  By `Justus Magin <https://github.com/keewis>`_.
 
+  This means that the supported versions change:
+
+  ============ ==============  ==============
+   dependency    old minimum     new minimum
+  ============ ==============  ==============
+   python               3.8              3.9
+   xarray            0.16.1             0.20
+   numpy               1.17             1.22
+   pint                0.16             0.19
+  ============ ==============  ==============
+
+- add support for python 3.11 (:pull:`228`)
+  By `Justus Magin <https://github.com/keewis>`_.
 
 0.3 (27 Jul 2022)
 -----------------
