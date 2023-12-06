@@ -5,7 +5,6 @@ from . import conversion
 
 
 class PintMetaIndex(Index):
-    # TODO: inherit from MetaIndex once that exists
     def __init__(self, *, index, units):
         """create a unit-aware MetaIndex
 
@@ -48,3 +47,6 @@ class PintMetaIndex(Index):
             return None
 
         return type(self)(index=subset, units=self.units)
+
+    def _repr_inline_(self, max_width):
+        return f"{self.__class__.__name__}({self.index.__class__.__name__})"
