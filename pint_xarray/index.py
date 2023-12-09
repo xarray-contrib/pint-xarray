@@ -69,7 +69,15 @@ class PintIndex(Index):
         raise NotImplementedError()
 
     def equals(self, other):
-        raise NotImplementedError()
+        if not isinstance(other, PintIndex):
+            return False
+
+        # for now we require exactly matching units to avoid the potentially expensive computation
+        if self.units != other.units:
+            return False
+
+        # last to avoid the potentially expensive comparison
+        return self.index.equals(other.index)
 
     def roll(self, shifts):
         return None
