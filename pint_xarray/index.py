@@ -80,13 +80,13 @@ class PintIndex(Index):
         return self.index.equals(other.index)
 
     def roll(self, shifts):
-        return None
+        return self._replace(self.index.roll(shifts))
 
     def rename(self, name_dict, dims_dict):
-        return self
+        return self._replace(self.index.rename(name_dict, dims_dict))
 
     def __getitem__(self, indexer):
-        raise NotImplementedError()
+        return self._replace(self.index[indexer])
 
     def _repr_inline_(self, max_width):
         return f"{self.__class__.__name__}({self.index.__class__.__name__})"
