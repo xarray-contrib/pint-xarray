@@ -18,6 +18,9 @@ class PintIndex(Index):
         self.index = index
         self.units = units
 
+    def _replace(self, new_index):
+        return self.__class__(index=new_index, units=self.units)
+
     def create_variables(self, variables=None):
         index_vars = self.index.create_variables(variables)
 
