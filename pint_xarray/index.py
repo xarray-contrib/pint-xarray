@@ -35,6 +35,17 @@ class PintMetaIndex(Index):
         units_dict = {index.index.name: options.get("units")}
         return cls(index, units_dict)
 
+    @classmethod
+    def concat(cls, indexes, dim, positions):
+        raise NotImplementedError()
+
+    @classmethod
+    def stack(cls, variables, dim):
+        raise NotImplementedError()
+
+    def unstack(self):
+        raise NotImplementedError()
+
     def sel(self, labels):
         converted_labels = conversion.convert_indexer_units(labels, self.units)
         stripped_labels = conversion.strip_indexer_units(converted_labels)
@@ -47,6 +58,24 @@ class PintMetaIndex(Index):
             return None
 
         return type(self)(index=subset, units=self.units)
+
+    def join(self, other, how="inner"):
+        raise NotImplementedError()
+
+    def reindex_like(self, other):
+        raise NotImplementedError()
+
+    def equals(self, other):
+        raise NotImplementedError()
+
+    def roll(self, shifts):
+        return None
+
+    def rename(self, name_dict, dims_dict):
+        return self
+
+    def __getitem__(self, indexer):
+        raise NotImplementedError()
 
     def _repr_inline_(self, max_width):
         return f"{self.__class__.__name__}({self.index.__class__.__name__})"
