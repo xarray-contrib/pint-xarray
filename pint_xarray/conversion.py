@@ -5,7 +5,7 @@ from xarray import Coordinates, DataArray, Dataset, IndexVariable, Variable
 
 from .compat import call_on_dataset
 from .errors import format_error_message
-from .index import PintMetaIndex
+from .index import PintIndex
 
 no_unit_values = ("none", None)
 unit_attribute_name = "units"
@@ -141,7 +141,7 @@ def attach_units_dataset(obj, units):
 
     for idx, idx_vars in ds_xindexes.group_by_index():
         idx_units = {name: units.get(name) for name in idx_vars.keys()}
-        new_idx = PintMetaIndex(index=idx, units=idx_units)
+        new_idx = PintIndex(index=idx, units=idx_units)
         new_indexes.update({k: new_idx for k in idx_vars})
         new_index_vars.update(new_idx.create_variables(idx_vars))
 

@@ -4,7 +4,7 @@ from xarray.core.indexes import Index, PandasIndex
 from . import conversion
 
 
-class PintMetaIndex(Index):
+class PintIndex(Index):
     def __init__(self, *, index, units):
         """create a unit-aware MetaIndex
 
