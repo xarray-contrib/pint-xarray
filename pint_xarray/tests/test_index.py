@@ -214,3 +214,14 @@ def test_getitem(indexer):
     expected = PintIndex(index=wrapped_index[indexer], units=index.units)
 
     assert actual.equals(expected)
+
+
+@pytest.mark.parametrize("wrapped_index", (PandasIndex(pd.Index([1, 2]), dim="x"),))
+def test_repr_inline(wrapped_index):
+    index = PintIndex(index=wrapped_index, units=ureg.Unit("m"))
+
+    # TODO: parametrize
+    actual = index._repr_inline_(90)
+
+    assert "PintIndex" in actual
+    assert wrapped_index.__class__.__name__ in actual
