@@ -123,3 +123,47 @@ def test_isel(indexers):
         expected = None
 
     assert (actual is None and expected is None) or actual.equals(expected)
+
+
+@pytest.mark.parametrize(
+    ["other", "expected"],
+    (
+        (
+            PintIndex(
+                index=PandasIndex(pd.Index([1, 2, 3, 4]), dim="x"),
+                units={"x": ureg.Unit("cm")},
+            ),
+            True,
+        ),
+        (PandasIndex(pd.Index([1, 2, 3, 4]), dim="x"), False),
+        (
+            PintIndex(
+                index=PandasIndex(pd.Index([1, 2, 3, 4]), dim="x"),
+                units={"x": ureg.Unit("m")},
+            ),
+            False,
+        ),
+        (
+            PintIndex(
+                index=PandasIndex(pd.Index([1, 2, 3, 4]), dim="y"),
+                units={"y": ureg.Unit("cm")},
+            ),
+            False,
+        ),
+        (
+            PintIndex(
+                index=PandasIndex(pd.Index([1, 3, 3, 4]), dim="x"),
+                units={"x": ureg.Unit("cm")},
+            ),
+            False,
+        ),
+    ),
+)
+def test_equals(other, expected):
+    index = PintIndex(
+        index=PandasIndex(pd.Index([1, 2, 3, 4]), dim="x"), units={"x": ureg.Unit("cm")}
+    )
+
+    actual = index.equals(other)
+
+    assert actual == expected
