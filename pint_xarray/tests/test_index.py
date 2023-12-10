@@ -167,3 +167,25 @@ def test_equals(other, expected):
     actual = index.equals(other)
 
     assert actual == expected
+
+
+@pytest.mark.parametrize(
+    ["shifts", "expected_index"],
+    (
+        ({"x": 0}, PandasIndex(pd.Index([-2, -1, 0, 1, 2]), dim="x")),
+        ({"x": 1}, PandasIndex(pd.Index([2, -2, -1, 0, 1]), dim="x")),
+        ({"x": 2}, PandasIndex(pd.Index([1, 2, -2, -1, 0]), dim="x")),
+        ({"x": -1}, PandasIndex(pd.Index([-1, 0, 1, 2, -2]), dim="x")),
+        ({"x": -2}, PandasIndex(pd.Index([0, 1, 2, -2, -1]), dim="x")),
+    ),
+)
+def test_roll(shifts, expected_index):
+    index = PintIndex(
+        index=PandasIndex(pd.Index([-2, -1, 0, 1, 2]), dim="x"),
+        units={"x": ureg.Unit("m")},
+    )
+
+    actual = index.roll(shifts)
+    expected = index._replace(expected_index)
+
+    assert actual.equals(expected)
