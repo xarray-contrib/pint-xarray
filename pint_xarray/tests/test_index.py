@@ -203,3 +203,14 @@ def test_rename(name_dict, dims_dict):
     )
 
     assert actual.equals(expected)
+
+
+@pytest.mark.parametrize("indexer", ([0], slice(0, 2)))
+def test_getitem(indexer):
+    wrapped_index = PandasIndex(pd.Index([1, 2], name="y2"), dim="y")
+    index = PintIndex(index=wrapped_index, units={"y": ureg.Unit("m")})
+
+    actual = index[indexer]
+    expected = PintIndex(index=wrapped_index[indexer], units=index.units)
+
+    assert actual.equals(expected)
