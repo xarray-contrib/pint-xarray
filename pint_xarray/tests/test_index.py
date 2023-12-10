@@ -76,3 +76,24 @@ def test_sel(labels, expected):
     actual = index.sel(labels)
 
     assert actual == expected
+
+
+@pytest.mark.parametrize(
+    "indexers",
+    ({"y": 0}, {"y": [1, 2]}, {"y": slice(0, None, 2)}, {"y": xr.Variable("y", [1])}),
+)
+def test_isel(indexers):
+    wrapped_index = PandasIndex(pd.Index([1, 2, 3, 4]), dim="y")
+    index = PintIndex(index=wrapped_index, units={"y": ureg.Unit("s")})
+
+    actual = index.isel(indexers)
+
+    wrapped_ = wrapped_index.isel(indexers)
+    if wrapped_ is not None:
+        expected = PintIndex(
+            index=wrapped_index.isel(indexers), units={"y": ureg.Unit("s")}
+        )
+    else:
+        expected = None
+
+    assert (actual is None and expected is None) or actual.equals(expected)
