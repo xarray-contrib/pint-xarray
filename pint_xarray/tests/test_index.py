@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
@@ -5,6 +6,16 @@ from xarray.core.indexes import IndexSelResult, PandasIndex
 
 from pint_xarray import unit_registry as ureg
 from pint_xarray.index import PintIndex
+
+
+def indexer_equal(first, second):
+    if type(first) is not type(second):
+        return False
+
+    if isinstance(first, np.ndarray):
+        return np.all(first == second)
+    else:
+        return first == second
 
 
 @pytest.mark.parametrize(
@@ -66,6 +77,14 @@ def test_create_variables(wrapped_index, units, expected):
         ({"x": ureg.Quantity(1, "m")}, IndexSelResult(dim_indexers={"x": 0})),
         ({"x": ureg.Quantity(3000, "mm")}, IndexSelResult(dim_indexers={"x": 2})),
         ({"x": ureg.Quantity(0.002, "km")}, IndexSelResult(dim_indexers={"x": 1})),
+        (
+            {"x": ureg.Quantity([0.002, 0.004], "km")},
+            IndexSelResult(dim_indexers={"x": np.array([1, 3])}),
+        ),
+        (
+            {"x": slice(ureg.Quantity(2, "m"), ureg.Quantity(3000, "mm"))},
+            IndexSelResult(dim_indexers={"x": slice(1, 3)}),
+        ),
     ),
 )
 def test_sel(labels, expected):
@@ -75,7 +94,14 @@ def test_sel(labels, expected):
 
     actual = index.sel(labels)
 
-    assert actual == expected
+    assert isinstance(actual, IndexSelResult)
+    assert list(actual.dim_indexers.keys()) == list(expected.dim_indexers.keys())
+    assert all(
+        [
+            indexer_equal(actual.dim_indexers[k], expected.dim_indexers[k])
+            for k in expected.dim_indexers.keys()
+        ]
+    )
 
 
 @pytest.mark.parametrize(
