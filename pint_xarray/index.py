@@ -72,7 +72,7 @@ class PintIndex(Index):
         if not isinstance(other, PintIndex):
             return False
 
-        # for now we require exactly matching units to avoid the potentially expensive computation
+        # for now we require exactly matching units to avoid the potentially expensive conversion
         if self.units != other.units:
             return False
 
