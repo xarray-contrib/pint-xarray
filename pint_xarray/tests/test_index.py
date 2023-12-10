@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 import xarray as xr
-from xarray.core.indexes import PandasIndex
+from xarray.core.indexes import IndexSelResult, PandasIndex
 
 from pint_xarray import unit_registry as ureg
 from pint_xarray.index import PintIndex
@@ -58,3 +58,21 @@ def test_create_variables(wrapped_index, units, expected):
 
     assert list(actual.keys()) == list(expected.keys())
     assert all([actual[k].equals(expected[k]) for k in expected.keys()])
+
+
+@pytest.mark.parametrize(
+    ["labels", "expected"],
+    (
+        ({"x": ureg.Quantity(1, "m")}, IndexSelResult(dim_indexers={"x": 0})),
+        ({"x": ureg.Quantity(3000, "mm")}, IndexSelResult(dim_indexers={"x": 2})),
+        ({"x": ureg.Quantity(0.002, "km")}, IndexSelResult(dim_indexers={"x": 1})),
+    ),
+)
+def test_sel(labels, expected):
+    index = PintIndex(
+        index=PandasIndex(pd.Index([1, 2, 3, 4]), dim="x"), units={"x": ureg.Unit("m")}
+    )
+
+    actual = index.sel(labels)
+
+    assert actual == expected
