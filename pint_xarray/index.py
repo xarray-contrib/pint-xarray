@@ -60,7 +60,7 @@ class PintIndex(Index):
         if subset is None:
             return None
 
-        return type(self)(index=subset, units=self.units)
+        return self._replace(subset)
 
     def join(self, other, how="inner"):
         raise NotImplementedError()
