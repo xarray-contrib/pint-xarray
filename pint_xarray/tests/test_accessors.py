@@ -22,7 +22,7 @@ pytestmark = [
 
 # make sure scalars are converted to 0d arrays so quantities can
 # always be treated like ndarrays
-unit_registry = UnitRegistry(force_ndarray=True)
+unit_registry = UnitRegistry(force_ndarray=False)
 Quantity = unit_registry.Quantity
 
 nan = np.nan
