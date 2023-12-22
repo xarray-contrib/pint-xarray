@@ -1,9 +1,11 @@
 import numpy as np
 import pint
 import pytest
-from xarray import DataArray, Dataset, Variable
+from xarray import Coordinates, DataArray, Dataset, Variable
+from xarray.core.indexes import PandasIndex
 
 from pint_xarray import conversion
+from pint_xarray.index import PintIndex
 
 from .utils import (
     assert_array_equal,
@@ -245,17 +247,22 @@ class TestXarrayFunctions:
 
         q_a = to_quantity(a, units.get("a"))
         q_b = to_quantity(b, units.get("b"))
+        q_x = to_quantity(x, units.get("x"))
         q_u = to_quantity(u, units.get("u"))
 
-        units_x = units.get("x")
+        index = PandasIndex(x, dim="x")
+        if units.get("x") is not None:
+            index = PintIndex(index=index, units=units.get("x"))
 
         obj = Dataset({"a": ("x", a), "b": ("x", b)}, coords={"u": ("x", u), "x": x})
+        coords = Coordinates._construct_direct(
+            coords={"u": Variable("x", q_u), "x": Variable("x", q_x)},
+            indexes={"x": index},
+        )
         expected = Dataset(
             {"a": ("x", q_a), "b": ("x", q_b)},
-            coords={"u": ("x", q_u), "x": x},
+            coords=coords,
         )
-        if units_x is not None:
-            expected.x.attrs["units"] = units_x
 
         if type == "DataArray":
             obj = obj["a"]
@@ -263,6 +270,11 @@ class TestXarrayFunctions:
 
         actual = conversion.attach_units(obj, units)
         assert_identical(actual, expected)
+
+        if units.get("x") is not None:
+            index = actual.xindexes["x"]
+
+            assert isinstance(index, PintIndex) and index.units == {"x": units.get("x")}
 
     @pytest.mark.parametrize("type", ("DataArray", "Dataset"))
     def test_attach_unit_attributes(self, type):
