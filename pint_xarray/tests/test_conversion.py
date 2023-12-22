@@ -271,10 +271,11 @@ class TestXarrayFunctions:
         actual = conversion.attach_units(obj, units)
         assert_identical(actual, expected)
 
-        if units.get("x") is not None:
-            index = actual.xindexes["x"]
-
-            assert isinstance(index, PintIndex) and index.units == {"x": units.get("x")}
+        if units.get("x") is None:
+            assert not isinstance(actual.xindexes["x"], PintIndex)
+        else:
+            assert isinstance(actual.xindexes["x"], PintIndex)
+            assert actual.xindexes["x"].units == {"x": units.get("x")}
 
     @pytest.mark.parametrize("type", ("DataArray", "Dataset"))
     def test_attach_unit_attributes(self, type):

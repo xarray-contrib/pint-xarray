@@ -141,6 +141,9 @@ def attach_units_dataset(obj, units):
 
     for idx, idx_vars in ds_xindexes.group_by_index():
         idx_units = {name: units.get(name) for name in idx_vars.keys()}
+        if all(unit is None for unit in idx_units.values()):
+            # skip non-quantity indexed variables
+            continue
         new_idx = PintIndex(index=idx, units=idx_units)
         new_indexes.update({k: new_idx for k in idx_vars})
         new_index_vars.update(new_idx.create_variables(idx_vars))
