@@ -275,7 +275,11 @@ def extract_units(obj):
 
 
 def extract_unit_attributes_dataset(obj, attr="units"):
-    return {name: var.attrs.get(attr, None) for name, var in obj.variables.items()}
+    all_units = {name: var.attrs.get(attr, None) for name, var in obj.variables.items()}
+
+    return {
+        name: unit for name, unit in all_units.items() if not is_datetime_unit(unit)
+    }
 
 
 def extract_unit_attributes(obj, attr="units"):
