@@ -321,6 +321,9 @@ def strip_units(obj):
 def strip_unit_attributes_dataset(obj, attr="units"):
     new_obj = obj.copy()
     for var in new_obj.variables.values():
+        if is_datetime_unit(var.attrs.get(attr, "")):
+            continue
+
         var.attrs.pop(attr, None)
 
     return new_obj
