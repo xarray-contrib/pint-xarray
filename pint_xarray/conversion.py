@@ -1,4 +1,5 @@
 import itertools
+import re
 
 import pint
 from xarray import DataArray, Dataset, IndexVariable, Variable
@@ -10,6 +11,14 @@ no_unit_values = ("none", None)
 unit_attribute_name = "units"
 slice_attributes = ("start", "stop", "step")
 temporary_name = "<this-array>"
+
+time_units_re = r"\w+"
+datetime_re = r"\d{4}-\d{2}-\d{2}(?:[ T]\d{2}:\d{2}:\d{2}(?:\.\d+)?)?"
+datetime_units_re = re.compile(rf"{time_units_re} since {datetime_re}")
+
+
+def is_datetime_unit(unit):
+    return datetime_units_re.match(unit) is not None
 
 
 def array_attach_units(data, unit):
