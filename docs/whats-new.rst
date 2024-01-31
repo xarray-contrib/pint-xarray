@@ -5,7 +5,6 @@ What's new
 0.4 (*unreleased*)
 ------------------
 - adopt `SPEC0 <https://scientific-python.org/specs/spec-0000>`_ (:pull:`228`)
-  By `Justus Magin <https://github.com/keewis>`_.
 
   This means that the supported versions change:
 
@@ -18,7 +17,10 @@ What's new
    pint                0.16             0.19
   ============ ==============  ==============
 
+  By `Justus Magin <https://github.com/keewis>`_.
 - add support for python 3.11 (:pull:`228`)
+  By `Justus Magin <https://github.com/keewis>`_.
+- ignore datetime units on attributes (:pull:`241`)
   By `Justus Magin <https://github.com/keewis>`_.
 
 0.3 (27 Jul 2022)

@@ -258,6 +258,12 @@ class PintDataArrayAccessor:
             ``xarray`` changes the way it implements indexes, these
             units will be set as attributes.
 
+        .. note::
+            Also note that datetime units (i.e. ones that match
+            ``{units} since {date}``) in unit attributes will be
+            ignored, to avoid interfering with ``xarray``'s datetime
+            encoding / decoding.
+
         Parameters
         ----------
         units : unit-like or mapping of hashable to unit-like, optional
@@ -983,6 +989,12 @@ class PintDatasetAccessor:
             As units in dimension coordinates are not supported until
             ``xarray`` changes the way it implements indexes, these
             units will be set as attributes.
+
+        .. note::
+            Also note that datetime units (i.e. ones that match
+            ``{units} since {date}``) in unit attributes will be
+            ignored, to avoid interfering with ``xarray``'s datetime
+            encoding / decoding.
 
         Parameters
         ----------
