@@ -18,7 +18,7 @@ datetime_units_re = re.compile(rf"{time_units_re} since {datetime_re}")
 
 
 def is_datetime_unit(unit):
-    return datetime_units_re.match(unit) is not None
+    return isinstance(unit, str) and datetime_units_re.match(unit) is not None
 
 
 def array_attach_units(data, unit):
