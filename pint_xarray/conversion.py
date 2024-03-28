@@ -2,10 +2,11 @@ import itertools
 import re
 
 import pint
-from xarray import DataArray, Dataset, IndexVariable, Variable
+from xarray import Coordinates, DataArray, Dataset, IndexVariable, Variable
 
 from .compat import call_on_dataset
 from .errors import format_error_message
+from .index import PintIndex
 
 no_unit_values = ("none", None)
 unit_attribute_name = "units"
@@ -131,7 +132,12 @@ def dataset_from_variables(variables, coords, attrs):
 def attach_units_dataset(obj, units):
     attached = {}
     rejected_vars = {}
+
+    indexed_variables = obj.xindexes.variables
     for name, var in obj.variables.items():
+        if name in indexed_variables:
+            continue
+
         unit = units.get(name)
         try:
             converted = attach_units_variable(var, unit)
@@ -139,10 +145,23 @@ def attach_units_dataset(obj, units):
         except ValueError as e:
             rejected_vars[name] = (unit, e)
 
+    ds_xindexes = obj.xindexes
+    new_indexes, new_index_vars = ds_xindexes.copy_indexes()
+
+    for idx, idx_vars in ds_xindexes.group_by_index():
+        idx_units = {name: units.get(name) for name in idx_vars.keys()}
+        new_idx = PintIndex(index=idx, units=idx_units)
+        new_indexes.update({k: new_idx for k in idx_vars})
+        new_index_vars.update(new_idx.create_variables(idx_vars))
+
+    new_coords = Coordinates._construct_direct(new_index_vars, new_indexes)
+
     if rejected_vars:
         raise ValueError(rejected_vars)
 
-    return dataset_from_variables(attached, obj._coord_names, obj.attrs)
+    return dataset_from_variables(attached, obj._coord_names, obj.attrs).assign_coords(
+        new_coords
+    )
 
 
 def attach_units(obj, units):
@@ -403,25 +422,31 @@ def convert_indexer_units(indexers, units):
     return converted
 
 
-def extract_indexer_units(indexer):
-    if isinstance(indexer, slice):
-        return slice_extract_units(indexer)
-    elif isinstance(indexer, (DataArray, Variable)):
-        return array_extract_units(indexer.data)
-    else:
-        return array_extract_units(indexer)
+def extract_indexer_units(indexers):
+    def extract(indexer):
+        if isinstance(indexer, slice):
+            return slice_extract_units(indexer)
+        elif isinstance(indexer, (DataArray, Variable)):
+            return array_extract_units(indexer.data)
+        else:
+            return array_extract_units(indexer)
+
+    return {name: extract(indexer) for name, indexer in indexers.items()}
 
 
-def strip_indexer_units(indexer):
-    if isinstance(indexer, slice):
-        return slice(
-            array_strip_units(indexer.start),
-            array_strip_units(indexer.stop),
-            array_strip_units(indexer.step),
-        )
-    elif isinstance(indexer, DataArray):
-        return strip_units(indexer)
-    elif isinstance(indexer, Variable):
-        return strip_units_variable(indexer)
-    else:
-        return array_strip_units(indexer)
+def strip_indexer_units(indexers):
+    def strip(indexer):
+        if isinstance(indexer, slice):
+            return slice(
+                array_strip_units(indexer.start),
+                array_strip_units(indexer.stop),
+                array_strip_units(indexer.step),
+            )
+        elif isinstance(indexer, DataArray):
+            return strip_units(indexer)
+        elif isinstance(indexer, Variable):
+            return strip_units_variable(indexer)
+        else:
+            return array_strip_units(indexer)
+
+    return {name: strip(indexer) for name, indexer in indexers.items()}

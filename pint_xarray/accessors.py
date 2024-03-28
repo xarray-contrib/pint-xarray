@@ -152,10 +152,9 @@ class DatasetLocIndexer:
             raise NotImplementedError("pandas-style indexing is not supported, yet")
 
         dims = self.ds.dims
+        indexer_units = conversion.extract_indexer_units(indexers)
         indexer_units = {
-            name: conversion.extract_indexer_units(indexer)
-            for name, indexer in indexers.items()
-            if name in dims
+            name: indexer for name, indexer in indexer_units.items() if name in dims
         }
 
         # convert the indexes to the indexer's units
@@ -165,10 +164,7 @@ class DatasetLocIndexer:
             raise KeyError(*e.args) from e
 
         # index
-        stripped_indexers = {
-            name: conversion.strip_indexer_units(indexer)
-            for name, indexer in indexers.items()
-        }
+        stripped_indexers = conversion.strip_indexer_units(indexers)
         return converted.loc[stripped_indexers]
 
 
@@ -183,10 +179,9 @@ class DataArrayLocIndexer:
             raise NotImplementedError("pandas-style indexing is not supported, yet")
 
         dims = self.da.dims
+        indexer_units = conversion.extract_indexer_units(indexers)
         indexer_units = {
-            name: conversion.extract_indexer_units(indexer)
-            for name, indexer in indexers.items()
-            if name in dims
+            name: indexer for name, indexer in indexer_units.items() if name in dims
         }
 
         # convert the indexes to the indexer's units
@@ -196,10 +191,7 @@ class DataArrayLocIndexer:
             raise KeyError(*e.args) from e
 
         # index
-        stripped_indexers = {
-            name: conversion.strip_indexer_units(indexer)
-            for name, indexer in indexers.items()
-        }
+        stripped_indexers = conversion.strip_indexer_units(indexers)
         return converted.loc[stripped_indexers]
 
     def __setitem__(self, indexers, values):
@@ -219,10 +211,7 @@ class DataArrayLocIndexer:
             raise KeyError(*e.args) from e
 
         # index
-        stripped_indexers = {
-            name: conversion.strip_indexer_units(indexer)
-            for name, indexer in converted.items()
-        }
+        stripped_indexers = conversion.strip_indexer_units(converted)
         self.da.loc[stripped_indexers] = values
 
 
@@ -648,10 +637,9 @@ class PintDataArrayAccessor:
         indexers = either_dict_or_kwargs(indexers, indexers_kwargs, "reindex")
 
         dims = self.da.dims
+        indexer_units = conversion.extract_indexer_units(indexers)
         indexer_units = {
-            name: conversion.extract_indexer_units(indexer)
-            for name, indexer in indexers.items()
-            if name in dims
+            name: indexer for name, indexer in indexer_units.items() if name in dims
         }
 
         # TODO: handle tolerance
@@ -661,10 +649,7 @@ class PintDataArrayAccessor:
         converted = conversion.convert_units(self.da, indexer_units)
 
         # index
-        stripped_indexers = {
-            name: conversion.strip_indexer_units(indexer)
-            for name, indexer in indexers.items()
-        }
+        stripped_indexers = conversion.strip_indexer_units(indexers)
         indexed = converted.reindex(
             stripped_indexers,
             method=method,
@@ -731,10 +716,9 @@ class PintDataArrayAccessor:
         indexers = either_dict_or_kwargs(coords, coords_kwargs, "interp")
 
         dims = self.da.dims
+        indexer_units = conversion.extract_indexer_units(indexers)
         indexer_units = {
-            name: conversion.extract_indexer_units(indexer)
-            for name, indexer in indexers.items()
-            if name in dims
+            name: indexer for name, indexer in indexer_units.items() if name in dims
         }
 
         # convert the indexes to the indexer's units
@@ -743,10 +727,7 @@ class PintDataArrayAccessor:
         stripped = conversion.strip_units(converted)
 
         # index
-        stripped_indexers = {
-            name: conversion.strip_indexer_units(indexer)
-            for name, indexer in indexers.items()
-        }
+        stripped_indexers = conversion.strip_indexer_units(indexers)
         interpolated = stripped.interp(
             stripped_indexers,
             method=method,
@@ -804,10 +785,9 @@ class PintDataArrayAccessor:
         indexers = either_dict_or_kwargs(indexers, indexers_kwargs, "sel")
 
         dims = self.da.dims
+        indexer_units = conversion.extract_indexer_units(indexers)
         indexer_units = {
-            name: conversion.extract_indexer_units(indexer)
-            for name, indexer in indexers.items()
-            if name in dims
+            name: indexer for name, indexer in indexer_units.items() if name in dims
         }
 
         # TODO: handle tolerance
@@ -819,10 +799,7 @@ class PintDataArrayAccessor:
             raise KeyError(*e.args) from e
 
         # index
-        stripped_indexers = {
-            name: conversion.strip_indexer_units(indexer)
-            for name, indexer in indexers.items()
-        }
+        stripped_indexers = conversion.strip_indexer_units(indexers)
         indexed = converted.sel(
             stripped_indexers,
             method=method,
@@ -872,10 +849,7 @@ class PintDataArrayAccessor:
             raise KeyError(*e.args) from e
 
         # index
-        stripped_indexers = {
-            name: conversion.strip_indexer_units(indexer)
-            for name, indexer in converted_indexers.items()
-        }
+        stripped_indexers = conversion.strip_indexer_units(converted_indexers)
         indexed = self.da.drop_sel(
             stripped_indexers,
             errors=errors,
@@ -1425,10 +1399,9 @@ class PintDatasetAccessor:
         indexers = either_dict_or_kwargs(indexers, indexers_kwargs, "reindex")
 
         dims = self.ds.dims
+        indexer_units = conversion.extract_indexer_units(indexers)
         indexer_units = {
-            name: conversion.extract_indexer_units(indexer)
-            for name, indexer in indexers.items()
-            if name in dims
+            name: indexer for name, indexer in indexer_units.items() if name in dims
         }
 
         # TODO: handle tolerance
@@ -1438,10 +1411,7 @@ class PintDatasetAccessor:
         converted = conversion.convert_units(self.ds, indexer_units)
 
         # index
-        stripped_indexers = {
-            name: conversion.strip_indexer_units(indexer)
-            for name, indexer in indexers.items()
-        }
+        stripped_indexers = conversion.strip_indexer_units(indexers)
         indexed = converted.reindex(
             stripped_indexers,
             method=method,
@@ -1508,10 +1478,9 @@ class PintDatasetAccessor:
         indexers = either_dict_or_kwargs(coords, coords_kwargs, "interp")
 
         dims = self.ds.dims
+        indexer_units = conversion.extract_indexer_units(indexers)
         indexer_units = {
-            name: conversion.extract_indexer_units(indexer)
-            for name, indexer in indexers.items()
-            if name in dims
+            name: indexer for name, indexer in indexer_units.items() if name in dims
         }
 
         # convert the indexes to the indexer's units
@@ -1520,10 +1489,7 @@ class PintDatasetAccessor:
         stripped = conversion.strip_units(converted)
 
         # index
-        stripped_indexers = {
-            name: conversion.strip_indexer_units(indexer)
-            for name, indexer in indexers.items()
-        }
+        stripped_indexers = conversion.strip_indexer_units(indexers)
         interpolated = stripped.interp(
             stripped_indexers,
             method=method,
@@ -1581,10 +1547,9 @@ class PintDatasetAccessor:
         indexers = either_dict_or_kwargs(indexers, indexers_kwargs, "sel")
 
         dims = self.ds.dims
+        indexer_units = conversion.extract_indexer_units(indexers)
         indexer_units = {
-            name: conversion.extract_indexer_units(indexer)
-            for name, indexer in indexers.items()
-            if name in dims
+            name: indexer for name, indexer in indexer_units.items() if name in dims
         }
 
         # TODO: handle tolerance
@@ -1596,10 +1561,7 @@ class PintDatasetAccessor:
             raise KeyError(*e.args) from e
 
         # index
-        stripped_indexers = {
-            name: conversion.strip_indexer_units(indexer)
-            for name, indexer in indexers.items()
-        }
+        stripped_indexers = conversion.strip_indexer_units(indexers)
         indexed = converted.sel(
             stripped_indexers,
             method=method,
@@ -1651,10 +1613,7 @@ class PintDatasetAccessor:
             raise KeyError(*e.args) from e
 
         # index
-        stripped_indexers = {
-            name: conversion.strip_indexer_units(indexer)
-            for name, indexer in converted_indexers.items()
-        }
+        stripped_indexers = conversion.strip_indexer_units(converted_indexers)
         indexed = self.ds.drop_sel(
             stripped_indexers,
             errors=errors,
