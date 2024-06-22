@@ -32,6 +32,9 @@ jobs:
     name: ${{ matrix.os }} py${{ matrix.python-version }}
     runs-on: ${{ matrix.os }}
     needs: detect-skip-ci-trigger
+    defaults:
+      run:
+        shell: bash -l {0}
 
     if: |
       always()
