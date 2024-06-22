@@ -73,6 +73,10 @@ jobs:
     - name: install dependencies
       run: |
         python -m pip install -r ci/requirements.txt
+        if [[ "${{matrix.python-version}}" == "3.9" ]]; then
+            # remove after the release
+            python -m pip install 'numpy<2.0'
+        fi
 
     - name: install pint-xarray
       run: python -m pip install --no-deps .
