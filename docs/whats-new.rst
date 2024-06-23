@@ -12,9 +12,9 @@ What's new
    dependency    old minimum     new minimum
   ============ ==============  ==============
    python               3.8              3.9
-   xarray            0.16.1             0.20
-   numpy               1.17             1.22
-   pint                0.16             0.19
+   xarray            0.16.1        2022.06.0
+   numpy               1.17             1.23
+   pint                0.16             0.21
   ============ ==============  ==============
 
   By `Justus Magin <https://github.com/keewis>`_.

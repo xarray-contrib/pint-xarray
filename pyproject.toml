@@ -20,9 +20,9 @@ classifiers = [
 ]
 requires-python = ">=3.9"
 dependencies = [
-    "numpy >= 1.22",
-    "xarray >= 0.20",
-    "pint >= 0.19",
+    "numpy >= 1.23",
+    "xarray >= 2022.06.0",
+    "pint >= 0.21",
 ]
 dynamic = ["version"]
 
