@@ -18,7 +18,7 @@ What's new
   ============ ==============  ==============
 
   By `Justus Magin <https://github.com/keewis>`_.
-- add support for python 3.11 and 3.12 (:pull:`228`)
+- add support for python 3.11 and 3.12 (:pull:`228`, :pull:`263`)
   By `Justus Magin <https://github.com/keewis>`_.
 - ignore datetime units on attributes (:pull:`241`)
   By `Justus Magin <https://github.com/keewis>`_.
