@@ -34,9 +34,12 @@ class PintIndex(Index):
 
     @classmethod
     def from_variables(cls, variables, options):
-        index = PandasIndex.from_variables(variables)
-        units_dict = {index.index.name: options.get("units")}
-        return cls(index, units_dict)
+        if len(variables) != 1:
+            raise ValueError("can only create a default index from single variables")
+
+        units = options.pop("units", None)
+        index = PandasIndex.from_variables(variables, options=options)
+        return cls(index=index, units={index.index.name: units})
 
     @classmethod
     def concat(cls, indexes, dim, positions):

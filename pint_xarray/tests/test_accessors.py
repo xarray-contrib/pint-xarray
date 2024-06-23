@@ -7,6 +7,7 @@ from numpy.testing import assert_array_equal
 from pint import Unit, UnitRegistry
 
 from .. import accessors, conversion
+from ..index import PintIndex
 from .utils import (
     assert_equal,
     assert_identical,
@@ -159,7 +160,17 @@ class TestQuantifyDataArray:
             arr.pint.quantify({"x": "s"})
 
     def test_dimension_coordinate_array_already_quantified_same_units(self):
-        ds = xr.Dataset(coords={"x": ("x", [10], {"units": unit_registry.Unit("m")})})
+        x = unit_registry.Quantity([10], "m")
+        coords = xr.Coordinates(
+            {"x": x},
+            indexes={
+                "x": PintIndex.from_variables(
+                    {"x": xr.Variable("x", x.magnitude)},
+                    options={"units": x.units},
+                ),
+            },
+        )
+        ds = xr.Dataset(coords=coords)
         arr = ds.x
 
         quantified = arr.pint.quantify({"x": "m"})
