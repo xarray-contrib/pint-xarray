@@ -36,6 +36,9 @@ jobs:
       run:
         shell: bash -l {0}
 
+    env:
+      FORCE_COLOR: 3
+
     if: |
       always()
       && github.repository == 'xarray-contrib/pint-xarray'
