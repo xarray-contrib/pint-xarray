@@ -495,6 +495,11 @@ class TestXarrayFunctions:
                 {"a": "K", "b": "hPa", "x": "m", "u": "s"},
                 id="Dataset",
             ),
+            pytest.param(
+                Dataset(coords={"t": ("t", [], {"units": "seconds since 2000-01-01"})}),
+                {},
+                id="datetime_unit",
+            ),
         ),
     )
     def test_extract_unit_attributes(self, obj, expected):
@@ -558,6 +563,11 @@ class TestXarrayFunctions:
                 ),
                 {"a": "K", "b": "hPa", "x": "m", "u": "s"},
                 id="Dataset",
+            ),
+            pytest.param(
+                Dataset(coords={"t": ("t", [], {"units": "seconds since 2000-01-01"})}),
+                {},
+                id="datetime_unit",
             ),
         ),
     )

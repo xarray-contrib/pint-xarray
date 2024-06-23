@@ -1,5 +1,5 @@
-pint>=0.14
-xarray>=0.16.0
+pint>=0.21
+xarray>=2022.06.0
 pooch
 netCDF4
 cf-xarray>=0.6

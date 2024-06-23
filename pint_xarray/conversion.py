@@ -1,4 +1,5 @@
 import itertools
+import re
 
 import pint
 from xarray import Coordinates, DataArray, Dataset, IndexVariable, Variable
@@ -11,6 +12,14 @@ no_unit_values = ("none", None)
 unit_attribute_name = "units"
 slice_attributes = ("start", "stop", "step")
 temporary_name = "<this-array>"
+
+time_units_re = r"\w+"
+datetime_re = r"\d{4}-\d{2}-\d{2}(?:[ T]\d{2}:\d{2}:\d{2}(?:\.\d+)?)?"
+datetime_units_re = re.compile(rf"{time_units_re} since {datetime_re}")
+
+
+def is_datetime_unit(unit):
+    return isinstance(unit, str) and datetime_units_re.match(unit) is not None
 
 
 def array_attach_units(data, unit):
@@ -288,7 +297,11 @@ def extract_units(obj):
 
 
 def extract_unit_attributes_dataset(obj, attr="units"):
-    return {name: var.attrs.get(attr, None) for name, var in obj.variables.items()}
+    all_units = {name: var.attrs.get(attr, None) for name, var in obj.variables.items()}
+
+    return {
+        name: unit for name, unit in all_units.items() if not is_datetime_unit(unit)
+    }
 
 
 def extract_unit_attributes(obj, attr="units"):
@@ -330,6 +343,9 @@ def strip_units(obj):
 def strip_unit_attributes_dataset(obj, attr="units"):
     new_obj = obj.copy()
     for var in new_obj.variables.values():
+        if is_datetime_unit(var.attrs.get(attr, "")):
+            continue
+
         var.attrs.pop(attr, None)
 
     return new_obj
