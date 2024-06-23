@@ -2,8 +2,8 @@
 
 What's new
 ==========
-0.4 (*unreleased*)
-------------------
+0.4 (23 Jun 2024)
+-----------------
 - adopt `SPEC0 <https://scientific-python.org/specs/spec-0000>`_ (:pull:`228`)
 
   This means that the supported versions change:
