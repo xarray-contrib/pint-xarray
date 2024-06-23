@@ -2,8 +2,8 @@
 
 What's new
 ==========
-0.4 (*unreleased*)
-------------------
+0.4 (23 Jun 2024)
+-----------------
 - adopt `SPEC0 <https://scientific-python.org/specs/spec-0000>`_ (:pull:`228`)
 
   This means that the supported versions change:
@@ -12,13 +12,13 @@ What's new
    dependency    old minimum     new minimum
   ============ ==============  ==============
    python               3.8              3.9
-   xarray            0.16.1             0.20
-   numpy               1.17             1.22
-   pint                0.16             0.19
+   xarray            0.16.1        2022.06.0
+   numpy               1.17             1.23
+   pint                0.16             0.21
   ============ ==============  ==============
 
   By `Justus Magin <https://github.com/keewis>`_.
-- add support for python 3.11 (:pull:`228`)
+- add support for python 3.11 and 3.12 (:pull:`228`, :pull:`263`)
   By `Justus Magin <https://github.com/keewis>`_.
 - ignore datetime units on attributes (:pull:`241`)
   By `Justus Magin <https://github.com/keewis>`_.
