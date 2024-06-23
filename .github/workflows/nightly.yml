@@ -58,6 +58,9 @@ jobs:
     outputs:
       artifacts_availability: ${{ steps.status.outputs.ARTIFACTS_AVAILABLE }}
 
+    env:
+      FORCE_COLOR: 3
+
     steps:
     - name: checkout the repository
       uses: actions/checkout@v4

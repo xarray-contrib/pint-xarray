@@ -23,6 +23,9 @@ jobs:
       matrix:
         python-version: ["3.12"]
 
+    env:
+      FORCE_COLOR: 3
+
     steps:
     - name: checkout
       uses: actions/checkout@v4
