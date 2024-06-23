@@ -8,6 +8,7 @@ on:
     branches: [ main ]
   schedule:
     - cron: "0 0 * * *"  # Daily "At 00:00" UTC
+
   workflow_dispatch:
 
 concurrency:
@@ -52,7 +53,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.11"]
+        python-version: ["3.12"]
 
     outputs:
       artifacts_availability: ${{ steps.status.outputs.ARTIFACTS_AVAILABLE }}
