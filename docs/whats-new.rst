@@ -2,6 +2,10 @@
 
 What's new
 ==========
+0.5 (*unreleased*)
+------------------
+
+
 0.4 (23 Jun 2024)
 -----------------
 - adopt `SPEC0 <https://scientific-python.org/specs/spec-0000>`_ (:pull:`228`)
