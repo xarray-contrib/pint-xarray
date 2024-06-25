@@ -52,3 +52,11 @@ skip_gitignore = "true"
 force_to_top = "true"
 default_section = "THIRDPARTY"
 known_first_party = "pint_xarray"
+
+[tool.coverage.run]
+source = ["pint_xarray"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+exclude_lines = ["pragma: no cover", "if TYPE_CHECKING"]

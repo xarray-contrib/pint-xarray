@@ -1,16 +1,18 @@
 import numpy as np
 import pint
 import pytest
-from xarray import DataArray, Dataset, Variable
+from xarray import Coordinates, DataArray, Dataset, Variable
+from xarray.core.indexes import PandasIndex
 
 from pint_xarray import conversion
+from pint_xarray.index import PintIndex
 
 from .utils import (
     assert_array_equal,
     assert_array_units_equal,
     assert_identical,
-    assert_indexer_equal,
     assert_indexer_units_equal,
+    assert_indexers_equal,
 )
 
 unit_registry = pint.UnitRegistry()
@@ -245,17 +247,22 @@ class TestXarrayFunctions:
 
         q_a = to_quantity(a, units.get("a"))
         q_b = to_quantity(b, units.get("b"))
+        q_x = to_quantity(x, units.get("x"))
         q_u = to_quantity(u, units.get("u"))
 
-        units_x = units.get("x")
+        index = PandasIndex(x, dim="x")
+        if units.get("x") is not None:
+            index = PintIndex(index=index, units=units.get("x"))
 
         obj = Dataset({"a": ("x", a), "b": ("x", b)}, coords={"u": ("x", u), "x": x})
+        coords = Coordinates._construct_direct(
+            coords={"u": Variable("x", q_u), "x": Variable("x", q_x)},
+            indexes={"x": index},
+        )
         expected = Dataset(
             {"a": ("x", q_a), "b": ("x", q_b)},
-            coords={"u": ("x", q_u), "x": x},
+            coords=coords,
         )
-        if units_x is not None:
-            expected.x.attrs["units"] = units_x
 
         if type == "DataArray":
             obj = obj["a"]
@@ -263,6 +270,12 @@ class TestXarrayFunctions:
 
         actual = conversion.attach_units(obj, units)
         assert_identical(actual, expected)
+
+        if units.get("x") is None:
+            assert not isinstance(actual.xindexes["x"], PintIndex)
+        else:
+            assert isinstance(actual.xindexes["x"], PintIndex)
+            assert actual.xindexes["x"].units == {"x": units.get("x")}
 
     @pytest.mark.parametrize("type", ("DataArray", "Dataset"))
     def test_attach_unit_attributes(self, type):
@@ -694,100 +707,118 @@ class TestIndexerFunctions:
                 conversion.convert_indexer_units(indexers, units)
         else:
             actual = conversion.convert_indexer_units(indexers, units)
-            assert_indexer_equal(actual["x"], expected["x"])
-            assert_indexer_units_equal(actual["x"], expected["x"])
+            assert_indexers_equal(actual, expected)
+            assert_indexer_units_equal(actual, expected)
 
     @pytest.mark.parametrize(
-        ["indexer", "expected"],
+        ["indexers", "expected"],
         (
-            pytest.param(1, None, id="scalar-no units"),
-            pytest.param(Quantity(1, "m"), Unit("m"), id="scalar-units"),
-            pytest.param(np.array([1, 2]), None, id="array-no units"),
-            pytest.param(Quantity([1, 2], "s"), Unit("s"), id="array-units"),
-            pytest.param(Variable("x", [1, 2]), None, id="Variable-no units"),
+            pytest.param({"x": 1}, {"x": None}, id="scalar-no units"),
+            pytest.param({"x": Quantity(1, "m")}, {"x": Unit("m")}, id="scalar-units"),
+            pytest.param({"x": np.array([1, 2])}, {"x": None}, id="array-no units"),
             pytest.param(
-                Variable("x", Quantity([1, 2], "m")), Unit("m"), id="Variable-units"
+                {"x": Quantity([1, 2], "s")}, {"x": Unit("s")}, id="array-units"
             ),
-            pytest.param(DataArray([1, 2], dims="x"), None, id="DataArray-no units"),
             pytest.param(
-                DataArray(Quantity([1, 2], "s"), dims="x"),
-                Unit("s"),
+                {"x": Variable("x", [1, 2])}, {"x": None}, id="Variable-no units"
+            ),
+            pytest.param(
+                {"x": Variable("x", Quantity([1, 2], "m"))},
+                {"x": Unit("m")},
+                id="Variable-units",
+            ),
+            pytest.param(
+                {"x": DataArray([1, 2], dims="x")}, {"x": None}, id="DataArray-no units"
+            ),
+            pytest.param(
+                {"x": DataArray(Quantity([1, 2], "s"), dims="x")},
+                {"x": Unit("s")},
                 id="DataArray-units",
             ),
-            pytest.param(slice(None), None, id="empty slice-no units"),
-            pytest.param(slice(1, None), None, id="slice-no units"),
+            pytest.param({"x": slice(None)}, {"x": None}, id="empty slice-no units"),
+            pytest.param({"x": slice(1, None)}, {"x": None}, id="slice-no units"),
             pytest.param(
-                slice(Quantity(1, "m"), Quantity(2, "m")),
-                Unit("m"),
+                {"x": slice(Quantity(1, "m"), Quantity(2, "m"))},
+                {"x": Unit("m")},
                 id="slice-identical units",
             ),
             pytest.param(
-                slice(Quantity(1, "m"), Quantity(2000, "mm")),
-                Unit("m"),
+                {"x": slice(Quantity(1, "m"), Quantity(2000, "mm"))},
+                {"x": Unit("m")},
                 id="slice-compatible units",
             ),
             pytest.param(
-                slice(Quantity(1, "m"), Quantity(2, "ms")),
+                {"x": slice(Quantity(1, "m"), Quantity(2, "ms"))},
                 ValueError,
                 id="slice-incompatible units",
             ),
             pytest.param(
-                slice(1, Quantity(2, "ms")),
+                {"x": slice(1, Quantity(2, "ms"))},
                 ValueError,
                 id="slice-incompatible units-mixed",
             ),
             pytest.param(
-                slice(1, Quantity(2, "rad")),
-                Unit("rad"),
+                {"x": slice(1, Quantity(2, "rad"))},
+                {"x": Unit("rad")},
                 id="slice-incompatible units-mixed-dimensionless",
             ),
         ),
     )
-    def test_extract_indexer_units(self, indexer, expected):
-        if expected is not None and not isinstance(expected, Unit):
+    def test_extract_indexer_units(self, indexers, expected):
+        if isinstance(expected, type) and issubclass(expected, Exception):
             with pytest.raises(expected):
-                conversion.extract_indexer_units(indexer)
+                conversion.extract_indexer_units(indexers)
         else:
-            actual = conversion.extract_indexer_units(indexer)
+            actual = conversion.extract_indexer_units(indexers)
             assert actual == expected
 
     @pytest.mark.parametrize(
-        ["indexer", "expected"],
+        ["indexers", "expected"],
         (
-            pytest.param(1, 1, id="scalar-no units"),
-            pytest.param(Quantity(1, "m"), 1, id="scalar-units"),
-            pytest.param(np.array([1, 2]), np.array([1, 2]), id="array-no units"),
-            pytest.param(Quantity([1, 2], "s"), np.array([1, 2]), id="array-units"),
+            pytest.param({"x": 1}, {"x": 1}, id="scalar-no units"),
+            pytest.param({"x": Quantity(1, "m")}, {"x": 1}, id="scalar-units"),
             pytest.param(
-                Variable("x", [1, 2]), Variable("x", [1, 2]), id="Variable-no units"
+                {"x": np.array([1, 2])},
+                {"x": np.array([1, 2])},
+                id="array-no units",
             ),
             pytest.param(
-                Variable("x", Quantity([1, 2], "m")),
-                Variable("x", [1, 2]),
+                {"x": Quantity([1, 2], "s")}, {"x": np.array([1, 2])}, id="array-units"
+            ),
+            pytest.param(
+                {"x": Variable("x", [1, 2])},
+                {"x": Variable("x", [1, 2])},
+                id="Variable-no units",
+            ),
+            pytest.param(
+                {"x": Variable("x", Quantity([1, 2], "m"))},
+                {"x": Variable("x", [1, 2])},
                 id="Variable-units",
             ),
             pytest.param(
-                DataArray([1, 2], dims="x"),
-                DataArray([1, 2], dims="x"),
+                {"x": DataArray([1, 2], dims="x")},
+                {"x": DataArray([1, 2], dims="x")},
                 id="DataArray-no units",
             ),
             pytest.param(
-                DataArray(Quantity([1, 2], "s"), dims="x"),
-                DataArray([1, 2], dims="x"),
+                {"x": DataArray(Quantity([1, 2], "s"), dims="x")},
+                {"x": DataArray([1, 2], dims="x")},
                 id="DataArray-units",
             ),
-            pytest.param(slice(None), slice(None), id="empty slice-no units"),
-            pytest.param(slice(1, None), slice(1, None), id="slice-no units"),
             pytest.param(
-                slice(Quantity(1, "m"), Quantity(2, "m")),
-                slice(1, 2),
+                {"x": slice(None)}, {"x": slice(None)}, id="empty slice-no units"
+            ),
+            pytest.param(
+                {"x": slice(1, None)}, {"x": slice(1, None)}, id="slice-no units"
+            ),
+            pytest.param(
+                {"x": slice(Quantity(1, "m"), Quantity(2, "m"))},
+                {"x": slice(1, 2)},
                 id="slice-units",
             ),
         ),
     )
-    def test_strip_indexer_units(self, indexer, expected):
-        actual = conversion.strip_indexer_units(indexer)
-        if isinstance(indexer, DataArray):
-            assert_identical(actual, expected)
-        else:
-            assert_array_equal(actual, expected)
+    def test_strip_indexer_units(self, indexers, expected):
+        actual = conversion.strip_indexer_units(indexers)
+
+        assert_indexers_equal(actual, expected)
