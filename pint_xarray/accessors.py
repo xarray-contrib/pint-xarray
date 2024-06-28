@@ -1,5 +1,6 @@
 # TODO is it possible to import pint-xarray from within xarray if pint is present?
 import itertools
+import warnings
 
 import pint
 from pint import Unit
@@ -16,21 +17,21 @@ _default = object()
 def setup_registry(registry):
     """set up the given registry for use with pint_xarray
 
-    Namely, it enables ``force_ndarray_like`` to make sure results are always
-    duck arrays.
+    Does nothing (returns the registry unchanged).
+    It used to enable ``force_ndarray_like`` to make sure results are always
+    duck arrays, but that caused more problems than it solved.
+    Kept for backwards compatibility.
 
     Parameters
     ----------
     registry : pint.UnitRegistry
         The registry to modify
     """
-    if not registry.force_ndarray and not registry.force_ndarray_like:
-        registry.force_ndarray_like = True
-
+    warnings.warn("setup_registry is not needed anymore", DeprecationWarning)
     return registry
 
 
-default_registry = setup_registry(pint.get_application_registry())
+default_registry = pint.get_application_registry()
 
 # TODO could/should we overwrite xr.open_dataset and xr.open_mfdataset to make
 # them apply units upon loading???
@@ -112,11 +113,6 @@ def get_registry(unit_registry, new_units, existing_units):
     if len(registries) > 1 or unit_registry not in registries:
         raise ValueError(
             "using multiple unit registries in the same object is not supported"
-        )
-
-    if not unit_registry.force_ndarray_like and not unit_registry.force_ndarray:
-        raise ValueError(
-            "invalid registry. Please enable 'force_ndarray_like' or 'force_ndarray'."
         )
 
     return unit_registry
