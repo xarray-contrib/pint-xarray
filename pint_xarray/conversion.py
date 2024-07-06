@@ -176,7 +176,8 @@ def attach_units_dataset(obj, units):
     if rejected_vars:
         raise ValueError(rejected_vars)
 
-    return dataset_from_variables(attached, obj._coord_names, indexes, obj.attrs)
+    reordered = {name: attached[name] for name in obj.variables.keys()}
+    return dataset_from_variables(reordered, obj._coord_names, indexes, obj.attrs)
 
 
 def attach_units(obj, units):
@@ -305,7 +306,8 @@ def convert_units_dataset(obj, units):
     if failed:
         raise ValueError(failed)
 
-    return dataset_from_variables(converted, obj._coord_names, indexes, obj.attrs)
+    reordered = {name: converted[name] for name in obj.variables.keys()}
+    return dataset_from_variables(reordered, obj._coord_names, indexes, obj.attrs)
 
 
 def convert_units(obj, units):
