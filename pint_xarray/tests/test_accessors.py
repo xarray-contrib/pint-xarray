@@ -684,13 +684,17 @@ def test_to(obj, units, expected, error):
     ),
 )
 def test_sel(obj, indexers, expected, error):
+    obj_ = obj.pint.quantify()
+
     if error is not None:
         with pytest.raises(error):
-            obj.pint.sel(indexers)
+            obj_.pint.sel(indexers)
     else:
-        actual = obj.pint.sel(indexers)
-        assert_units_equal(actual, expected)
-        assert_identical(actual, expected)
+        expected_ = expected.pint.quantify()
+
+        actual = obj_.pint.sel(indexers)
+        assert_units_equal(actual, expected_)
+        assert_identical(actual, expected_)
 
 
 @pytest.mark.parametrize(
@@ -801,13 +805,17 @@ def test_sel(obj, indexers, expected, error):
     ),
 )
 def test_loc(obj, indexers, expected, error):
+    obj_ = obj.pint.quantify()
+
     if error is not None:
         with pytest.raises(error):
-            obj.pint.loc[indexers]
+            obj_.pint.loc[indexers]
     else:
-        actual = obj.pint.loc[indexers]
-        assert_units_equal(actual, expected)
-        assert_identical(actual, expected)
+        expected_ = expected.pint.quantify()
+
+        actual = obj_.pint.loc[indexers]
+        assert_units_equal(actual, expected_)
+        assert_identical(actual, expected_)
 
 
 @pytest.mark.parametrize(
