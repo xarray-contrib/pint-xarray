@@ -647,17 +647,19 @@ class PintDataArrayAccessor:
 
         # convert the indexes to the indexer's units
         converted = conversion.convert_units(self.da, indexer_units)
+        converted_units = conversion.extract_units(converted)
+        stripped = conversion.strip_units(converted)
 
         # index
         stripped_indexers = conversion.strip_indexer_units(indexers)
-        indexed = converted.reindex(
+        indexed = stripped.reindex(
             stripped_indexers,
             method=method,
             tolerance=tolerance,
             copy=copy,
             fill_value=fill_value,
         )
-        return indexed
+        return conversion.attach_units(indexed, converted_units)
 
     def reindex_like(
         self, other, method=None, tolerance=None, copy=True, fill_value=NA
@@ -1410,17 +1412,19 @@ class PintDatasetAccessor:
 
         # convert the indexes to the indexer's units
         converted = conversion.convert_units(self.ds, indexer_units)
+        converted_units = conversion.extract_units(converted)
+        stripped = conversion.strip_units(converted)
 
         # index
         stripped_indexers = conversion.strip_indexer_units(indexers)
-        indexed = converted.reindex(
+        indexed = stripped.reindex(
             stripped_indexers,
             method=method,
             tolerance=tolerance,
             copy=copy,
             fill_value=fill_value,
         )
-        return indexed
+        return conversion.attach_units(indexed, converted_units)
 
     def reindex_like(
         self, other, method=None, tolerance=None, copy=True, fill_value=NA
