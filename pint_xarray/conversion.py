@@ -122,11 +122,27 @@ def attach_units_variable(variable, units):
     return new_obj
 
 
-def dataset_from_variables(variables, coords, attrs):
-    data_vars = {name: var for name, var in variables.items() if name not in coords}
-    coords = {name: var for name, var in variables.items() if name in coords}
+def dataset_from_variables(variables, coordinate_names, indexes, attrs):
+    data_vars = {
+        name: var for name, var in variables.items() if name not in coordinate_names
+    }
+    coords = {name: var for name, var in variables.items() if name in coordinate_names}
 
-    return Dataset(data_vars=data_vars, coords=coords, attrs=attrs)
+    new_coords = Coordinates._construct_direct(coords, indexes)
+    return Dataset(data_vars=data_vars, coords=new_coords, attrs=attrs)
+
+
+def attach_units_index(index, index_vars, units):
+    if all(unit is None for unit in units.values()):
+        # skip non-quantity indexed variables
+        return index
+
+    if isinstance(index, PintIndex) and index.units != units:
+        raise ValueError(
+            f"cannot attach units to quantified index: {index.units} != {units}"
+        )
+
+    return PintIndex(index=index, units=units)
 
 
 def attach_units_dataset(obj, units):
@@ -145,26 +161,22 @@ def attach_units_dataset(obj, units):
         except ValueError as e:
             rejected_vars[name] = (unit, e)
 
-    ds_xindexes = obj.xindexes
-    new_indexes, new_index_vars = ds_xindexes.copy_indexes()
-
-    for idx, idx_vars in ds_xindexes.group_by_index():
+    indexes, index_vars = obj.xindexes.copy_indexes()
+    for idx, idx_vars in obj.xindexes.group_by_index():
         idx_units = {name: units.get(name) for name in idx_vars.keys()}
-        if all(unit is None for unit in idx_units.values()):
-            # skip non-quantity indexed variables
-            continue
-        new_idx = PintIndex(index=idx, units=idx_units)
-        new_indexes.update({k: new_idx for k in idx_vars})
-        new_index_vars.update(new_idx.create_variables(idx_vars))
+        try:
+            attached_idx = attach_units_index(idx, idx_vars, idx_units)
+            indexes.update({k: attached_idx for k in idx_vars})
+            index_vars.update(attached_idx.create_variables(idx_vars))
+        except ValueError as e:
+            rejected_vars[name] = (units, e)
 
-    new_coords = Coordinates._construct_direct(new_index_vars, new_indexes)
+    attached.update(index_vars)
 
     if rejected_vars:
         raise ValueError(rejected_vars)
 
-    return dataset_from_variables(attached, obj._coord_names, obj.attrs).assign_coords(
-        new_coords
-    )
+    return dataset_from_variables(attached, obj._coord_names, indexes, obj.attrs)
 
 
 def attach_units(obj, units):
