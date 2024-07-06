@@ -385,7 +385,12 @@ def strip_units_variable(var):
 def strip_units_dataset(obj):
     variables = {name: strip_units_variable(var) for name, var in obj.variables.items()}
 
-    return dataset_from_variables(variables, obj._coord_names, obj.attrs)
+    indexes = {
+        name: (index.index if isinstance(index, PintIndex) else index)
+        for name, index in obj.xindexes.items()
+    }
+
+    return dataset_from_variables(variables, obj._coord_names, indexes, obj.attrs)
 
 
 def strip_units(obj):
