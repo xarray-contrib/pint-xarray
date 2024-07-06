@@ -751,7 +751,7 @@ class PintDataArrayAccessor:
         xarray.DataArray.pint.interp
         xarray.DataArray.interp_like
         """
-        indexer_units = conversion.extract_unit_attributes(other)
+        indexer_units = conversion.extract_units(other)
 
         converted = conversion.convert_units(self.da, indexer_units)
         units = conversion.extract_units(converted)
@@ -1514,7 +1514,7 @@ class PintDatasetAccessor:
         xarray.Dataset.pint.interp
         xarray.Dataset.interp_like
         """
-        indexer_units = conversion.extract_unit_attributes(other)
+        indexer_units = conversion.extract_units(other)
 
         converted = conversion.convert_units(self.ds, indexer_units)
         units = conversion.extract_units(converted)
