@@ -249,20 +249,63 @@ def convert_units_variable(variable, units):
     return new_obj
 
 
+def convert_units_index(index, index_vars, units):
+    if not isinstance(index, PintIndex):
+        raise ValueError("cannot convert non-quantified index")
+
+    converted_vars = {}
+    failed = {}
+    for name, var in index_vars.items():
+        unit = units.get(name)
+        try:
+            converted = convert_units_variable(var, unit)
+            converted_vars[name] = strip_units_variable(converted)
+        except (ValueError, pint.errors.PintTypeError) as e:
+            failed[name] = e
+
+    if failed:
+        # raise exception group
+        raise ValueError("failed to convert index variables:", failed)
+
+    # TODO: figure out how to pull out `options`
+    converted_index = index.index.from_variables(converted_vars, options={})
+    return PintIndex(index=converted_index, units=units)
+
+
 def convert_units_dataset(obj, units):
     converted = {}
     failed = {}
+    indexed_variables = obj.xindexes.variables
     for name, var in obj.variables.items():
+        if name in indexed_variables:
+            continue
+
         unit = units.get(name)
         try:
             converted[name] = convert_units_variable(var, unit)
         except (ValueError, pint.errors.PintTypeError) as e:
             failed[name] = e
 
+    indexes, index_vars = obj.xindexes.copy_indexes()
+    for idx, idx_vars in obj.xindexes.group_by_index():
+        idx_units = {name: units.get(name) for name in idx_vars.keys()}
+        if all(unit is None for unit in idx_units.values()):
+            continue
+
+        try:
+            converted_index = convert_units_index(idx, idx_vars, idx_units)
+            indexes.update({k: converted_index for k in idx_vars})
+            index_vars.update(converted_index.create_variables())
+        except (ValueError, pint.errors.PintTypeError) as e:
+            names = tuple(idx_vars)
+            failed[names] = e
+
+    converted.update(index_vars)
+
     if failed:
         raise ValueError(failed)
 
-    return dataset_from_variables(converted, obj._coord_names, obj.attrs)
+    return dataset_from_variables(converted, obj._coord_names, indexes, obj.attrs)
 
 
 def convert_units(obj, units):
