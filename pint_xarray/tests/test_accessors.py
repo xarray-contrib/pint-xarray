@@ -494,18 +494,20 @@ class TestDequantifyDataSet:
             id="Dataset-incompatible units-data",
         ),
         pytest.param(
-            xr.Dataset(coords={"x": ("x", [2, 4], {"units": Unit("s")})}),
+            xr.Dataset(coords=xr.Coordinates({"x": Quantity([2, 4], "s")}, indexes={})),
             {"x": "ms"},
-            xr.Dataset(coords={"x": ("x", [2000, 4000], {"units": Unit("ms")})}),
+            xr.Dataset(
+                coords=xr.Coordinates({"x": Quantity([2000, 4000], "ms")}, indexes={})
+            ),
             None,
-            id="Dataset-compatible units-dims",
+            id="Dataset-compatible units-dims-no index",
         ),
         pytest.param(
-            xr.Dataset(coords={"x": ("x", [2, 4], {"units": Unit("s")})}),
+            xr.Dataset(coords=xr.Coordinates({"x": Quantity([2, 4], "s")}, indexes={})),
             {"x": "mm"},
             None,
             ValueError,
-            id="Dataset-incompatible units-dims",
+            id="Dataset-incompatible units-dims-no index",
         ),
         pytest.param(
             xr.DataArray(Quantity([0, 1], "m"), dims="x"),
@@ -537,25 +539,29 @@ class TestDequantifyDataSet:
         ),
         pytest.param(
             xr.DataArray(
-                [0, 1], dims="x", coords={"x": ("x", [2, 4], {"units": Unit("s")})}
+                [0, 1],
+                dims="x",
+                coords=xr.Coordinates({"x": Quantity([2, 4], "s")}, indexes={}),
             ),
             {"x": "ms"},
             xr.DataArray(
                 [0, 1],
                 dims="x",
-                coords={"x": ("x", [2000, 4000], {"units": Unit("ms")})},
+                coords=xr.Coordinates({"x": Quantity([2000, 4000], "ms")}, indexes={}),
             ),
             None,
-            id="DataArray-compatible units-dims",
+            id="DataArray-compatible units-dims-no index",
         ),
         pytest.param(
             xr.DataArray(
-                [0, 1], dims="x", coords={"x": ("x", [2, 4], {"units": Unit("s")})}
+                [0, 1],
+                dims="x",
+                coords=xr.Coordinates({"x": Quantity([2, 4], "s")}, indexes={}),
             ),
             {"x": "mm"},
             None,
             ValueError,
-            id="DataArray-incompatible units-dims",
+            id="DataArray-incompatible units-dims-no index",
         ),
     ),
 )
