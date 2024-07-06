@@ -1275,13 +1275,13 @@ def test_chunk(obj):
 )
 def test_reindex(obj, units, indexers, expected, expected_units, error):
     obj_ = obj.pint.quantify(units)
-    if expected is not None:
-        expected_ = expected.pint.quantify(expected_units)
 
     if error is not None:
         with pytest.raises(error):
             obj.pint.reindex(indexers)
     else:
+        expected_ = expected.pint.quantify(expected_units)
+
         actual = obj_.pint.reindex(indexers)
         assert_units_equal(actual, expected_)
         assert_identical(actual, expected_)
@@ -1416,13 +1416,12 @@ def test_reindex_like(obj, units, other, other_units, expected, expected_units, 
     obj_ = obj.pint.quantify(units)
     other_ = other.pint.quantify(other_units)
 
-    if expected is not None:
-        expected_ = expected.pint.quantify(expected_units)
-
     if error is not None:
         with pytest.raises(error):
             obj_.pint.reindex_like(other_)
     else:
+        expected_ = expected.pint.quantify(expected_units)
+
         actual = obj_.pint.reindex_like(other_)
         assert_units_equal(actual, expected_)
         assert_identical(actual, expected_)
@@ -1551,13 +1550,13 @@ def test_reindex_like(obj, units, other, other_units, expected, expected_units, 
 )
 def test_interp(obj, units, indexers, expected, expected_units, error):
     obj_ = obj.pint.quantify(units)
-    if expected is not None:
-        expected_ = expected.pint.quantify(expected_units)
 
     if error is not None:
         with pytest.raises(error):
             obj.pint.interp(indexers)
     else:
+        expected_ = expected.pint.quantify(expected_units)
+
         actual = obj_.pint.interp(indexers)
         assert_units_equal(actual, expected_)
         assert_identical(actual, expected_)
@@ -1693,13 +1692,12 @@ def test_interp_like(obj, units, other, other_units, expected, expected_units, e
     obj_ = obj.pint.quantify(units)
     other_ = other.pint.quantify(other_units)
 
-    if expected is not None:
-        expected_ = expected.pint.quantify(expected_units)
-
     if error is not None:
         with pytest.raises(error):
             obj_.pint.interp_like(other_)
     else:
+        expected_ = expected.pint.quantify(expected_units)
+
         actual = obj_.pint.interp_like(other_)
         assert_units_equal(actual, expected_)
         assert_identical(actual, expected_)
