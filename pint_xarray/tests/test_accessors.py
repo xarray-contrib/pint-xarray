@@ -1545,7 +1545,7 @@ def test_reindex_like(obj, other, expected, error):
             {None: "kg"},
             {"x": [15, 25], "y": [75, 105]},
             xr.DataArray(
-                Quantity([[1.25, 1.75], [3.25, 3.75]], "kg"),
+                [[1.25, 1.75], [3.25, 3.75]],
                 dims=("x", "y"),
                 coords={"x": [15, 25], "y": [75, 105]},
             ),
