@@ -756,8 +756,9 @@ class PintDataArrayAccessor:
         converted = conversion.convert_units(self.da, indexer_units)
         units = conversion.extract_units(converted)
         stripped = conversion.strip_units(converted)
+        stripped_other = conversion.strip_units(other)
         interpolated = stripped.interp_like(
-            other,
+            stripped_other,
             method=method,
             assume_sorted=assume_sorted,
             kwargs=kwargs,
@@ -1518,8 +1519,9 @@ class PintDatasetAccessor:
         converted = conversion.convert_units(self.ds, indexer_units)
         units = conversion.extract_units(converted)
         stripped = conversion.strip_units(converted)
+        stripped_other = conversion.strip_units(other)
         interpolated = stripped.interp_like(
-            other,
+            stripped_other,
             method=method,
             assume_sorted=assume_sorted,
             kwargs=kwargs,
