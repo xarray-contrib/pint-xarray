@@ -165,7 +165,12 @@ class DatasetLocIndexer:
 
         # index
         stripped_indexers = conversion.strip_indexer_units(indexers)
-        return converted.loc[stripped_indexers]
+
+        stripped = conversion.strip_units(converted)
+        converted_units = conversion.extract_units(converted)
+        indexed = stripped.loc[stripped_indexers]
+
+        return conversion.attach_units(indexed, converted_units)
 
 
 class DataArrayLocIndexer:
@@ -192,7 +197,12 @@ class DataArrayLocIndexer:
 
         # index
         stripped_indexers = conversion.strip_indexer_units(indexers)
-        return converted.loc[stripped_indexers]
+
+        stripped = conversion.strip_units(converted)
+        converted_units = conversion.extract_units(converted)
+        indexed = stripped.loc[stripped_indexers]
+
+        return conversion.attach_units(indexed, converted_units)
 
     def __setitem__(self, indexers, values):
         if not is_dict_like(indexers):
@@ -808,14 +818,17 @@ class PintDataArrayAccessor:
 
         # index
         stripped_indexers = conversion.strip_indexer_units(indexers)
-        indexed = converted.sel(
+
+        stripped = conversion.strip_units(converted)
+        converted_units = conversion.extract_units(converted)
+        indexed = stripped.sel(
             stripped_indexers,
             method=method,
             tolerance=tolerance,
             drop=drop,
         )
 
-        return indexed
+        return conversion.attach_units(indexed, converted_units)
 
     @property
     def loc(self):
@@ -1578,14 +1591,17 @@ class PintDatasetAccessor:
 
         # index
         stripped_indexers = conversion.strip_indexer_units(indexers)
-        indexed = converted.sel(
+
+        stripped = conversion.strip_units(converted)
+        converted_units = conversion.extract_units(converted)
+        indexed = stripped.sel(
             stripped_indexers,
             method=method,
             tolerance=tolerance,
             drop=drop,
         )
 
-        return indexed
+        return conversion.attach_units(indexed, converted_units)
 
     @property
     def loc(self):
