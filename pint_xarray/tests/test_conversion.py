@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import pint
 import pytest
 from xarray import Coordinates, DataArray, Dataset, Variable
@@ -385,15 +386,19 @@ class TestXarrayFunctions:
         q_u = to_quantity(u, original_units.get("u"))
         q_x = to_quantity(x, original_units.get("x"))
 
+        x_index = PandasIndex(pd.Index(x), "x")
+        if original_units.get("x") is not None:
+            x_index = PintIndex(index=x_index, units={"x": original_units.get("x")})
+
         obj = Dataset(
             {
                 "a": ("x", q_a),
                 "b": ("x", q_b),
             },
-            coords={
-                "u": ("x", q_u),
-                "x": ("x", x, {"units": original_units.get("x")}),
-            },
+            coords=Coordinates(
+                {"u": ("x", q_u), "x": ("x", q_x)},
+                indexes={"x": x_index},
+            ),
         )
         if type == "DataArray":
             obj = obj["a"]
@@ -407,20 +412,22 @@ class TestXarrayFunctions:
         expected_a = convert_quantity(q_a, units.get("a", original_units.get("a")))
         expected_b = convert_quantity(q_b, units.get("b", original_units.get("b")))
         expected_u = convert_quantity(q_u, units.get("u", original_units.get("u")))
-        expected_x = strip_quantity(convert_quantity(q_x, units.get("x")))
+        expected_x = convert_quantity(q_x, units.get("x"))
+        expected_index = PandasIndex(pd.Index(strip_quantity(expected_x)), "x")
+        if units.get("x") is not None:
+            expected_index = PintIndex(
+                index=expected_index, units={"x": units.get("x")}
+            )
+
         expected = Dataset(
             {
                 "a": ("x", expected_a),
                 "b": ("x", expected_b),
             },
-            coords={
-                "u": ("x", expected_u),
-                "x": (
-                    "x",
-                    expected_x,
-                    {"units": units.get("x", original_units.get("x"))},
-                ),
-            },
+            coords=Coordinates(
+                {"u": ("x", expected_u), "x": ("x", expected_x)},
+                indexes={"x": expected_index},
+            ),
         )
 
         if type == "DataArray":
@@ -429,7 +436,7 @@ class TestXarrayFunctions:
         actual = conversion.convert_units(obj, units)
 
         assert conversion.extract_units(actual) == conversion.extract_units(expected)
-        assert_identical(expected, actual)
+        assert_identical(actual, expected)
 
     @pytest.mark.parametrize(
         "units",
@@ -449,15 +456,22 @@ class TestXarrayFunctions:
         u = np.linspace(0, 100, 2)
         x = np.arange(2)
 
+        index = PandasIndex(x, "x")
+        if units.get("x") is not None:
+            index = PintIndex(index=index, units={"x": units.get("x")})
+
         obj = Dataset(
             {
                 "a": ("x", to_quantity(a, units.get("a"))),
                 "b": ("x", to_quantity(b, units.get("b"))),
             },
-            coords={
-                "u": ("x", to_quantity(u, units.get("u"))),
-                "x": ("x", x, {"units": units.get("x")}),
-            },
+            coords=Coordinates(
+                {
+                    "u": ("x", to_quantity(u, units.get("u"))),
+                    "x": ("x", to_quantity(x, units.get("x"))),
+                },
+                indexes={"x": index},
+            ),
         )
         if type == "DataArray":
             obj = obj["a"]
@@ -512,21 +526,33 @@ class TestXarrayFunctions:
             pytest.param(
                 DataArray(
                     dims="x",
-                    data=[0, 4, 3] * unit_registry.m,
-                    coords={"u": ("x", [2, 3, 4] * unit_registry.s)},
+                    data=Quantity([0, 4, 3], "kg"),
+                    coords=Coordinates(
+                        {
+                            "u": ("x", Quantity([2, 3, 4], "s")),
+                            "x": Quantity([0, 1, 2], "m"),
+                        },
+                        indexes={},
+                    ),
                 ),
-                {None: None, "u": None},
+                {None: None, "u": None, "x": None},
                 id="DataArray",
             ),
             pytest.param(
                 Dataset(
                     data_vars={
-                        "a": ("x", [3, 2, 5] * unit_registry.Pa),
-                        "b": ("x", [0, 2, -1] * unit_registry.kg),
+                        "a": ("x", Quantity([3, 2, 5], "Pa")),
+                        "b": ("x", Quantity([0, 2, -1], "kg")),
                     },
-                    coords={"u": ("x", [2, 3, 4] * unit_registry.s)},
+                    coords=Coordinates(
+                        {
+                            "u": ("x", Quantity([2, 3, 4], "s")),
+                            "x": Quantity([0, 1, 2], "m"),
+                        },
+                        indexes={},
+                    ),
                 ),
-                {"a": None, "b": None, "u": None},
+                {"a": None, "b": None, "u": None, "x": None},
                 id="Dataset",
             ),
         ),
