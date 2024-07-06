@@ -679,19 +679,24 @@ class PintDataArrayAccessor:
         xarray.DataArray.pint.reindex
         xarray.DataArray.reindex_like
         """
-        indexer_units = conversion.extract_unit_attributes(other)
+        indexer_units = conversion.extract_units(other)
+
+        converted = conversion.convert_units(self.da, indexer_units)
+        units = conversion.extract_units(converted)
+        stripped = conversion.strip_units(converted)
+        stripped_other = conversion.strip_units(other)
 
         # TODO: handle tolerance
         # TODO: handle fill_value
 
-        converted = conversion.convert_units(self.da, indexer_units)
-        return converted.reindex_like(
-            other,
+        reindexed = stripped.reindex_like(
+            stripped_other,
             method=method,
             tolerance=tolerance,
             copy=copy,
             fill_value=fill_value,
         )
+        return conversion.attach_units(reindexed, units)
 
     def interp(
         self,
@@ -1444,19 +1449,24 @@ class PintDatasetAccessor:
         xarray.Dataset.pint.reindex
         xarray.Dataset.reindex_like
         """
-        indexer_units = conversion.extract_unit_attributes(other)
+        indexer_units = conversion.extract_units(other)
+
+        converted = conversion.convert_units(self.ds, indexer_units)
+        units = conversion.extract_units(converted)
+        stripped = conversion.strip_units(converted)
+        stripped_other = conversion.strip_units(other)
 
         # TODO: handle tolerance
         # TODO: handle fill_value
 
-        converted = conversion.convert_units(self.ds, indexer_units)
-        return converted.reindex_like(
-            other,
+        reindexed = stripped.reindex_like(
+            stripped_other,
             method=method,
             tolerance=tolerance,
             copy=copy,
             fill_value=fill_value,
         )
+        return conversion.attach_units(reindexed, units)
 
     def interp(
         self,
