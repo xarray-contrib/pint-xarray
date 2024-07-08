@@ -256,7 +256,7 @@ class TestXarrayFunctions:
             index = PintIndex(index=index, units=units.get("x"))
 
         obj = Dataset({"a": ("x", a), "b": ("x", b)}, coords={"u": ("x", u), "x": x})
-        coords = Coordinates._construct_direct(
+        coords = Coordinates(
             coords={"u": Variable("x", q_u), "x": Variable("x", q_x)},
             indexes={"x": index},
         )

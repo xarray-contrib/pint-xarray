@@ -128,7 +128,7 @@ def dataset_from_variables(variables, coordinate_names, indexes, attrs):
     }
     coords = {name: var for name, var in variables.items() if name in coordinate_names}
 
-    new_coords = Coordinates._construct_direct(coords, indexes)
+    new_coords = Coordinates(coords, indexes=indexes)
     return Dataset(data_vars=data_vars, coords=new_coords, attrs=attrs)
 
 
