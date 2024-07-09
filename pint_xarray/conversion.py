@@ -2,10 +2,11 @@ import itertools
 import re
 
 import pint
-from xarray import DataArray, Dataset, IndexVariable, Variable
+from xarray import Coordinates, DataArray, Dataset, IndexVariable, Variable
 
 from .compat import call_on_dataset
 from .errors import format_error_message
+from .index import PintIndex
 
 no_unit_values = ("none", None)
 unit_attribute_name = "units"
@@ -121,17 +122,38 @@ def attach_units_variable(variable, units):
     return new_obj
 
 
-def dataset_from_variables(variables, coords, attrs):
-    data_vars = {name: var for name, var in variables.items() if name not in coords}
-    coords = {name: var for name, var in variables.items() if name in coords}
+def dataset_from_variables(variables, coordinate_names, indexes, attrs):
+    data_vars = {
+        name: var for name, var in variables.items() if name not in coordinate_names
+    }
+    coords = {name: var for name, var in variables.items() if name in coordinate_names}
 
-    return Dataset(data_vars=data_vars, coords=coords, attrs=attrs)
+    new_coords = Coordinates(coords, indexes=indexes)
+    return Dataset(data_vars=data_vars, coords=new_coords, attrs=attrs)
+
+
+def attach_units_index(index, index_vars, units):
+    if all(unit is None for unit in units.values()):
+        # skip non-quantity indexed variables
+        return index
+
+    if isinstance(index, PintIndex) and index.units != units:
+        raise ValueError(
+            f"cannot attach units to quantified index: {index.units} != {units}"
+        )
+
+    return PintIndex(index=index, units=units)
 
 
 def attach_units_dataset(obj, units):
     attached = {}
     rejected_vars = {}
+
+    indexed_variables = obj.xindexes.variables
     for name, var in obj.variables.items():
+        if name in indexed_variables:
+            continue
+
         unit = units.get(name)
         try:
             converted = attach_units_variable(var, unit)
@@ -139,10 +161,23 @@ def attach_units_dataset(obj, units):
         except ValueError as e:
             rejected_vars[name] = (unit, e)
 
+    indexes, index_vars = obj.xindexes.copy_indexes()
+    for idx, idx_vars in obj.xindexes.group_by_index():
+        idx_units = {name: units.get(name) for name in idx_vars.keys()}
+        try:
+            attached_idx = attach_units_index(idx, idx_vars, idx_units)
+            indexes.update({k: attached_idx for k in idx_vars})
+            index_vars.update(attached_idx.create_variables(idx_vars))
+        except ValueError as e:
+            rejected_vars[name] = (units, e)
+
+    attached.update(index_vars)
+
     if rejected_vars:
         raise ValueError(rejected_vars)
 
-    return dataset_from_variables(attached, obj._coord_names, obj.attrs)
+    reordered = {name: attached[name] for name in obj.variables.keys()}
+    return dataset_from_variables(reordered, obj._coord_names, indexes, obj.attrs)
 
 
 def attach_units(obj, units):
@@ -215,20 +250,64 @@ def convert_units_variable(variable, units):
     return new_obj
 
 
+def convert_units_index(index, index_vars, units):
+    if not isinstance(index, PintIndex):
+        raise ValueError("cannot convert non-quantified index")
+
+    converted_vars = {}
+    failed = {}
+    for name, var in index_vars.items():
+        unit = units.get(name)
+        try:
+            converted = convert_units_variable(var, unit)
+            converted_vars[name] = strip_units_variable(converted)
+        except (ValueError, pint.errors.PintTypeError) as e:
+            failed[name] = e
+
+    if failed:
+        # raise exception group
+        raise ValueError("failed to convert index variables:", failed)
+
+    # TODO: figure out how to pull out `options`
+    converted_index = index.index.from_variables(converted_vars, options={})
+    return PintIndex(index=converted_index, units=units)
+
+
 def convert_units_dataset(obj, units):
     converted = {}
     failed = {}
+    indexed_variables = obj.xindexes.variables
     for name, var in obj.variables.items():
+        if name in indexed_variables:
+            continue
+
         unit = units.get(name)
         try:
             converted[name] = convert_units_variable(var, unit)
         except (ValueError, pint.errors.PintTypeError) as e:
             failed[name] = e
 
+    indexes, index_vars = obj.xindexes.copy_indexes()
+    for idx, idx_vars in obj.xindexes.group_by_index():
+        idx_units = {name: units.get(name) for name in idx_vars.keys()}
+        if all(unit is None for unit in idx_units.values()):
+            continue
+
+        try:
+            converted_index = convert_units_index(idx, idx_vars, idx_units)
+            indexes.update({k: converted_index for k in idx_vars})
+            index_vars.update(converted_index.create_variables())
+        except (ValueError, pint.errors.PintTypeError) as e:
+            names = tuple(idx_vars)
+            failed[names] = e
+
+    converted.update(index_vars)
+
     if failed:
         raise ValueError(failed)
 
-    return dataset_from_variables(converted, obj._coord_names, obj.attrs)
+    reordered = {name: converted[name] for name in obj.variables.keys()}
+    return dataset_from_variables(reordered, obj._coord_names, indexes, obj.attrs)
 
 
 def convert_units(obj, units):
@@ -308,7 +387,12 @@ def strip_units_variable(var):
 def strip_units_dataset(obj):
     variables = {name: strip_units_variable(var) for name, var in obj.variables.items()}
 
-    return dataset_from_variables(variables, obj._coord_names, obj.attrs)
+    indexes = {
+        name: (index.index if isinstance(index, PintIndex) else index)
+        for name, index in obj.xindexes.items()
+    }
+
+    return dataset_from_variables(variables, obj._coord_names, indexes, obj.attrs)
 
 
 def strip_units(obj):
@@ -403,25 +487,31 @@ def convert_indexer_units(indexers, units):
     return converted
 
 
-def extract_indexer_units(indexer):
-    if isinstance(indexer, slice):
-        return slice_extract_units(indexer)
-    elif isinstance(indexer, (DataArray, Variable)):
-        return array_extract_units(indexer.data)
-    else:
-        return array_extract_units(indexer)
+def extract_indexer_units(indexers):
+    def extract(indexer):
+        if isinstance(indexer, slice):
+            return slice_extract_units(indexer)
+        elif isinstance(indexer, (DataArray, Variable)):
+            return array_extract_units(indexer.data)
+        else:
+            return array_extract_units(indexer)
+
+    return {name: extract(indexer) for name, indexer in indexers.items()}
 
 
-def strip_indexer_units(indexer):
-    if isinstance(indexer, slice):
-        return slice(
-            array_strip_units(indexer.start),
-            array_strip_units(indexer.stop),
-            array_strip_units(indexer.step),
-        )
-    elif isinstance(indexer, DataArray):
-        return strip_units(indexer)
-    elif isinstance(indexer, Variable):
-        return strip_units_variable(indexer)
-    else:
-        return array_strip_units(indexer)
+def strip_indexer_units(indexers):
+    def strip(indexer):
+        if isinstance(indexer, slice):
+            return slice(
+                array_strip_units(indexer.start),
+                array_strip_units(indexer.stop),
+                array_strip_units(indexer.step),
+            )
+        elif isinstance(indexer, DataArray):
+            return strip_units(indexer)
+        elif isinstance(indexer, Variable):
+            return strip_units_variable(indexer)
+        else:
+            return array_strip_units(indexer)
+
+    return {name: strip(indexer) for name, indexer in indexers.items()}

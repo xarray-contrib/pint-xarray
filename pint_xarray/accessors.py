@@ -152,10 +152,9 @@ class DatasetLocIndexer:
             raise NotImplementedError("pandas-style indexing is not supported, yet")
 
         dims = self.ds.dims
+        indexer_units = conversion.extract_indexer_units(indexers)
         indexer_units = {
-            name: conversion.extract_indexer_units(indexer)
-            for name, indexer in indexers.items()
-            if name in dims
+            name: indexer for name, indexer in indexer_units.items() if name in dims
         }
 
         # convert the indexes to the indexer's units
@@ -165,11 +164,13 @@ class DatasetLocIndexer:
             raise KeyError(*e.args) from e
 
         # index
-        stripped_indexers = {
-            name: conversion.strip_indexer_units(indexer)
-            for name, indexer in indexers.items()
-        }
-        return converted.loc[stripped_indexers]
+        stripped_indexers = conversion.strip_indexer_units(indexers)
+
+        stripped = conversion.strip_units(converted)
+        converted_units = conversion.extract_units(converted)
+        indexed = stripped.loc[stripped_indexers]
+
+        return conversion.attach_units(indexed, converted_units)
 
 
 class DataArrayLocIndexer:
@@ -183,10 +184,9 @@ class DataArrayLocIndexer:
             raise NotImplementedError("pandas-style indexing is not supported, yet")
 
         dims = self.da.dims
+        indexer_units = conversion.extract_indexer_units(indexers)
         indexer_units = {
-            name: conversion.extract_indexer_units(indexer)
-            for name, indexer in indexers.items()
-            if name in dims
+            name: indexer for name, indexer in indexer_units.items() if name in dims
         }
 
         # convert the indexes to the indexer's units
@@ -196,11 +196,13 @@ class DataArrayLocIndexer:
             raise KeyError(*e.args) from e
 
         # index
-        stripped_indexers = {
-            name: conversion.strip_indexer_units(indexer)
-            for name, indexer in indexers.items()
-        }
-        return converted.loc[stripped_indexers]
+        stripped_indexers = conversion.strip_indexer_units(indexers)
+
+        stripped = conversion.strip_units(converted)
+        converted_units = conversion.extract_units(converted)
+        indexed = stripped.loc[stripped_indexers]
+
+        return conversion.attach_units(indexed, converted_units)
 
     def __setitem__(self, indexers, values):
         if not is_dict_like(indexers):
@@ -219,10 +221,7 @@ class DataArrayLocIndexer:
             raise KeyError(*e.args) from e
 
         # index
-        stripped_indexers = {
-            name: conversion.strip_indexer_units(indexer)
-            for name, indexer in converted.items()
-        }
+        stripped_indexers = conversion.strip_indexer_units(converted)
         self.da.loc[stripped_indexers] = values
 
 
@@ -251,12 +250,6 @@ class PintDataArrayAccessor:
             Be aware that unless you're using ``dask`` this will load
             the data into memory. To avoid that, consider converting
             to ``dask`` first (e.g. using ``chunk``).
-
-        .. warning::
-
-            As units in dimension coordinates are not supported until
-            ``xarray`` changes the way it implements indexes, these
-            units will be set as attributes.
 
         .. note::
             Also note that datetime units (i.e. ones that match
@@ -648,10 +641,9 @@ class PintDataArrayAccessor:
         indexers = either_dict_or_kwargs(indexers, indexers_kwargs, "reindex")
 
         dims = self.da.dims
+        indexer_units = conversion.extract_indexer_units(indexers)
         indexer_units = {
-            name: conversion.extract_indexer_units(indexer)
-            for name, indexer in indexers.items()
-            if name in dims
+            name: indexer for name, indexer in indexer_units.items() if name in dims
         }
 
         # TODO: handle tolerance
@@ -659,20 +651,19 @@ class PintDataArrayAccessor:
 
         # convert the indexes to the indexer's units
         converted = conversion.convert_units(self.da, indexer_units)
+        converted_units = conversion.extract_units(converted)
+        stripped = conversion.strip_units(converted)
 
         # index
-        stripped_indexers = {
-            name: conversion.strip_indexer_units(indexer)
-            for name, indexer in indexers.items()
-        }
-        indexed = converted.reindex(
+        stripped_indexers = conversion.strip_indexer_units(indexers)
+        indexed = stripped.reindex(
             stripped_indexers,
             method=method,
             tolerance=tolerance,
             copy=copy,
             fill_value=fill_value,
         )
-        return indexed
+        return conversion.attach_units(indexed, converted_units)
 
     def reindex_like(
         self, other, method=None, tolerance=None, copy=True, fill_value=NA
@@ -692,19 +683,24 @@ class PintDataArrayAccessor:
         xarray.DataArray.pint.reindex
         xarray.DataArray.reindex_like
         """
-        indexer_units = conversion.extract_unit_attributes(other)
+        indexer_units = conversion.extract_units(other)
+
+        converted = conversion.convert_units(self.da, indexer_units)
+        units = conversion.extract_units(converted)
+        stripped = conversion.strip_units(converted)
+        stripped_other = conversion.strip_units(other)
 
         # TODO: handle tolerance
         # TODO: handle fill_value
 
-        converted = conversion.convert_units(self.da, indexer_units)
-        return converted.reindex_like(
-            other,
+        reindexed = stripped.reindex_like(
+            stripped_other,
             method=method,
             tolerance=tolerance,
             copy=copy,
             fill_value=fill_value,
         )
+        return conversion.attach_units(reindexed, units)
 
     def interp(
         self,
@@ -731,10 +727,9 @@ class PintDataArrayAccessor:
         indexers = either_dict_or_kwargs(coords, coords_kwargs, "interp")
 
         dims = self.da.dims
+        indexer_units = conversion.extract_indexer_units(indexers)
         indexer_units = {
-            name: conversion.extract_indexer_units(indexer)
-            for name, indexer in indexers.items()
-            if name in dims
+            name: indexer for name, indexer in indexer_units.items() if name in dims
         }
 
         # convert the indexes to the indexer's units
@@ -743,10 +738,7 @@ class PintDataArrayAccessor:
         stripped = conversion.strip_units(converted)
 
         # index
-        stripped_indexers = {
-            name: conversion.strip_indexer_units(indexer)
-            for name, indexer in indexers.items()
-        }
+        stripped_indexers = conversion.strip_indexer_units(indexers)
         interpolated = stripped.interp(
             stripped_indexers,
             method=method,
@@ -770,13 +762,14 @@ class PintDataArrayAccessor:
         xarray.DataArray.pint.interp
         xarray.DataArray.interp_like
         """
-        indexer_units = conversion.extract_unit_attributes(other)
+        indexer_units = conversion.extract_units(other)
 
         converted = conversion.convert_units(self.da, indexer_units)
         units = conversion.extract_units(converted)
         stripped = conversion.strip_units(converted)
+        stripped_other = conversion.strip_units(other)
         interpolated = stripped.interp_like(
-            other,
+            stripped_other,
             method=method,
             assume_sorted=assume_sorted,
             kwargs=kwargs,
@@ -804,10 +797,9 @@ class PintDataArrayAccessor:
         indexers = either_dict_or_kwargs(indexers, indexers_kwargs, "sel")
 
         dims = self.da.dims
+        indexer_units = conversion.extract_indexer_units(indexers)
         indexer_units = {
-            name: conversion.extract_indexer_units(indexer)
-            for name, indexer in indexers.items()
-            if name in dims
+            name: indexer for name, indexer in indexer_units.items() if name in dims
         }
 
         # TODO: handle tolerance
@@ -819,18 +811,18 @@ class PintDataArrayAccessor:
             raise KeyError(*e.args) from e
 
         # index
-        stripped_indexers = {
-            name: conversion.strip_indexer_units(indexer)
-            for name, indexer in indexers.items()
-        }
-        indexed = converted.sel(
+        stripped_indexers = conversion.strip_indexer_units(indexers)
+
+        stripped = conversion.strip_units(converted)
+        converted_units = conversion.extract_units(converted)
+        indexed = stripped.sel(
             stripped_indexers,
             method=method,
             tolerance=tolerance,
             drop=drop,
         )
 
-        return indexed
+        return conversion.attach_units(indexed, converted_units)
 
     @property
     def loc(self):
@@ -872,10 +864,7 @@ class PintDataArrayAccessor:
             raise KeyError(*e.args) from e
 
         # index
-        stripped_indexers = {
-            name: conversion.strip_indexer_units(indexer)
-            for name, indexer in converted_indexers.items()
-        }
+        stripped_indexers = conversion.strip_indexer_units(converted_indexers)
         indexed = self.da.drop_sel(
             stripped_indexers,
             errors=errors,
@@ -983,12 +972,6 @@ class PintDatasetAccessor:
             Be aware that unless you're using ``dask`` this will load
             the data into memory. To avoid that, consider converting
             to ``dask`` first (e.g. using ``chunk``).
-
-        .. warning::
-
-            As units in dimension coordinates are not supported until
-            ``xarray`` changes the way it implements indexes, these
-            units will be set as attributes.
 
         .. note::
             Also note that datetime units (i.e. ones that match
@@ -1425,10 +1408,9 @@ class PintDatasetAccessor:
         indexers = either_dict_or_kwargs(indexers, indexers_kwargs, "reindex")
 
         dims = self.ds.dims
+        indexer_units = conversion.extract_indexer_units(indexers)
         indexer_units = {
-            name: conversion.extract_indexer_units(indexer)
-            for name, indexer in indexers.items()
-            if name in dims
+            name: indexer for name, indexer in indexer_units.items() if name in dims
         }
 
         # TODO: handle tolerance
@@ -1436,20 +1418,19 @@ class PintDatasetAccessor:
 
         # convert the indexes to the indexer's units
         converted = conversion.convert_units(self.ds, indexer_units)
+        converted_units = conversion.extract_units(converted)
+        stripped = conversion.strip_units(converted)
 
         # index
-        stripped_indexers = {
-            name: conversion.strip_indexer_units(indexer)
-            for name, indexer in indexers.items()
-        }
-        indexed = converted.reindex(
+        stripped_indexers = conversion.strip_indexer_units(indexers)
+        indexed = stripped.reindex(
             stripped_indexers,
             method=method,
             tolerance=tolerance,
             copy=copy,
             fill_value=fill_value,
         )
-        return indexed
+        return conversion.attach_units(indexed, converted_units)
 
     def reindex_like(
         self, other, method=None, tolerance=None, copy=True, fill_value=NA
@@ -1469,19 +1450,24 @@ class PintDatasetAccessor:
         xarray.Dataset.pint.reindex
         xarray.Dataset.reindex_like
         """
-        indexer_units = conversion.extract_unit_attributes(other)
+        indexer_units = conversion.extract_units(other)
+
+        converted = conversion.convert_units(self.ds, indexer_units)
+        units = conversion.extract_units(converted)
+        stripped = conversion.strip_units(converted)
+        stripped_other = conversion.strip_units(other)
 
         # TODO: handle tolerance
         # TODO: handle fill_value
 
-        converted = conversion.convert_units(self.ds, indexer_units)
-        return converted.reindex_like(
-            other,
+        reindexed = stripped.reindex_like(
+            stripped_other,
             method=method,
             tolerance=tolerance,
             copy=copy,
             fill_value=fill_value,
         )
+        return conversion.attach_units(reindexed, units)
 
     def interp(
         self,
@@ -1508,10 +1494,9 @@ class PintDatasetAccessor:
         indexers = either_dict_or_kwargs(coords, coords_kwargs, "interp")
 
         dims = self.ds.dims
+        indexer_units = conversion.extract_indexer_units(indexers)
         indexer_units = {
-            name: conversion.extract_indexer_units(indexer)
-            for name, indexer in indexers.items()
-            if name in dims
+            name: indexer for name, indexer in indexer_units.items() if name in dims
         }
 
         # convert the indexes to the indexer's units
@@ -1520,10 +1505,7 @@ class PintDatasetAccessor:
         stripped = conversion.strip_units(converted)
 
         # index
-        stripped_indexers = {
-            name: conversion.strip_indexer_units(indexer)
-            for name, indexer in indexers.items()
-        }
+        stripped_indexers = conversion.strip_indexer_units(indexers)
         interpolated = stripped.interp(
             stripped_indexers,
             method=method,
@@ -1547,13 +1529,14 @@ class PintDatasetAccessor:
         xarray.Dataset.pint.interp
         xarray.Dataset.interp_like
         """
-        indexer_units = conversion.extract_unit_attributes(other)
+        indexer_units = conversion.extract_units(other)
 
         converted = conversion.convert_units(self.ds, indexer_units)
         units = conversion.extract_units(converted)
         stripped = conversion.strip_units(converted)
+        stripped_other = conversion.strip_units(other)
         interpolated = stripped.interp_like(
-            other,
+            stripped_other,
             method=method,
             assume_sorted=assume_sorted,
             kwargs=kwargs,
@@ -1581,10 +1564,9 @@ class PintDatasetAccessor:
         indexers = either_dict_or_kwargs(indexers, indexers_kwargs, "sel")
 
         dims = self.ds.dims
+        indexer_units = conversion.extract_indexer_units(indexers)
         indexer_units = {
-            name: conversion.extract_indexer_units(indexer)
-            for name, indexer in indexers.items()
-            if name in dims
+            name: indexer for name, indexer in indexer_units.items() if name in dims
         }
 
         # TODO: handle tolerance
@@ -1596,18 +1578,18 @@ class PintDatasetAccessor:
             raise KeyError(*e.args) from e
 
         # index
-        stripped_indexers = {
-            name: conversion.strip_indexer_units(indexer)
-            for name, indexer in indexers.items()
-        }
-        indexed = converted.sel(
+        stripped_indexers = conversion.strip_indexer_units(indexers)
+
+        stripped = conversion.strip_units(converted)
+        converted_units = conversion.extract_units(converted)
+        indexed = stripped.sel(
             stripped_indexers,
             method=method,
             tolerance=tolerance,
             drop=drop,
         )
 
-        return indexed
+        return conversion.attach_units(indexed, converted_units)
 
     @property
     def loc(self):
@@ -1651,10 +1633,7 @@ class PintDatasetAccessor:
             raise KeyError(*e.args) from e
 
         # index
-        stripped_indexers = {
-            name: conversion.strip_indexer_units(indexer)
-            for name, indexer in converted_indexers.items()
-        }
+        stripped_indexers = conversion.strip_indexer_units(converted_indexers)
         indexed = self.ds.drop_sel(
             stripped_indexers,
             errors=errors,

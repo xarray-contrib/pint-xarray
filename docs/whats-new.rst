@@ -6,6 +6,8 @@ What's new
 ------------------
 - drop support for python 3.9 (:pull:`266`)
   By `Justus Magin <https://github.com/keewis>`_.
+- create a `PintIndex` to allow units on indexed coordinates (:pull:`163`, :issue:`162`)
+  By `Justus Magin <https://github.com/keewis>`_ and `Benoit Bovy <https://github.com/benbovy>`_.
 
 0.4 (23 Jun 2024)
 -----------------

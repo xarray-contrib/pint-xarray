@@ -5,6 +5,7 @@ import pint
 from . import accessors, formatting, testing  # noqa: F401
 from .accessors import default_registry as unit_registry
 from .accessors import setup_registry
+from .index import PintIndex
 
 try:
     __version__ = version("pint-xarray")
@@ -21,4 +22,5 @@ __all__ = [
     "testing",
     "unit_registry",
     "setup_registry",
+    "PintIndex",
 ]

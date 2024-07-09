@@ -1,5 +1,6 @@
 import re
 from contextlib import contextmanager
+from textwrap import indent
 
 import numpy as np
 import pytest
@@ -95,6 +96,33 @@ def assert_indexer_equal(a, b):
         a_ = array_strip_units(a)
         b_ = array_strip_units(b)
         assert a_ == b_, f"different values: {a_!r} ←→ {b_!r}"
+
+
+def assert_indexers_equal(first, second):
+    __tracebackhide__ = True
+    # same keys
+    assert first.keys() == second.keys(), "different keys"
+
+    errors = {}
+    for name in first:
+        first_value = first[name]
+        second_value = second[name]
+
+        try:
+            assert_indexer_equal(first_value, second_value)
+        except AssertionError as e:
+            errors[name] = e
+
+    if errors:
+        message = "\n".join(
+            ["indexers are not equal:"]
+            + [
+                f" - {name}:\n{indent(str(error), ' ' * 4)}"
+                for name, error in errors.items()
+            ]
+        )
+
+        raise AssertionError(message)
 
 
 def assert_indexer_units_equal(a, b):
