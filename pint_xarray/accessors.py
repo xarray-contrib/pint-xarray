@@ -742,8 +742,8 @@ class PintDataArrayAccessor:
         interpolated = stripped.interp(
             stripped_indexers,
             method=method,
-            assume_sorted=False,
-            kwargs=None,
+            assume_sorted=assume_sorted,
+            kwargs=kwargs,
         )
         return conversion.attach_units(interpolated, units)
 
@@ -1509,8 +1509,8 @@ class PintDatasetAccessor:
         interpolated = stripped.interp(
             stripped_indexers,
             method=method,
-            assume_sorted=False,
-            kwargs=None,
+            assume_sorted=assume_sorted,
+            kwargs=kwargs,
         )
         return conversion.attach_units(interpolated, units)
 
