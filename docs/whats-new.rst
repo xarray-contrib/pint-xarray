@@ -8,6 +8,9 @@ What's new
   By `Justus Magin <https://github.com/keewis>`_.
 - create a `PintIndex` to allow units on indexed coordinates (:pull:`163`, :issue:`162`)
   By `Justus Magin <https://github.com/keewis>`_ and `Benoit Bovy <https://github.com/benbovy>`_.
+- fix :py:meth:`Dataset.pint.interp` and :py:meth:`DataArray.pint.interp` bug
+  failing to pass through arguments (:pull:`270`, :issue:`267`)
+  By `Martijn van der Marel <https://github.com/martijnvandermarel>`_
 
 0.4 (23 Jun 2024)
 -----------------
