@@ -1437,7 +1437,7 @@ def test_reindex_like(obj, units, other, other_units, expected, expected_units, 
 
 @requires_scipy
 @pytest.mark.parametrize(
-    ["obj", "units", "indexers", "expected", "expected_units", "error"],
+    ["obj", "units", "indexers", "expected", "expected_units", "error", "kwargs"],
     (
         pytest.param(
             xr.Dataset({"x": ("x", [10, 20, 30]), "y": ("y", [60, 120])}),
@@ -1445,6 +1445,7 @@ def test_reindex_like(obj, units, other, other_units, expected, expected_units, 
             {"x": Quantity([10, 30, 50], "dm"), "y": Quantity([0, 120, 240], "s")},
             xr.Dataset({"x": ("x", [10, 30, 50]), "y": ("y", [0, 120, 240])}),
             {"x": "dm", "y": "s"},
+            None,
             None,
             id="Dataset-identical units",
         ),
@@ -1455,6 +1456,7 @@ def test_reindex_like(obj, units, other, other_units, expected, expected_units, 
             xr.Dataset({"x": ("x", [0, 1, 3, 5]), "y": ("y", [0, 2, 4])}),
             {"x": "m", "y": "min"},
             None,
+            None,
             id="Dataset-compatible units",
         ),
         pytest.param(
@@ -1464,6 +1466,7 @@ def test_reindex_like(obj, units, other, other_units, expected, expected_units, 
             None,
             {},
             ValueError,
+            None,
             id="Dataset-incompatible units",
         ),
         pytest.param(
@@ -1488,6 +1491,7 @@ def test_reindex_like(obj, units, other, other_units, expected, expected_units, 
             ),
             {"a": "kg"},
             None,
+            None,
             id="Dataset-data units",
         ),
         pytest.param(
@@ -1504,6 +1508,7 @@ def test_reindex_like(obj, units, other, other_units, expected, expected_units, 
                 coords={"x": ("x", [10, 30, 50]), "y": ("y", [0, 240])},
             ),
             {"x": "dm", "y": "s"},
+            None,
             None,
             id="DataArray-identical units",
         ),
@@ -1522,6 +1527,7 @@ def test_reindex_like(obj, units, other, other_units, expected, expected_units, 
             ),
             {"x": "m", "y": "min"},
             None,
+            None,
             id="DataArray-compatible units",
         ),
         pytest.param(
@@ -1535,6 +1541,7 @@ def test_reindex_like(obj, units, other, other_units, expected, expected_units, 
             None,
             {},
             ValueError,
+            None,
             id="DataArray-incompatible units",
         ),
         pytest.param(
@@ -1552,20 +1559,39 @@ def test_reindex_like(obj, units, other, other_units, expected, expected_units, 
             ),
             {None: "kg"},
             None,
+            None,
             id="DataArray-data units",
+        ),
+        pytest.param(
+            xr.DataArray(
+                [[0, 1], [2, 3], [4, 5]],
+                dims=("x", "y"),
+                coords={"x": ("x", [10, 20, 30]), "y": ("y", [60, 120])},
+            ),
+            {"x": "dm", "y": "s"},
+            {"x": Quantity([1, 3, 5], "m"), "y": Quantity([0, 2], "min")},
+            xr.DataArray(
+                [[0, 1], [0, 5], [0, 0]],
+                dims=("x", "y"),
+                coords={"x": ("x", [1, 3, 5]), "y": ("y", [0, 2])},
+            ),
+            {"x": "m", "y": "min"},
+            None,
+            {"bounds_error": False, "fill_value": 0},
+            id="DataArray-other parameters",
         ),
     ),
 )
-def test_interp(obj, units, indexers, expected, expected_units, error):
+def test_interp(obj, units, indexers, expected, expected_units, error, kwargs):
     obj_ = obj.pint.quantify(units)
 
     if error is not None:
         with pytest.raises(error):
-            obj.pint.interp(indexers)
+            obj_.pint.interp(indexers, kwargs=kwargs)
     else:
         expected_ = expected.pint.quantify(expected_units)
 
-        actual = obj_.pint.interp(indexers)
+        actual = obj_.pint.interp(indexers, kwargs=kwargs)
         assert_units_equal(actual, expected_)
         assert_identical(actual, expected_)
 

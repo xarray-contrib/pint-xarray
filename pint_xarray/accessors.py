@@ -716,7 +716,8 @@ class PintDataArrayAccessor:
         converted to the units of the indexers first.
 
         .. note::
-            ``kwargs`` is passed unmodified to ``DataArray.interp``
+            ``method``, ``assume_sorted`` and ``kwargs`` are passed unmodified to
+            ``DataArray.interp``.
 
         See Also
         --------
@@ -742,8 +743,8 @@ class PintDataArrayAccessor:
         interpolated = stripped.interp(
             stripped_indexers,
             method=method,
-            assume_sorted=False,
-            kwargs=None,
+            assume_sorted=assume_sorted,
+            kwargs=kwargs,
         )
         return conversion.attach_units(interpolated, units)
 
@@ -754,7 +755,8 @@ class PintDataArrayAccessor:
         to the units of the indexers first.
 
         .. note::
-            ``kwargs`` is passed unmodified to ``DataArray.interp``
+            ``method``, ``assume_sorted`` and ``kwargs`` are passed unmodified to
+            ``DataArray.interp``.
 
         See Also
         --------
@@ -1483,7 +1485,8 @@ class PintDatasetAccessor:
         to the units of the indexers first.
 
         .. note::
-            ``kwargs`` is passed unmodified to ``Dataset.interp``
+            ``method``, ``assume_sorted`` and ``kwargs`` are passed unmodified to
+            ``DataArray.interp``.
 
         See Also
         --------
@@ -1509,8 +1512,8 @@ class PintDatasetAccessor:
         interpolated = stripped.interp(
             stripped_indexers,
             method=method,
-            assume_sorted=False,
-            kwargs=None,
+            assume_sorted=assume_sorted,
+            kwargs=kwargs,
         )
         return conversion.attach_units(interpolated, units)
 
@@ -1521,7 +1524,8 @@ class PintDatasetAccessor:
         converted to the units of the indexers first.
 
         .. note::
-            ``kwargs`` is passed unmodified to ``Dataset.interp``
+            ``method``, ``assume_sorted`` and ``kwargs`` are passed unmodified to
+            ``DataArray.interp``.
 
         See Also
         --------
