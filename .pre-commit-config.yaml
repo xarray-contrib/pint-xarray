@@ -12,19 +12,19 @@ repos:
       - id: check-yaml
   # isort should run before black as black sometimes tweaks the isort output
   - repo: https://github.com/pycqa/isort
-    rev: 5.13.2
+    rev: 6.0.0
     hooks:
       - id: isort
   # https://github.com/python/black#version-control-integration
   - repo: https://github.com/psf/black
-    rev: 24.10.0
+    rev: 25.1.0
     hooks:
       - id: black-jupyter
   - repo: https://github.com/keewis/blackdoc
     rev: v0.3.9
     hooks:
       - id: blackdoc
-        additional_dependencies: ["black==24.10.0"]
+        additional_dependencies: ["black==25.1.0"]
       - id: blackdoc-autoupdate-black
   - repo: https://github.com/pycqa/flake8
     rev: 7.1.1
