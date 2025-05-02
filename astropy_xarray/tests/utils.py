@@ -4,12 +4,12 @@ from textwrap import indent
 
 import numpy as np
 import pytest
-from pint import Quantity
+from astropy.units import Quantity
 from xarray import DataArray, Variable
 from xarray.testing import assert_equal, assert_identical  # noqa: F401
 
 from ..conversion import (
-    array_strip_units,
+    array_strip_unit,
     extract_indexer_units,
     strip_units,
     strip_units_variable,
@@ -56,8 +56,8 @@ def assert_array_units_equal(a, b):
 def assert_array_equal(a, b):
     __tracebackhide__ = True
 
-    a_ = getattr(a, "magnitude", a)
-    b_ = getattr(b, "magnitude", b)
+    a_ = getattr(a, "value", a)
+    b_ = getattr(b, "value", b)
 
     np.testing.assert_array_equal(a_, b_)
 
@@ -66,8 +66,8 @@ def assert_slice_equal(a, b):
     attrs = ("start", "stop", "step")
     values_a = tuple(getattr(a, name) for name in attrs)
     values_b = tuple(getattr(b, name) for name in attrs)
-    stripped_a = tuple(array_strip_units(v) for v in values_a)
-    stripped_b = tuple(array_strip_units(v) for v in values_b)
+    stripped_a = tuple(array_strip_unit(v) for v in values_a)
+    stripped_b = tuple(array_strip_unit(v) for v in values_b)
 
     assert (
         stripped_a == stripped_b
@@ -93,8 +93,8 @@ def assert_indexer_equal(a, b):
     elif isinstance(a, (Quantity, np.ndarray)):
         assert_array_equal(a, b)
     else:
-        a_ = array_strip_units(a)
-        b_ = array_strip_units(b)
+        a_ = array_strip_unit(a)
+        b_ = array_strip_unit(b)
         assert a_ == b_, f"different values: {a_!r} ←→ {b_!r}"
 
 

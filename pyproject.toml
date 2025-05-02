@@ -1,6 +1,7 @@
 [project]
-name = "pint-xarray"
+name = "astropy-xarray"
 authors = [
+    {name = "Callan Gray", email = "calj.gray@gmail.com"},
     {name = "Tom Nicholas", email = "tomnicholas1@googlemail.com"}
 ]
 description = "Physical units interface to xarray using Pint"
@@ -22,18 +23,18 @@ requires-python = ">=3.10"
 dependencies = [
     "numpy >= 1.23",
     "xarray >= 2022.06.0",
-    "pint >= 0.21",
+    "astropy >= 5.0.0",
 ]
 dynamic = ["version"]
 
 [project.urls]
-Home = "https://github.com/xarray-contrib/pint-xarray"
-Documentation = "https://pint-xarray.readthedocs.io/en/stable"
+Home = "https://github.com/calgray/astropy-xarray"
+Documentation = "https://astropy-xarray.readthedocs.io/en/stable"
 
 [tool.setuptools.packages.find]
 include = [
-    "pint_xarray",
-    "pint_xarray.tests",
+    "astropy_xarray",
+    "astropy_xarray.tests",
 ]
 
 [build-system]

@@ -1,12 +1,12 @@
 import numpy as np
 import pandas as pd
-import pint
+import astropy.units
 import pytest
 from xarray import Coordinates, DataArray, Dataset, Variable
 from xarray.core.indexes import PandasIndex
 
-from pint_xarray import conversion
-from pint_xarray.index import PintIndex
+from astropy_xarray import conversion
+from astropy_xarray.index import AstropyIndex
 
 from .utils import (
     assert_array_equal,
@@ -16,11 +16,11 @@ from .utils import (
     assert_indexers_equal,
 )
 
-unit_registry = pint.UnitRegistry()
-Quantity = unit_registry.Quantity
-Unit = unit_registry.Unit
+unit_registry = astropy.units
+Quantity = astropy.units.Quantity
+Unit = astropy.units.Unit
 
-pytestmark = pytest.mark.filterwarnings("error::pint.UnitStrippedWarning")
+# pytestmark = pytest.mark.filterwarnings("error::pint.UnitStrippedWarning")
 
 
 def filter_none_values(mapping):
@@ -46,7 +46,7 @@ def convert_quantity(q, u):
 
 def strip_quantity(q):
     try:
-        return q.magnitude
+        return q.value
     except AttributeError:
         return q
 
@@ -100,11 +100,11 @@ class TestArrayFunctions:
     def test_array_attach_units(self, data, unit, expected, match):
         if match is not None:
             with pytest.raises(ValueError, match=match):
-                conversion.array_attach_units(data, unit)
+                conversion.array_attach_unit(data, unit)
 
             return
 
-        actual = conversion.array_attach_units(data, unit)
+        actual = conversion.array_attach_unit(data, unit)
         assert_array_units_equal(expected, actual)
         assert_array_equal(expected, actual)
 
@@ -145,7 +145,7 @@ class TestArrayFunctions:
             ),
             pytest.param(
                 Unit("deg"),
-                np.array([0, np.pi / 2, np.pi]),
+                Quantity(np.array([0, np.pi / 2, np.pi]), "rad"),
                 Quantity([0, 90, 180], "deg"),
                 None,
                 None,
@@ -153,9 +153,9 @@ class TestArrayFunctions:
             ),
             pytest.param(
                 Unit("mm"),
-                np.array([0, np.pi / 2, np.pi]),
+                Quantity(np.array([0, np.pi / 2, np.pi]), "rad"),
                 None,
-                pint.DimensionalityError,
+                astropy.units.errors.UnitConversionError,
                 None,
                 id="unit-ndarray",
             ),
@@ -179,7 +179,7 @@ class TestArrayFunctions:
                 "s",
                 Quantity([0, 1, 2], "m"),
                 None,
-                pint.DimensionalityError,
+                astropy.units.errors.UnitConversionError,
                 None,
                 id="quantity-incompatible unit",
             ),
@@ -188,11 +188,11 @@ class TestArrayFunctions:
     def test_array_convert_units(self, data, unit, expected, error, match):
         if error is not None:
             with pytest.raises(error, match=match):
-                conversion.array_convert_units(data, unit)
+                conversion.array_convert_unit(data, unit)
 
             return
 
-        actual = conversion.array_convert_units(data, unit)
+        actual = conversion.array_convert_unit(data, unit)
         assert_array_equal(expected, actual)
 
     @pytest.mark.parametrize(
@@ -203,7 +203,7 @@ class TestArrayFunctions:
         ),
     )
     def test_array_extract_units(self, data, expected):
-        actual = conversion.array_extract_units(data)
+        actual = conversion.array_extract_unit(data)
 
         assert expected == actual
 
@@ -215,7 +215,7 @@ class TestArrayFunctions:
         ),
     )
     def test_array_strip_units(self, data, expected):
-        actual = conversion.array_strip_units(data)
+        actual = conversion.array_strip_unit(data)
 
         assert_array_equal(expected, actual)
 
@@ -253,7 +253,7 @@ class TestXarrayFunctions:
 
         index = PandasIndex(x, dim="x")
         if units.get("x") is not None:
-            index = PintIndex(index=index, units=units.get("x"))
+            index = AstropyIndex(index=index, units=units.get("x"))
 
         obj = Dataset({"a": ("x", a), "b": ("x", b)}, coords={"u": ("x", u), "x": x})
         coords = Coordinates(
@@ -273,9 +273,9 @@ class TestXarrayFunctions:
         assert_identical(actual, expected)
 
         if units.get("x") is None:
-            assert not isinstance(actual.xindexes["x"], PintIndex)
+            assert not isinstance(actual.xindexes["x"], AstropyIndex)
         else:
-            assert isinstance(actual.xindexes["x"], PintIndex)
+            assert isinstance(actual.xindexes["x"], AstropyIndex)
             assert actual.xindexes["x"].units == {"x": units.get("x")}
 
     @pytest.mark.parametrize("type", ("DataArray", "Dataset"))
@@ -388,7 +388,7 @@ class TestXarrayFunctions:
 
         x_index = PandasIndex(pd.Index(x), "x")
         if original_units.get("x") is not None:
-            x_index = PintIndex(index=x_index, units={"x": original_units.get("x")})
+            x_index = AstropyIndex(index=x_index, units={"x": original_units.get("x")})
 
         obj = Dataset(
             {
@@ -415,7 +415,7 @@ class TestXarrayFunctions:
         expected_x = convert_quantity(q_x, units.get("x"))
         expected_index = PandasIndex(pd.Index(strip_quantity(expected_x)), "x")
         if units.get("x") is not None:
-            expected_index = PintIndex(
+            expected_index = AstropyIndex(
                 index=expected_index, units={"x": units.get("x")}
             )
 
@@ -458,7 +458,7 @@ class TestXarrayFunctions:
 
         index = PandasIndex(x, "x")
         if units.get("x") is not None:
-            index = PintIndex(index=index, units={"x": units.get("x")})
+            index = AstropyIndex(index=index, units={"x": units.get("x")})
 
         obj = Dataset(
             {
@@ -784,7 +784,7 @@ class TestIndexerFunctions:
                 id="slice-incompatible units-mixed",
             ),
             pytest.param(
-                {"x": slice(1, Quantity(2, "rad"))},
+                {"x": slice(Quantity(1, "rad"), Quantity(2, "rad"))},
                 {"x": Unit("rad")},
                 id="slice-incompatible units-mixed-dimensionless",
             ),
@@ -802,7 +802,11 @@ class TestIndexerFunctions:
         ["indexers", "expected"],
         (
             pytest.param({"x": 1}, {"x": 1}, id="scalar-no units"),
-            pytest.param({"x": Quantity(1, "m")}, {"x": 1}, id="scalar-units"),
+            pytest.param(
+                {"x": Quantity(1, "m")},
+                {"x": np.float64(1)},
+                id="scalar-units",
+            ),
             pytest.param(
                 {"x": np.array([1, 2])},
                 {"x": np.array([1, 2])},

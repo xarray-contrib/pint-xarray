@@ -1,10 +1,8 @@
-import pint
+import astropy.units as u
 import pytest
 
 # only need to register _repr_inline_
-import pint_xarray  # noqa: F401
-
-unit_registry = pint.UnitRegistry(force_ndarray_like=True)
+import astropy_xarray  # noqa: F401
 
 
 @pytest.mark.parametrize(
@@ -18,6 +16,6 @@ unit_registry = pint.UnitRegistry(force_ndarray_like=True)
     ),
 )
 def test_inline_repr(length, expected):
-    quantity = unit_registry.Quantity([7.1, 5.4, 9.8, 21.4, 15.3], "N")
+    quantity = u.Quantity([7.1, 5.4, 9.8, 21.4, 15.3], "N")
 
     assert quantity._repr_inline_(length) == expected

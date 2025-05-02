@@ -1,10 +1,8 @@
-import pint
+import astropy.units as u
 import pytest
 import xarray as xr
 
-from pint_xarray import testing
-
-unit_registry = pint.UnitRegistry(force_ndarray_like=True)
+from astropy_xarray import testing
 
 
 @pytest.mark.parametrize(
@@ -23,14 +21,14 @@ unit_registry = pint.UnitRegistry(force_ndarray_like=True)
             id="different attrs",
         ),
         pytest.param(
-            xr.DataArray([10, 20] * unit_registry.K),
-            xr.DataArray([50, 80] * unit_registry.K),
+            xr.DataArray([10, 20] * u.K),
+            xr.DataArray([50, 80] * u.K),
             None,
             id="equal units",
         ),
         pytest.param(
-            xr.DataArray([10, 20] * unit_registry.K),
-            xr.DataArray([50, 80] * unit_registry.dimensionless),
+            xr.DataArray([10, 20] * u.K),
+            xr.DataArray([50, 80] * u.dimensionless_unscaled),
             AssertionError,
             id="different units",
         ),

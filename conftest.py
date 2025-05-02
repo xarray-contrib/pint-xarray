@@ -5,19 +5,20 @@ import pytest
 def add_standard_imports(doctest_namespace, tmpdir):
     import numpy as np
     import pandas as pd
-    import pint
+    import astropy
+    import astropy.units
     import xarray as xr
 
-    import pint_xarray
+    import astropy_xarray
 
-    ureg = pint.UnitRegistry(force_ndarray_like=True)
+    ureg = astropy.units
 
     doctest_namespace["np"] = np
     doctest_namespace["pd"] = pd
     doctest_namespace["xr"] = xr
-    doctest_namespace["pint"] = pint
+    doctest_namespace["astropy"] = astropy
     doctest_namespace["ureg"] = ureg
-    doctest_namespace["pint_xarray"] = pint_xarray
+    doctest_namespace["astropy_xarray"] = astropy_xarray
 
     # always seed numpy.random to make the examples deterministic
     np.random.seed(0)

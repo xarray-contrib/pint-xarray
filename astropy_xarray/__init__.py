@@ -1,11 +1,9 @@
 from importlib.metadata import version
 
-import pint
+import astropy.units
 
 from . import accessors, formatting, testing  # noqa: F401
-from .accessors import default_registry as unit_registry
-from .accessors import setup_registry
-from .index import PintIndex
+from .index import AstropyIndex
 
 try:
     __version__ = version("pint-xarray")
@@ -15,12 +13,10 @@ except Exception:
     __version__ = "999"
 
 
-pint.Quantity._repr_inline_ = formatting.inline_repr
+astropy.units.Quantity._repr_inline_ = formatting.inline_repr
 
 
 __all__ = [
     "testing",
-    "unit_registry",
-    "setup_registry",
-    "PintIndex",
+    "AstropyIndex",
 ]

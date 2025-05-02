@@ -4,8 +4,8 @@ import pytest
 import xarray as xr
 from xarray.core.indexes import IndexSelResult, PandasIndex
 
-from pint_xarray import unit_registry as ureg
-from pint_xarray.index import PintIndex
+import astropy.units as ureg
+from astropy_xarray.index import AstropyIndex
 
 
 def indexer_equal(first, second):
@@ -28,7 +28,7 @@ def indexer_equal(first, second):
 )
 @pytest.mark.parametrize("units", [ureg.Unit("m"), ureg.Unit("s")])
 def test_init(base_index, units):
-    index = PintIndex(index=base_index, units=units)
+    index = AstropyIndex(index=base_index, units=units)
 
     assert index.index.equals(base_index)
     assert index.units == units
@@ -38,7 +38,7 @@ def test_replace():
     old_index = PandasIndex([1, 2, 3], dim="y")
     new_index = PandasIndex([0.1, 0.2, 0.3], dim="x")
 
-    old = PintIndex(index=old_index, units=ureg.Unit("m"))
+    old = AstropyIndex(index=old_index, units=ureg.Unit("m"))
     new = old._replace(new_index)
 
     assert new.index.equals(new_index)
@@ -63,7 +63,7 @@ def test_replace():
     ),
 )
 def test_create_variables(wrapped_index, units, expected):
-    index = PintIndex(index=wrapped_index, units=units)
+    index = AstropyIndex(index=wrapped_index, units=units)
 
     actual = index.create_variables()
 
@@ -88,7 +88,7 @@ def test_create_variables(wrapped_index, units, expected):
     ),
 )
 def test_sel(labels, expected):
-    index = PintIndex(
+    index = AstropyIndex(
         index=PandasIndex(pd.Index([1, 2, 3, 4]), dim="x"), units={"x": ureg.Unit("m")}
     )
 
@@ -110,13 +110,13 @@ def test_sel(labels, expected):
 )
 def test_isel(indexers):
     wrapped_index = PandasIndex(pd.Index([1, 2, 3, 4]), dim="y")
-    index = PintIndex(index=wrapped_index, units={"y": ureg.Unit("s")})
+    index = AstropyIndex(index=wrapped_index, units={"y": ureg.Unit("s")})
 
     actual = index.isel(indexers)
 
     wrapped_ = wrapped_index.isel(indexers)
     if wrapped_ is not None:
-        expected = PintIndex(
+        expected = AstropyIndex(
             index=wrapped_index.isel(indexers), units={"y": ureg.Unit("s")}
         )
     else:
@@ -129,7 +129,7 @@ def test_isel(indexers):
     ["other", "expected"],
     (
         (
-            PintIndex(
+            AstropyIndex(
                 index=PandasIndex(pd.Index([1, 2, 3, 4]), dim="x"),
                 units={"x": ureg.Unit("cm")},
             ),
@@ -137,21 +137,21 @@ def test_isel(indexers):
         ),
         (PandasIndex(pd.Index([1, 2, 3, 4]), dim="x"), False),
         (
-            PintIndex(
+            AstropyIndex(
                 index=PandasIndex(pd.Index([1, 2, 3, 4]), dim="x"),
                 units={"x": ureg.Unit("m")},
             ),
             False,
         ),
         (
-            PintIndex(
+            AstropyIndex(
                 index=PandasIndex(pd.Index([1, 2, 3, 4]), dim="y"),
                 units={"y": ureg.Unit("cm")},
             ),
             False,
         ),
         (
-            PintIndex(
+            AstropyIndex(
                 index=PandasIndex(pd.Index([1, 3, 3, 4]), dim="x"),
                 units={"x": ureg.Unit("cm")},
             ),
@@ -160,7 +160,7 @@ def test_isel(indexers):
     ),
 )
 def test_equals(other, expected):
-    index = PintIndex(
+    index = AstropyIndex(
         index=PandasIndex(pd.Index([1, 2, 3, 4]), dim="x"), units={"x": ureg.Unit("cm")}
     )
 
@@ -180,7 +180,7 @@ def test_equals(other, expected):
     ),
 )
 def test_roll(shifts, expected_index):
-    index = PintIndex(
+    index = AstropyIndex(
         index=PandasIndex(pd.Index([-2, -1, 0, 1, 2]), dim="x"),
         units={"x": ureg.Unit("m")},
     )
@@ -195,10 +195,10 @@ def test_roll(shifts, expected_index):
 @pytest.mark.parametrize("name_dict", ({"y2": "y3"}, {"y2": "y1"}))
 def test_rename(name_dict, dims_dict):
     wrapped_index = PandasIndex(pd.Index([1, 2], name="y2"), dim="y")
-    index = PintIndex(index=wrapped_index, units={"y": ureg.Unit("m")})
+    index = AstropyIndex(index=wrapped_index, units={"y": ureg.Unit("m")})
 
     actual = index.rename(name_dict, dims_dict)
-    expected = PintIndex(
+    expected = AstropyIndex(
         index=wrapped_index.rename(name_dict, dims_dict), units=index.units
     )
 
@@ -208,20 +208,20 @@ def test_rename(name_dict, dims_dict):
 @pytest.mark.parametrize("indexer", ([0], slice(0, 2)))
 def test_getitem(indexer):
     wrapped_index = PandasIndex(pd.Index([1, 2], name="y2"), dim="y")
-    index = PintIndex(index=wrapped_index, units={"y": ureg.Unit("m")})
+    index = AstropyIndex(index=wrapped_index, units={"y": ureg.Unit("m")})
 
     actual = index[indexer]
-    expected = PintIndex(index=wrapped_index[indexer], units=index.units)
+    expected = AstropyIndex(index=wrapped_index[indexer], units=index.units)
 
     assert actual.equals(expected)
 
 
 @pytest.mark.parametrize("wrapped_index", (PandasIndex(pd.Index([1, 2]), dim="x"),))
 def test_repr_inline(wrapped_index):
-    index = PintIndex(index=wrapped_index, units=ureg.Unit("m"))
+    index = AstropyIndex(index=wrapped_index, units=ureg.Unit("m"))
 
     # TODO: parametrize
     actual = index._repr_inline_(90)
 
-    assert "PintIndex" in actual
+    assert "AstropyIndex" in actual
     assert wrapped_index.__class__.__name__ in actual

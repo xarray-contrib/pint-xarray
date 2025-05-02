@@ -14,25 +14,25 @@ Dataset
    :toctree: generated/
    :template: autosummary/accessor_attribute.rst
 
-   xarray.Dataset.pint.loc
+   xarray.Dataset.astropy.loc
 
 .. autosummary::
    :toctree: generated/
    :template: autosummary/accessor_method.rst
 
-   xarray.Dataset.pint.quantify
-   xarray.Dataset.pint.dequantify
-   xarray.Dataset.pint.interp
-   xarray.Dataset.pint.interp_like
-   xarray.Dataset.pint.reindex
-   xarray.Dataset.pint.reindex_like
-   xarray.Dataset.pint.drop_sel
-   xarray.Dataset.pint.sel
-   xarray.Dataset.pint.to
-   xarray.Dataset.pint.chunk
-   xarray.Dataset.pint.ffill
-   xarray.Dataset.pint.bfill
-   xarray.Dataset.pint.interpolate_na
+   xarray.Dataset.astropy.quantify
+   xarray.Dataset.astropy.dequantify
+   xarray.Dataset.astropy.interp
+   xarray.Dataset.astropy.interp_like
+   xarray.Dataset.astropy.reindex
+   xarray.Dataset.astropy.reindex_like
+   xarray.Dataset.astropy.drop_sel
+   xarray.Dataset.astropy.sel
+   xarray.Dataset.astropy.to
+   xarray.Dataset.astropy.chunk
+   xarray.Dataset.astropy.ffill
+   xarray.Dataset.astropy.bfill
+   xarray.Dataset.astropy.interpolate_na
 
 DataArray
 ---------
@@ -40,30 +40,30 @@ DataArray
    :toctree: generated/
    :template: autosummary/accessor_attribute.rst
 
-   xarray.DataArray.pint.loc
+   xarray.DataArray.astropy.loc
 
-   xarray.DataArray.pint.magnitude
-   xarray.DataArray.pint.units
-   xarray.DataArray.pint.dimensionality
-   xarray.DataArray.pint.registry
+   xarray.DataArray.astropy.value
+   xarray.DataArray.astropy.units
+   xarray.DataArray.astropy.dimensionality
+   xarray.DataArray.astropy.registry
 
 .. autosummary::
    :toctree: generated/
    :template: autosummary/accessor_method.rst
 
-   xarray.DataArray.pint.quantify
-   xarray.DataArray.pint.dequantify
-   xarray.DataArray.pint.interp
-   xarray.DataArray.pint.interp_like
-   xarray.DataArray.pint.reindex
-   xarray.DataArray.pint.reindex_like
-   xarray.DataArray.pint.drop_sel
-   xarray.DataArray.pint.sel
-   xarray.DataArray.pint.to
-   xarray.DataArray.pint.chunk
-   xarray.DataArray.pint.ffill
-   xarray.DataArray.pint.bfill
-   xarray.DataArray.pint.interpolate_na
+   xarray.DataArray.astropy.quantify
+   xarray.DataArray.astropy.dequantify
+   xarray.DataArray.astropy.interp
+   xarray.DataArray.astropy.interp_like
+   xarray.DataArray.astropy.reindex
+   xarray.DataArray.astropy.reindex_like
+   xarray.DataArray.astropy.drop_sel
+   xarray.DataArray.astropy.sel
+   xarray.DataArray.astropy.to
+   xarray.DataArray.astropy.chunk
+   xarray.DataArray.astropy.ffill
+   xarray.DataArray.astropy.bfill
+   xarray.DataArray.astropy.interpolate_na
 
 Testing
 -------

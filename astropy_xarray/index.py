@@ -4,7 +4,7 @@ from xarray.core.indexes import Index, PandasIndex
 from . import conversion
 
 
-class PintIndex(Index):
+class AstropyIndex(Index):
     def __init__(self, *, index, units):
         """create a unit-aware MetaIndex
 
@@ -26,7 +26,7 @@ class PintIndex(Index):
 
         index_vars_units = {}
         for name, var in index_vars.items():
-            data = conversion.array_attach_units(var.data, self.units[name])
+            data = conversion.array_attach_unit(var.data, self.units[name])
             var_units = Variable(var.dims, data, attrs=var.attrs, encoding=var.encoding)
             index_vars_units[name] = var_units
 
@@ -72,7 +72,7 @@ class PintIndex(Index):
         raise NotImplementedError()
 
     def equals(self, other):
-        if not isinstance(other, PintIndex):
+        if not isinstance(other, AstropyIndex):
             return False
 
         # for now we require exactly matching units to avoid the potentially expensive conversion

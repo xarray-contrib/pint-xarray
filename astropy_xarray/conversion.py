@@ -1,12 +1,13 @@
 import itertools
 import re
 
-import pint
+import astropy
+import astropy.units
 from xarray import Coordinates, DataArray, Dataset, IndexVariable, Variable
 
 from .compat import call_on_dataset
 from .errors import format_error_message
-from .index import PintIndex
+from .index import AstropyIndex
 
 no_unit_values = ("none", None)
 unit_attribute_name = "units"
@@ -22,41 +23,40 @@ def is_datetime_unit(unit):
     return isinstance(unit, str) and datetime_units_re.match(unit) is not None
 
 
-def array_attach_units(data, unit):
+def array_attach_unit(data, unit) -> astropy.units.Quantity:
     """attach a unit to the data
 
     Parameters
     ----------
     data : array-like
         The data to attach units to.
-    unit : pint.Unit
+    unit : astropy.units.UnitBase
         The desired unit.
 
     Returns
     -------
-    quantity : pint.Quantity
+    quantity : astropy.units.Quantity
     """
     if unit in no_unit_values:
         return data
 
-    if not isinstance(unit, pint.Unit):
+    if not isinstance(unit, astropy.units.UnitBase):
         raise ValueError(f"cannot use {unit!r} as a unit")
 
-    if isinstance(data, pint.Quantity):
-        if data.units == unit:
+    if isinstance(data, astropy.units.Quantity):
+        if data.unit == unit:
             return data
 
         raise ValueError(
             f"Cannot attach unit {unit!r} to quantity: data "
-            f"already has units {data.units}"
+            f"already has units {data.unit}"
         )
 
-    registry = unit._REGISTRY
-    return registry.Quantity(data, unit)
+    return astropy.units.Quantity(data, unit)
 
 
-def array_convert_units(data, unit):
-    """convert the units of an array
+def array_convert_unit(data, unit) -> astropy.units.Quantity:
+    """convert the unit of an array
 
     This is roughly the same as ``data.to(unit)``.
 
@@ -65,56 +65,57 @@ def array_convert_units(data, unit):
     data : quantity or array-like
         The data to convert. If it is not a quantity, it is assumed to be
         dimensionless.
-    unit : str or pint.Unit
+    unit : str or astropy.units.Unit
         The unit to convert to. If a string ``data`` has to be a quantity.
 
     Returns
     -------
-    result : pint.Quantity
+    result : astropy.units.Quantity
         The converted data
     """
     if unit is None:
         return data
 
-    if not isinstance(unit, (str, pint.Unit)):
+    if not isinstance(unit, (str, astropy.units.UnitBase)):
         raise ValueError(f"cannot use {unit!r} as a unit")
-    elif isinstance(unit, str) and not isinstance(data, pint.Quantity):
+    elif isinstance(unit, (str, astropy.units.UnitBase)) and not isinstance(data, astropy.units.Quantity):
         raise ValueError(f"cannot convert a non-quantity using {unit!r} as unit")
 
-    registry = data._REGISTRY if isinstance(unit, str) else unit._REGISTRY
 
-    if not isinstance(data, pint.Quantity):
-        data = registry.Quantity(data, "dimensionless")
+    if not isinstance(data, astropy.units.Quantity):
+        data = data * astropy.units.Unit(unit)
+    else:
+        data = data.to(unit)
 
-    return data.to(unit)
+    return data
 
 
-def array_extract_units(data):
-    """extract the units of an array
+def array_extract_unit(data):
+    """extract the unit of an array
 
     If ``data`` is not a quantity, the units are ``None``
     """
     try:
-        return data.units
+        return data.unit
     except AttributeError:
         return None
 
 
-def array_strip_units(data):
-    """strip the units of a quantity"""
+def array_strip_unit(data):
+    """strip the unit of a quantity"""
     try:
-        return data.magnitude
+        return data.value
     except AttributeError:
         return data
 
 
-def attach_units_variable(variable, units):
+def attach_unit_variable(variable, unit):
     if isinstance(variable, IndexVariable):
         new_obj = variable.copy()
-        if units is not None:
-            new_obj.attrs[unit_attribute_name] = units
+        if unit is not None:
+            new_obj.attrs[unit_attribute_name] = unit
     elif isinstance(variable, Variable):
-        new_data = array_attach_units(variable.data, units)
+        new_data = array_attach_unit(variable.data, unit)
         new_obj = variable.copy(data=new_data)
     else:
         raise ValueError(f"invalid type: {variable!r}")
@@ -137,12 +138,12 @@ def attach_units_index(index, index_vars, units):
         # skip non-quantity indexed variables
         return index
 
-    if isinstance(index, PintIndex) and index.units != units:
+    if isinstance(index, AstropyIndex) and index.units != units:
         raise ValueError(
             f"cannot attach units to quantified index: {index.units} != {units}"
         )
 
-    return PintIndex(index=index, units=units)
+    return AstropyIndex(index=index, units=units)
 
 
 def attach_units_dataset(obj, units):
@@ -156,7 +157,7 @@ def attach_units_dataset(obj, units):
 
         unit = units.get(name)
         try:
-            converted = attach_units_variable(var, unit)
+            converted = attach_unit_variable(var, unit)
             attached[name] = converted
         except ValueError as e:
             rejected_vars[name] = (unit, e)
@@ -232,17 +233,17 @@ def convert_units_variable(variable, units):
             return variable
 
         if units is not None:
-            quantity = array_attach_units(
+            quantity = array_attach_unit(
                 variable.data, variable.attrs.get(unit_attribute_name)
             )
-            converted = array_convert_units(quantity, units)
-            new_obj = variable.copy(data=array_strip_units(converted))
+            converted = array_convert_unit(quantity, units)
+            new_obj = variable.copy(data=array_strip_unit(converted))
 
-            new_obj.attrs[unit_attribute_name] = array_extract_units(converted)
+            new_obj.attrs[unit_attribute_name] = array_extract_unit(converted)
         else:
             new_obj = variable
     elif isinstance(variable, Variable):
-        converted = array_convert_units(variable.data, units)
+        converted = array_convert_unit(variable.data, units)
         new_obj = variable.copy(data=converted)
     else:
         raise ValueError(f"unknown type: {variable}")
@@ -251,7 +252,7 @@ def convert_units_variable(variable, units):
 
 
 def convert_units_index(index, index_vars, units):
-    if not isinstance(index, PintIndex):
+    if not isinstance(index, AstropyIndex):
         raise ValueError("cannot convert non-quantified index")
 
     converted_vars = {}
@@ -261,7 +262,7 @@ def convert_units_index(index, index_vars, units):
         try:
             converted = convert_units_variable(var, unit)
             converted_vars[name] = strip_units_variable(converted)
-        except (ValueError, pint.errors.PintTypeError) as e:
+        except (ValueError, astropy.units.errors.UnitConversionError) as e:
             failed[name] = e
 
     if failed:
@@ -270,7 +271,7 @@ def convert_units_index(index, index_vars, units):
 
     # TODO: figure out how to pull out `options`
     converted_index = index.index.from_variables(converted_vars, options={})
-    return PintIndex(index=converted_index, units=units)
+    return AstropyIndex(index=converted_index, units=units)
 
 
 def convert_units_dataset(obj, units):
@@ -284,7 +285,7 @@ def convert_units_dataset(obj, units):
         unit = units.get(name)
         try:
             converted[name] = convert_units_variable(var, unit)
-        except (ValueError, pint.errors.PintTypeError) as e:
+        except (ValueError, astropy.units.errors.UnitConversionError) as e:
             failed[name] = e
 
     indexes, index_vars = obj.xindexes.copy_indexes()
@@ -297,7 +298,7 @@ def convert_units_dataset(obj, units):
             converted_index = convert_units_index(idx, idx_vars, idx_units)
             indexes.update({k: converted_index for k in idx_vars})
             index_vars.update(converted_index.create_variables())
-        except (ValueError, pint.errors.PintTypeError) as e:
+        except (ValueError, astropy.units.errors.UnitConversionError) as e:
             names = tuple(idx_vars)
             failed[names] = e
 
@@ -334,7 +335,7 @@ def convert_units(obj, units):
 
 
 def extract_units_dataset(obj):
-    return {name: array_extract_units(var.data) for name, var in obj.variables.items()}
+    return {name: array_extract_unit(var.data) for name, var in obj.variables.items()}
 
 
 def extract_units(obj):
@@ -377,10 +378,10 @@ def extract_unit_attributes(obj, attr="units"):
 
 
 def strip_units_variable(var):
-    if not isinstance(var.data, pint.Quantity):
+    if not isinstance(var.data, astropy.units.Quantity):
         return var
 
-    data = array_strip_units(var.data)
+    data = array_strip_unit(var.data)
     return var.copy(data=data)
 
 
@@ -388,7 +389,7 @@ def strip_units_dataset(obj):
     variables = {name: strip_units_variable(var) for name, var in obj.variables.items()}
 
     indexes = {
-        name: (index.index if isinstance(index, PintIndex) else index)
+        name: (index.index if isinstance(index, AstropyIndex) else index)
         for name, index in obj.xindexes.items()
     }
 
@@ -425,7 +426,7 @@ def strip_unit_attributes(obj, attr="units"):
 def slice_extract_units(indexer):
     elements = {name: getattr(indexer, name) for name in slice_attributes}
     extracted_units = [
-        array_extract_units(value)
+        array_extract_unit(value)
         for name, value in elements.items()
         if value is not None
     ]
@@ -435,7 +436,8 @@ def slice_extract_units(indexer):
         return None
 
     dimensionalities = {
-        str(getattr(units, "dimensionality", "dimensionless"))
+        # TODO does not work for unknown, consider def dimensionality_string(unit)
+        str(getattr(units, "physical_type", ""))
         for units in extracted_units
     }
     if len(dimensionalities) > 1:
@@ -446,14 +448,13 @@ def slice_extract_units(indexer):
         return units[0]
     else:
         units_ = units[0]
-        registry = units_._REGISTRY
-        return registry.Quantity(1, units_).to_base_units().units
+        return astropy.units.Quantity(1, units_).si.unit
 
 
 def convert_units_slice(indexer, units):
     attrs = {name: getattr(indexer, name) for name in slice_attributes}
     converted = {
-        name: array_convert_units(value, units) if value is not None else None
+        name: array_convert_unit(value, units) if value is not None else None
         for name, value in attrs.items()
     }
     args = [converted[name] for name in slice_attributes]
@@ -470,7 +471,7 @@ def convert_indexer_units(indexers, units):
         elif isinstance(indexer, Variable):
             return convert_units_variable(indexer, units)
         else:
-            return array_convert_units(indexer, units)
+            return array_convert_unit(indexer, units)
 
     converted = {}
     invalid = {}
@@ -478,7 +479,7 @@ def convert_indexer_units(indexers, units):
         indexer_units = units.get(name)
         try:
             converted[name] = convert(indexer, indexer_units)
-        except (ValueError, pint.errors.PintTypeError) as e:
+        except (ValueError, astropy.units.errors.UnitConversionError) as e:
             invalid[name] = e
 
     if invalid:
@@ -492,9 +493,9 @@ def extract_indexer_units(indexers):
         if isinstance(indexer, slice):
             return slice_extract_units(indexer)
         elif isinstance(indexer, (DataArray, Variable)):
-            return array_extract_units(indexer.data)
+            return array_extract_unit(indexer.data)
         else:
-            return array_extract_units(indexer)
+            return array_extract_unit(indexer)
 
     return {name: extract(indexer) for name, indexer in indexers.items()}
 
@@ -503,15 +504,15 @@ def strip_indexer_units(indexers):
     def strip(indexer):
         if isinstance(indexer, slice):
             return slice(
-                array_strip_units(indexer.start),
-                array_strip_units(indexer.stop),
-                array_strip_units(indexer.step),
+                array_strip_unit(indexer.start),
+                array_strip_unit(indexer.stop),
+                array_strip_unit(indexer.step),
             )
         elif isinstance(indexer, DataArray):
             return strip_units(indexer)
         elif isinstance(indexer, Variable):
             return strip_units_variable(indexer)
         else:
-            return array_strip_units(indexer)
+            return array_strip_unit(indexer)
 
     return {name: strip(indexer) for name, indexer in indexers.items()}

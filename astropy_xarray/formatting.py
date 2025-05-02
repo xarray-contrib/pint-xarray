@@ -194,13 +194,13 @@ def format_array_flat(array, max_width: int):
 
 
 def inline_repr(quantity, max_width):
-    magnitude = quantity.magnitude
-    units = quantity.units
+    value = quantity.value
+    units = quantity.unit
 
-    units_repr = f"{units:~P}"
-    if isinstance(magnitude, np.ndarray):
-        data_repr = format_array_flat(magnitude, max_width - len(units_repr) - 3)
+    units_repr = f"{units:unicode}"
+    if isinstance(value, np.ndarray):
+        data_repr = format_array_flat(value, max_width - len(units_repr) - 3)
     else:
-        data_repr = maybe_truncate(repr(magnitude), max_width - len(units_repr) - 3)
+        data_repr = maybe_truncate(repr(value), max_width - len(units_repr) - 3)
 
     return f"[{units_repr}] {data_repr}"

@@ -1,20 +1,20 @@
-[![CI](https://github.com/xarray-contrib/pint-xarray/workflows/CI/badge.svg?branch=main)](https://github.com/xarray-contrib/pint-xarray/actions?query=branch%3Amain)
-[![code coverage](https://codecov.io/gh/xarray-contrib/pint-xarray/branch/main/graph/badge.svg)](https://codecov.io/gh/xarray-contrib/pint-xarray)
-[![docs](https://readthedocs.org/projects/pint-xarray/badge/?version=latest)](https://pint-xarray.readthedocs.io)
-[![PyPI version](https://img.shields.io/pypi/v/pint-xarray.svg)](https://pypi.org/project/pint-xarray)
+[![CI](https://github.com/xarray-contrib/astropy-xarray/workflows/CI/badge.svg?branch=main)](https://github.com/xarray-contrib/astropy-xarray/actions?query=branch%3Amain)
+[![code coverage](https://codecov.io/gh/xarray-contrib/astropy-xarray/branch/main/graph/badge.svg)](https://codecov.io/gh/xarray-contrib/astropy-xarray)
+[![docs](https://readthedocs.org/projects/astropy-xarray/badge/?version=latest)](https://astropy-xarray.readthedocs.io)
+[![PyPI version](https://img.shields.io/pypi/v/astropy-xarray.svg)](https://pypi.org/project/astropy-xarray)
 [![codestyle](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/python/black)
-[![conda-forge](https://img.shields.io/conda/vn/conda-forge/pint-xarray)](https://github.com/conda-forge/pint-xarray-feedstock)
+[![conda-forge](https://img.shields.io/conda/vn/conda-forge/astropy-xarray)](https://github.com/conda-forge/astropy-xarray-feedstock)
 
-# pint-xarray
+# astropy-xarray
 
-A convenience wrapper for using [pint](https://pint.readthedocs.io) with
+A convenience wrapper for using [astropy](https://www.astropy.org) with
 [xarray](https://xarray.pydata.org).
 
 ## Usage
 
 To convert the variables of a `Dataset` to quantities:
 ```python
-In [1]: import pint_xarray
+In [1]: import astropy_xarray
    ...: import xarray as xr
 
 In [2]: ds = xr.Dataset({"a": ("x", [0, 1, 2]), "b": ("y", [-3, 5, 1], {"units": "m"})})
@@ -27,7 +27,7 @@ Data variables:
     a        (x) int64 0 1 2
     b        (y) int64 -3 5 1
 
-In [3]: q = ds.pint.quantify(a="s")
+In [3]: q = ds.astropy.quantify(a="s")
    ...: q
 Out[3]:
 <xarray.Dataset>
@@ -39,7 +39,7 @@ Data variables:
 ```
 to convert to different units:
 ```python
-In [4]: c = q.pint.to({"a": "ms", "b": "km"})
+In [4]: c = q.astropy.to({"a": "ms", "b": "km"})
    ...: c
 Out[4]:
 <xarray.Dataset>
@@ -51,7 +51,7 @@ Data variables:
 ```
 to convert back to non-quantities:
 ```python
-In [5]: d = c.pint.dequantify()
+In [5]: d = c.astropy.dequantify()
    ...: d
 Out[5]:
 <xarray.Dataset>
@@ -62,4 +62,4 @@ Data variables:
     b        (y) float64 -0.003 0.005 0.001
 ```
 
-For more, see the [documentation](https://pint-xarray.readthedocs.io)
+For more, see the [documentation](https://astropy-xarray.readthedocs.io)

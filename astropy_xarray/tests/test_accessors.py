@@ -1,13 +1,13 @@
 import numpy as np
 import pandas as pd
-import pint
 import pytest
 import xarray as xr
 from numpy.testing import assert_array_equal
-from pint import Unit, UnitRegistry
+from astropy.units import Unit, UnitBase
+import astropy.units.errors
 
 from .. import accessors, conversion
-from ..index import PintIndex
+from ..index import AstropyIndex
 from .utils import (
     assert_equal,
     assert_identical,
@@ -17,15 +17,14 @@ from .utils import (
     requires_scipy,
 )
 
-pytestmark = [
-    pytest.mark.filterwarnings("error::pint.UnitStrippedWarning"),
-]
+# pytestmark = [
+#     pytest.mark.filterwarnings("error::pint.UnitStrippedWarning"),
+# ]
 
 # make sure scalars are converted to 0d arrays so quantities can
 # always be treated like ndarrays
-from pint_xarray import unit_registry
-
-Quantity = unit_registry.Quantity
+import astropy.units as unit_registry
+from astropy.units import Quantity
 
 nan = np.nan
 
@@ -65,25 +64,25 @@ def example_quantity_da():
 
 
 class TestQuantifyDataArray:
-    def test_attach_units_from_str(self, example_unitless_da):
+    def test_attach_units_from_str(self, example_unitless_da: xr.DataArray):
         orig = example_unitless_da
-        result = orig.pint.quantify("s")
-        assert_array_equal(result.data.magnitude, orig.data)
+        result = orig.astropy.quantify("s")
+        assert_array_equal(result.data.value, orig.data)
         # TODO better comparisons for when you can't access the unit_registry?
-        assert str(result.data.units) == "second"
+        assert str(result.data.unit) == "s"
 
     def test_attach_units_given_registry(self, example_unitless_da):
         orig = example_unitless_da
-        ureg = UnitRegistry(force_ndarray=True)
-        result = orig.pint.quantify("m", unit_registry=ureg)
-        assert_array_equal(result.data.magnitude, orig.data)
-        assert result.data.units == ureg.Unit("m")
+        ureg = unit_registry
+        result = orig.astropy.quantify("m", unit_registry=ureg)
+        assert_array_equal(result.data.value, orig.data)
+        assert result.data.unit == ureg.Unit("m")
 
     def test_attach_units_from_attrs(self, example_unitless_da):
         orig = example_unitless_da
-        result = orig.pint.quantify()
-        assert_array_equal(result.data.magnitude, orig.data)
-        assert str(result.data.units) == "meter"
+        result = orig.astropy.quantify()
+        assert_array_equal(result.data.value, orig.data)
+        assert str(result.data.unit) == "m"
 
         remaining_attrs = conversion.extract_unit_attributes(result)
         assert {k: v for k, v in remaining_attrs.items() if v is not None} == {}
@@ -91,47 +90,47 @@ class TestQuantifyDataArray:
     def test_attach_units_from_str_attr_no_unit(self, example_unitless_da):
         orig = example_unitless_da
         orig.attrs["units"] = "none"
-        result = orig.pint.quantify("m")
-        assert_array_equal(result.data.magnitude, orig.data)
-        assert str(result.data.units) == "meter"
+        result = orig.astropy.quantify("m")
+        assert_array_equal(result.data.value, orig.data)
+        assert str(result.data.unit) == "m"
 
     def test_attach_units_given_unit_objs(self, example_unitless_da):
         orig = example_unitless_da
-        ureg = UnitRegistry(force_ndarray=True)
-        result = orig.pint.quantify(ureg.Unit("m"), unit_registry=ureg)
-        assert_array_equal(result.data.magnitude, orig.data)
-        assert result.data.units == ureg.Unit("m")
+        ureg = unit_registry
+        result = orig.astropy.quantify(ureg.Unit("m"), unit_registry=ureg)
+        assert_array_equal(result.data.value, orig.data)
+        assert result.data.unit == ureg.Unit("m")
 
     @pytest.mark.parametrize("no_unit_value", conversion.no_unit_values)
     def test_override_units(self, example_unitless_da, no_unit_value):
         orig = example_unitless_da
-        result = orig.pint.quantify(no_unit_value, u=no_unit_value)
+        result = orig.astropy.quantify(no_unit_value, u=no_unit_value)
 
         with pytest.raises(AttributeError):
-            result.data.units
+            result.data.unit
         with pytest.raises(AttributeError):
-            result["u"].data.units
+            result["u"].data.unit
 
     def test_error_when_changing_units(self, example_quantity_da):
         da = example_quantity_da
         with pytest.raises(ValueError, match="already has units"):
-            da.pint.quantify("s")
+            da.astropy.quantify("s")
 
     def test_attach_no_units(self):
         arr = xr.DataArray([1, 2, 3], dims="x")
-        quantified = arr.pint.quantify()
+        quantified = arr.astropy.quantify()
         assert_identical(quantified, arr)
         assert_units_equal(quantified, arr)
 
     def test_attach_no_new_units(self):
         da = xr.DataArray(unit_registry.Quantity([1, 2, 3], "m"), dims="x")
-        quantified = da.pint.quantify()
+        quantified = da.astropy.quantify()
         assert_identical(quantified, da)
         assert_units_equal(quantified, da)
 
     def test_attach_same_units(self):
         da = xr.DataArray(unit_registry.Quantity([1, 2, 3], "m"), dims="x")
-        quantified = da.pint.quantify("m")
+        quantified = da.astropy.quantify("m")
         assert_identical(quantified, da)
         assert_units_equal(quantified, da)
 
@@ -142,7 +141,7 @@ class TestQuantifyDataArray:
             coords={"x": ("x", [-1, 0, 1], {"units": unit_registry.Unit("m")})},
         )
         with pytest.raises(ValueError, match="already has units"):
-            arr.pint.quantify({"x": "s"})
+            arr.astropy.quantify({"x": "s"})
 
     def test_dimension_coordinate_array(self):
         ds = xr.Dataset(coords={"x": ("x", [10], {"units": "m"})})
@@ -150,31 +149,31 @@ class TestQuantifyDataArray:
 
         # does not actually quantify because `arr` wraps a IndexVariable
         # but we still get a `Unit` in the attrs
-        q = arr.pint.quantify()
-        assert isinstance(q.attrs["units"], Unit)
+        q = arr.astropy.quantify()
+        assert isinstance(q.attrs["units"], UnitBase)
 
     def test_dimension_coordinate_array_already_quantified(self):
         ds = xr.Dataset(coords={"x": ("x", [10], {"units": unit_registry.Unit("m")})})
         arr = ds.x
 
         with pytest.raises(ValueError):
-            arr.pint.quantify({"x": "s"})
+            arr.astropy.quantify({"x": "s"})
 
     def test_dimension_coordinate_array_already_quantified_same_units(self):
         x = unit_registry.Quantity([10], "m")
         coords = xr.Coordinates(
             {"x": x},
             indexes={
-                "x": PintIndex.from_variables(
-                    {"x": xr.Variable("x", x.magnitude)},
-                    options={"units": x.units},
+                "x": AstropyIndex.from_variables(
+                    {"x": xr.Variable("x", x.value)},
+                    options={"units": x.unit},
                 ),
             },
         )
         ds = xr.Dataset(coords=coords)
         arr = ds.x
 
-        quantified = arr.pint.quantify({"x": "m"})
+        quantified = arr.astropy.quantify({"x": "m"})
 
         assert_identical(quantified, arr)
         assert_units_equal(quantified, arr)
@@ -182,7 +181,7 @@ class TestQuantifyDataArray:
     def test_error_on_nonsense_units(self, example_unitless_da):
         da = example_unitless_da
         with pytest.raises(ValueError, match=str(da.name)):
-            da.pint.quantify(units="aecjhbav")
+            da.astropy.quantify(units="aecjhbav")
 
     def test_error_on_nonsense_units_attrs(self, example_unitless_da):
         da = example_unitless_da
@@ -190,41 +189,47 @@ class TestQuantifyDataArray:
         with pytest.raises(
             ValueError, match=rf"{da.name}: {da.attrs['units']} \(attribute\)"
         ):
-            da.pint.quantify()
+            da.astropy.quantify()
 
     def test_parse_integer_inverse(self):
         # Regression test for issue #40
         da = xr.DataArray([10], attrs={"units": "m^-1"})
-        result = da.pint.quantify()
-        assert result.pint.units == Unit("1 / meter")
+        result = da.astropy.quantify()
+        assert result.astropy.unit == Unit("1 / meter")
 
 
-@pytest.mark.parametrize("formatter", ("", "P", "C"))
-@pytest.mark.parametrize("modifier", ("", "~"))
-def test_units_to_str_or_none(formatter, modifier):
-    unit_format = f"{{:{modifier}{formatter}}}"
-    unit_attrs = {None: "m", "a": "s", "b": "degC", "c": "degF", "d": "degK"}
+@pytest.mark.parametrize("unit_attrs,formatters", [
+    pytest.param({None: "m", "a": "s", "d": "Kelvin"}, ("", "fits", "vounit", "cds", "ogip", "generic", "unicode", "console"), id="si"),
+    pytest.param({None: "m", "a": "s", "b": "Celsius", "d": "Kelvin"}, ("", "fits", "generic", "unicode", "console"), id="metric"),
+    pytest.param({None: "m", "a": "s", "b": "Celsius", "c": "Fahrenheit", "d": "Kelvin"}, ("", "generic", "unicode", "console"), id="mixed"),
+])
+def test_units_to_str_or_none(unit_attrs, formatters):
+    import astropy.units.imperial
+    astropy.units.imperial.enable()
+
     units = {key: unit_registry.Unit(value) for key, value in unit_attrs.items()}
+    for formatter in formatters:
+        unit_format = f"{{:{formatter}}}"
 
-    expected = {key: unit_format.format(value) for key, value in units.items()}
-    actual = accessors.units_to_str_or_none(units, unit_format)
+        expected = {key: unit_format.format(value) for key, value in units.items()}
+        actual = accessors.units_to_str_or_none(units, unit_format)
 
-    assert expected == actual
-    assert units == {key: unit_registry.Unit(value) for key, value in actual.items()}
+        assert expected == actual
+        assert units == {key: unit_registry.Unit(value) for key, value in actual.items()}
 
-    expected = {None: None}
-    assert expected == accessors.units_to_str_or_none(expected, unit_format)
+        expected = {None: None}
+        assert expected == accessors.units_to_str_or_none(expected, unit_format)
 
 
 class TestDequantifyDataArray:
     def test_strip_units(self, example_quantity_da):
-        result = example_quantity_da.pint.dequantify()
+        result = example_quantity_da.astropy.dequantify()
         assert isinstance(result.data, np.ndarray)
         assert isinstance(result.coords["x"].data, np.ndarray)
 
     def test_attrs_reinstated(self, example_quantity_da):
         da = example_quantity_da
-        result = da.pint.dequantify()
+        result = da.astropy.dequantify()
 
         units = conversion.extract_units(da)
         attrs = conversion.extract_unit_attributes(result)
@@ -234,8 +239,8 @@ class TestDequantifyDataArray:
 
     def test_roundtrip_data(self, example_unitless_da):
         orig = example_unitless_da
-        quantified = orig.pint.quantify()
-        result = quantified.pint.dequantify()
+        quantified = orig.astropy.quantify()
+        result = quantified.astropy.dequantify()
         assert_equal(result, orig)
 
     def test_multiindex(self):
@@ -244,41 +249,41 @@ class TestDequantifyDataArray:
         da = xr.DataArray(
             np.arange(len(mindex)), dims="multi", coords={"multi": mindex}
         )
-        result = da.pint.dequantify()
+        result = da.astropy.dequantify()
 
         xr.testing.assert_identical(da, result)
         assert isinstance(result.indexes["multi"], pd.MultiIndex)
 
 
 class TestPropertiesDataArray:
-    def test_magnitude_getattr(self, example_quantity_da):
+    def test_value_getattr(self, example_quantity_da):
         da = example_quantity_da
-        actual = da.pint.magnitude
+        actual = da.astropy.value
         assert not isinstance(actual, Quantity)
 
-    def test_magnitude_getattr_unitless(self, example_unitless_da):
+    def test_value_getattr_unitless(self, example_unitless_da):
         da = example_unitless_da
-        xr.testing.assert_duckarray_equal(da.pint.magnitude, da.data)
+        xr.testing.assert_duckarray_equal(da.astropy.value, da.data)
 
     def test_units_getattr(self, example_quantity_da):
         da = example_quantity_da
-        actual = da.pint.units
-        assert isinstance(actual, Unit)
+        actual = da.astropy.unit
+        assert isinstance(actual, unit_registry.UnitBase)
         assert actual == unit_registry.m
 
     def test_units_setattr(self, example_quantity_da):
         da = example_quantity_da
         with pytest.raises(ValueError):
-            da.pint.units = "s"
+            da.astropy.unit = "s"
 
     def test_units_getattr_unitless(self, example_unitless_da):
         da = example_unitless_da
-        assert da.pint.units is None
+        assert da.astropy.unit is None
 
     def test_units_setattr_unitless(self, example_unitless_da):
         da = example_unitless_da
-        da.pint.units = unit_registry.s
-        assert da.pint.units == unit_registry.s
+        da.astropy.unit = unit_registry.s
+        assert da.astropy.unit == unit_registry.s
 
 
 @pytest.fixture()
@@ -290,14 +295,14 @@ def example_unitless_ds():
         data_vars={"users": (["t"], users), "funds": (["t"], funds)}, coords={"t": t}
     )
     ds["users"].attrs["units"] = ""
-    ds["funds"].attrs["units"] = "pound"
+    ds["funds"].attrs["units"] = "kilogram"
     return ds
 
 
 @pytest.fixture()
 def example_quantity_ds():
-    users = np.linspace(0, 10, 20) * unit_registry.dimensionless
-    funds = np.logspace(0, 10, 20) * unit_registry.pound
+    users = np.linspace(0, 10, 20) * unit_registry.dimensionless_unscaled
+    funds = np.logspace(0, 10, 20) * unit_registry.gram
     t = np.arange(20)
     ds = xr.Dataset(
         data_vars={"users": (["t"], users), "funds": (["t"], funds)}, coords={"t": t}
@@ -308,25 +313,25 @@ def example_quantity_ds():
 class TestQuantifyDataSet:
     def test_attach_units_from_str(self, example_unitless_ds):
         orig = example_unitless_ds
-        result = orig.pint.quantify()
-        assert_array_equal(result["users"].data.magnitude, orig["users"].data)
-        assert str(result["users"].data.units) == "dimensionless"
+        result = orig.astropy.quantify()
+        assert_array_equal(result["users"].data.value, orig["users"].data)
+        assert str(result["users"].data.unit) == ""
 
     def test_attach_units_given_registry(self, example_unitless_ds):
         orig = example_unitless_ds
         orig["users"].attrs.clear()
-        result = orig.pint.quantify(
-            {"users": "dimensionless"}, unit_registry=unit_registry
+        result = orig.astropy.quantify(
+            {"users": ""}, unit_registry=unit_registry
         )
-        assert_array_equal(result["users"].data.magnitude, orig["users"].data)
-        assert str(result["users"].data.units) == "dimensionless"
+        assert_array_equal(result["users"].data.value, orig["users"].data)
+        assert str(result["users"].data.unit) == ""
 
     def test_attach_units_from_attrs(self, example_unitless_ds):
         orig = example_unitless_ds
         orig["users"].attrs.clear()
-        result = orig.pint.quantify({"users": "dimensionless"})
-        assert_array_equal(result["users"].data.magnitude, orig["users"].data)
-        assert str(result["users"].data.units) == "dimensionless"
+        result = orig.astropy.quantify({"users": ""})
+        assert_array_equal(result["users"].data.value, orig["users"].data)
+        assert str(result["users"].data.unit) == ""
 
         remaining_attrs = conversion.extract_unit_attributes(result)
         assert {k: v for k, v in remaining_attrs.items() if v is not None} == {}
@@ -334,46 +339,46 @@ class TestQuantifyDataSet:
     def test_attach_units_given_unit_objs(self, example_unitless_ds):
         orig = example_unitless_ds
         orig["users"].attrs.clear()
-        dimensionless = unit_registry.Unit("dimensionless")
-        result = orig.pint.quantify({"users": dimensionless})
-        assert_array_equal(result["users"].data.magnitude, orig["users"].data)
-        assert str(result["users"].data.units) == "dimensionless"
+        dimensionless = unit_registry.Unit("")
+        result = orig.astropy.quantify({"users": dimensionless})
+        assert_array_equal(result["users"].data.value, orig["users"].data)
+        assert str(result["users"].data.unit) == ""
 
     def test_attach_units_from_str_attr_no_unit(self, example_unitless_ds):
         orig = example_unitless_ds
         orig["users"].attrs["units"] = "none"
-        result = orig.pint.quantify({"users": "m"})
-        assert_array_equal(result["users"].data.magnitude, orig["users"].data)
-        assert str(result["users"].data.units) == "meter"
+        result = orig.astropy.quantify({"users": "m"})
+        assert_array_equal(result["users"].data.value, orig["users"].data)
+        assert str(result["users"].data.unit) == "m"
 
     @pytest.mark.parametrize("no_unit_value", conversion.no_unit_values)
     def test_override_units(self, example_unitless_ds, no_unit_value):
         orig = example_unitless_ds
-        result = orig.pint.quantify({"users": no_unit_value})
+        result = orig.astropy.quantify({"users": no_unit_value})
         assert (
             getattr(result["users"].data, "units", "not a quantity") == "not a quantity"
         )
 
     def test_error_when_already_units(self, example_quantity_ds):
         with pytest.raises(ValueError, match="already has units"):
-            example_quantity_ds.pint.quantify({"funds": "kg"})
+            example_quantity_ds.astropy.quantify({"funds": "kg"})
 
     def test_attach_no_units(self):
         ds = xr.Dataset({"a": ("x", [1, 2, 3])})
-        quantified = ds.pint.quantify()
+        quantified = ds.astropy.quantify()
         assert_identical(quantified, ds)
         assert_units_equal(quantified, ds)
 
     def test_attach_no_new_units(self):
         ds = xr.Dataset({"a": ("x", unit_registry.Quantity([1, 2, 3], "m"))})
-        quantified = ds.pint.quantify()
+        quantified = ds.astropy.quantify()
 
         assert_identical(quantified, ds)
         assert_units_equal(quantified, ds)
 
     def test_attach_same_units(self):
         ds = xr.Dataset({"a": ("x", unit_registry.Quantity([1, 2, 3], "m"))})
-        quantified = ds.pint.quantify({"a": "m"})
+        quantified = ds.astropy.quantify({"a": "m"})
 
         assert_identical(quantified, ds)
         assert_units_equal(quantified, ds)
@@ -383,12 +388,12 @@ class TestQuantifyDataSet:
             coords={"x": ("x", [-1, 0, 1], {"units": unit_registry.Unit("m")})},
         )
         with pytest.raises(ValueError, match="already has units"):
-            ds.pint.quantify({"x": "s"})
+            ds.astropy.quantify({"x": "s"})
 
     def test_error_on_nonsense_units(self, example_unitless_ds):
         ds = example_unitless_ds
         with pytest.raises(ValueError):
-            ds.pint.quantify(units={"users": "aecjhbav"})
+            ds.astropy.quantify(units={"users": "aecjhbav"})
 
     def test_error_on_nonsense_units_attrs(self, example_unitless_ds):
         ds = example_unitless_ds
@@ -396,31 +401,31 @@ class TestQuantifyDataSet:
         with pytest.raises(
             ValueError, match=rf"'users': {ds.users.attrs['units']} \(attribute\)"
         ):
-            ds.pint.quantify()
+            ds.astropy.quantify()
 
     def test_error_indicates_problematic_variable(self, example_unitless_ds):
         ds = example_unitless_ds
         with pytest.raises(ValueError, match="'users'"):
-            ds.pint.quantify(units={"users": "aecjhbav"})
+            ds.astropy.quantify(units={"users": "aecjhbav"})
 
     def test_existing_units(self, example_quantity_ds):
         ds = example_quantity_ds.copy()
         ds.t.attrs["units"] = unit_registry.Unit("m")
 
         with pytest.raises(ValueError, match="Cannot attach"):
-            ds.pint.quantify({"funds": "kg"})
+            ds.astropy.quantify({"funds": "kg"})
 
     def test_existing_units_dimension(self, example_quantity_ds):
         ds = example_quantity_ds.copy()
         ds.t.attrs["units"] = unit_registry.Unit("m")
 
         with pytest.raises(ValueError, match="Cannot attach"):
-            ds.pint.quantify({"t": "s"})
+            ds.astropy.quantify({"t": "s"})
 
 
 class TestDequantifyDataSet:
     def test_strip_units(self, example_quantity_ds):
-        result = example_quantity_ds.pint.dequantify()
+        result = example_quantity_ds.astropy.dequantify()
 
         assert all(
             isinstance(var.data, np.ndarray) for var in result.variables.values()
@@ -428,7 +433,7 @@ class TestDequantifyDataSet:
 
     def test_attrs_reinstated(self, example_quantity_ds):
         ds = example_quantity_ds
-        result = ds.pint.dequantify()
+        result = ds.astropy.dequantify()
 
         units = conversion.extract_units(ds)
         # workaround for Unit("dimensionless") != str(Unit("dimensionless"))
@@ -444,12 +449,12 @@ class TestDequantifyDataSet:
 
     def test_roundtrip_data(self, example_unitless_ds):
         orig = example_unitless_ds
-        quantified = orig.pint.quantify()
+        quantified = orig.astropy.quantify()
 
-        result = quantified.pint.dequantify()
+        result = quantified.astropy.dequantify()
         assert_equal(result, orig)
 
-        result = quantified.pint.dequantify().pint.quantify()
+        result = quantified.astropy.dequantify().astropy.quantify()
         assert_equal(quantified, result)
 
 
@@ -568,9 +573,9 @@ class TestDequantifyDataSet:
 def test_to(obj, units, expected, error):
     if error is not None:
         with pytest.raises(error):
-            obj.pint.to(units)
+            obj.astropy.to(units)
     else:
-        actual = obj.pint.to(units)
+        actual = obj.astropy.to(units)
 
         assert_units_equal(actual, expected)
         assert_identical(actual, expected)
@@ -684,15 +689,15 @@ def test_to(obj, units, expected, error):
     ),
 )
 def test_sel(obj, indexers, expected, error):
-    obj_ = obj.pint.quantify()
+    obj_ = obj.astropy.quantify()
 
     if error is not None:
         with pytest.raises(error):
-            obj_.pint.sel(indexers)
+            obj_.astropy.sel(indexers)
     else:
-        expected_ = expected.pint.quantify()
+        expected_ = expected.astropy.quantify()
 
-        actual = obj_.pint.sel(indexers)
+        actual = obj_.astropy.sel(indexers)
         assert_units_equal(actual, expected_)
         assert_identical(actual, expected_)
 
@@ -805,15 +810,15 @@ def test_sel(obj, indexers, expected, error):
     ),
 )
 def test_loc(obj, indexers, expected, error):
-    obj_ = obj.pint.quantify()
+    obj_ = obj.astropy.quantify()
 
     if error is not None:
         with pytest.raises(error):
-            obj_.pint.loc[indexers]
+            obj_.astropy.loc[indexers]
     else:
-        expected_ = expected.pint.quantify()
+        expected_ = expected.astropy.quantify()
 
-        actual = obj_.pint.loc[indexers]
+        actual = obj_.astropy.loc[indexers]
         assert_units_equal(actual, expected_)
         assert_identical(actual, expected_)
 
@@ -936,7 +941,7 @@ def test_loc(obj, indexers, expected, error):
             {"x": Quantity([10, 30], "dm"), "y": Quantity([60], "s")},
             Quantity([[-1], [-2]], "s"),
             None,
-            pint.DimensionalityError,
+            astropy.units.errors.UnitConversionError,
             id="data-incompatible units",
         ),
     ),
@@ -944,9 +949,9 @@ def test_loc(obj, indexers, expected, error):
 def test_loc_setitem(obj, indexers, values, expected, error):
     if error is not None:
         with pytest.raises(error):
-            obj.pint.loc[indexers] = values
+            obj.astropy.loc[indexers] = values
     else:
-        obj.pint.loc[indexers] = values
+        obj.astropy.loc[indexers] = values
         assert_units_equal(obj, expected)
         assert_identical(obj, expected)
 
@@ -1087,9 +1092,9 @@ def test_loc_setitem(obj, indexers, values, expected, error):
 def test_drop_sel(obj, indexers, expected, error):
     if error is not None:
         with pytest.raises(error):
-            obj.pint.drop_sel(indexers)
+            obj.astropy.drop_sel(indexers)
     else:
-        actual = obj.pint.drop_sel(indexers)
+        actual = obj.astropy.drop_sel(indexers)
         assert_units_equal(actual, expected)
         assert_identical(actual, expected)
 
@@ -1151,10 +1156,10 @@ def test_drop_sel(obj, indexers, expected, error):
     ),
 )
 def test_chunk(obj):
-    actual = obj.pint.chunk({"x": 2})
+    actual = obj.astropy.chunk({"x": 2})
 
     expected = (
-        obj.pint.dequantify().chunk({"x": 2}).pint.quantify(unit_registry=unit_registry)
+        obj.astropy.dequantify().chunk({"x": 2}).astropy.quantify(unit_registry=unit_registry)
     )
 
     assert_units_equal(actual, expected)
@@ -1282,15 +1287,15 @@ def test_chunk(obj):
     ),
 )
 def test_reindex(obj, units, indexers, expected, expected_units, error):
-    obj_ = obj.pint.quantify(units)
+    obj_ = obj.astropy.quantify(units)
 
     if error is not None:
         with pytest.raises(error):
-            obj.pint.reindex(indexers)
+            obj.astropy.reindex(indexers)
     else:
-        expected_ = expected.pint.quantify(expected_units)
+        expected_ = expected.astropy.quantify(expected_units)
 
-        actual = obj_.pint.reindex(indexers)
+        actual = obj_.astropy.reindex(indexers)
         assert_units_equal(actual, expected_)
         assert_identical(actual, expected_)
 
@@ -1421,16 +1426,16 @@ def test_reindex(obj, units, indexers, expected, expected_units, error):
     ),
 )
 def test_reindex_like(obj, units, other, other_units, expected, expected_units, error):
-    obj_ = obj.pint.quantify(units)
-    other_ = other.pint.quantify(other_units)
+    obj_ = obj.astropy.quantify(units)
+    other_ = other.astropy.quantify(other_units)
 
     if error is not None:
         with pytest.raises(error):
-            obj_.pint.reindex_like(other_)
+            obj_.astropy.reindex_like(other_)
     else:
-        expected_ = expected.pint.quantify(expected_units)
+        expected_ = expected.astropy.quantify(expected_units)
 
-        actual = obj_.pint.reindex_like(other_)
+        actual = obj_.astropy.reindex_like(other_)
         assert_units_equal(actual, expected_)
         assert_identical(actual, expected_)
 
@@ -1583,15 +1588,15 @@ def test_reindex_like(obj, units, other, other_units, expected, expected_units, 
     ),
 )
 def test_interp(obj, units, indexers, expected, expected_units, error, kwargs):
-    obj_ = obj.pint.quantify(units)
+    obj_ = obj.astropy.quantify(units)
 
     if error is not None:
         with pytest.raises(error):
-            obj_.pint.interp(indexers, kwargs=kwargs)
+            obj_.astropy.interp(indexers, kwargs=kwargs)
     else:
-        expected_ = expected.pint.quantify(expected_units)
+        expected_ = expected.astropy.quantify(expected_units)
 
-        actual = obj_.pint.interp(indexers, kwargs=kwargs)
+        actual = obj_.astropy.interp(indexers, kwargs=kwargs)
         assert_units_equal(actual, expected_)
         assert_identical(actual, expected_)
 
@@ -1723,16 +1728,16 @@ def test_interp(obj, units, indexers, expected, expected_units, error, kwargs):
     ),
 )
 def test_interp_like(obj, units, other, other_units, expected, expected_units, error):
-    obj_ = obj.pint.quantify(units)
-    other_ = other.pint.quantify(other_units)
+    obj_ = obj.astropy.quantify(units)
+    other_ = other.astropy.quantify(other_units)
 
     if error is not None:
         with pytest.raises(error):
-            obj_.pint.interp_like(other_)
+            obj_.astropy.interp_like(other_)
     else:
-        expected_ = expected.pint.quantify(expected_units)
+        expected_ = expected.astropy.quantify(expected_units)
 
-        actual = obj_.pint.interp_like(other_)
+        actual = obj_.astropy.interp_like(other_)
         assert_units_equal(actual, expected_)
         assert_identical(actual, expected_)
 
@@ -1827,7 +1832,7 @@ def test_interp_like(obj, units, other, other_units, expected, expected_units, e
     ),
 )
 def test_ffill(obj, expected):
-    actual = obj.pint.ffill(dim="x")
+    actual = obj.astropy.ffill(dim="x")
     assert_identical(actual, expected)
     assert_units_equal(actual, expected)
 
@@ -1922,7 +1927,7 @@ def test_ffill(obj, expected):
     ),
 )
 def test_bfill(obj, expected):
-    actual = obj.pint.bfill(dim="x")
+    actual = obj.astropy.bfill(dim="x")
     assert_identical(actual, expected)
     assert_units_equal(actual, expected)
 
@@ -2016,6 +2021,6 @@ def test_bfill(obj, expected):
     ),
 )
 def test_interpolate_na(obj, expected):
-    actual = obj.pint.interpolate_na(dim="x")
+    actual = obj.astropy.interpolate_na(dim="x")
     assert_identical(actual, expected)
     assert_units_equal(actual, expected)
