@@ -19,7 +19,7 @@ jobs:
   detect-test-upstream-trigger:
     name: "Detect CI Trigger: [test-upstream]"
     if: |
-      github.repository_owner == 'xarray-contrib'
+      github.repository_owner == 'calgray'
       && (github.event_name == 'push' || github.event_name == 'pull_request')
     runs-on: ubuntu-latest
     outputs:
@@ -28,7 +28,7 @@ jobs:
     - uses: actions/checkout@v4
       with:
         fetch-depth: 2
-    - uses: xarray-contrib/ci-trigger@v1.2
+    - uses: calgray/ci-trigger@v1.2
       id: detect-trigger
       with:
         keyword: "[test-upstream]"
@@ -40,7 +40,7 @@ jobs:
 
     if: |
       always()
-      && github.repository_owner == 'xarray-contrib'
+      && github.repository_owner == 'calgray'
       && (
         (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
         || needs.detect-test-upstream-trigger.outputs.triggered == 'true'
@@ -84,7 +84,7 @@ jobs:
     - name: install upstream-dev dependencies
       run: bash ci/install-upstream-dev.sh
 
-    - name: install pint-xarray
+    - name: install astropy-xarray
       run: python -m pip install .
 
     - name: show versions
@@ -101,6 +101,6 @@ jobs:
         failure()
         && steps.tests.outcome == 'failure'
         && github.event_name == 'schedule'
-      uses: xarray-contrib/issue-from-pytest-log@v1
+      uses: calgray/issue-from-pytest-log@v1
       with:
         log-path: pytest-log.jsonl

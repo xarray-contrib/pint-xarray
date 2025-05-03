@@ -8,7 +8,7 @@ on:
 jobs:
   build-artifacts:
     runs-on: ubuntu-latest
-    if: github.repository == 'xarray-contrib/pint-xarray'
+    if: github.repository == 'calgray/astropy-xarray'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -34,7 +34,7 @@ jobs:
         run: |
           python -m twine check --strict dist/*
           pwd
-          if [ -f dist/pint-xarray-0.0.0.tar.gz ]; then
+          if [ -f dist/astropy-xarray-0.0.0.tar.gz ]; then
             echo "❌ INVALID VERSION NUMBER"
             exit 1
           else
@@ -52,7 +52,7 @@ jobs:
 
     environment:
       name: pypi
-      url: https://pypi.org/p/pint-xarray
+      url: https://pypi.org/p/astropy-xarray
     permissions:
       id-token: write
 
