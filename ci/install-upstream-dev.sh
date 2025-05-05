@@ -7,5 +7,5 @@ python -m pip install \
   numpy \
   scipy  # until `scipy` has released a version compatible with `numpy>=2.0`
 python -m pip install --upgrade \
-  git+https://github.com/hgrecco/pint \
+  git+https://https://github.com/astropy/astropy \
   git+https://github.com/pydata/xarray

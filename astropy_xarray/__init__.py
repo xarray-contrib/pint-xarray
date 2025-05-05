@@ -6,7 +6,7 @@ from . import accessors, formatting, testing  # noqa: F401
 from .index import AstropyIndex
 
 try:
-    __version__ = version("pint-xarray")
+    __version__ = version("astropy-xarray")
 except Exception:
     # Local copy or not installed with setuptools.
     # Disable minimum version checks on downstream libraries.

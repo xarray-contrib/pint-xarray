@@ -73,19 +73,17 @@ def array_convert_unit(data, unit) -> astropy.units.Quantity:
     result : astropy.units.Quantity
         The converted data
     """
-    if unit is None:
-        return data
+    if unit is not None:
+        if not isinstance(unit, (str, astropy.units.UnitBase)):
+            raise ValueError(f"cannot use {unit!r} as a unit")
+        elif isinstance(unit, (str, astropy.units.UnitBase)) and not isinstance(data, astropy.units.Quantity):
+            raise ValueError(f"cannot convert a non-quantity using {unit!r} as unit")
 
-    if not isinstance(unit, (str, astropy.units.UnitBase)):
-        raise ValueError(f"cannot use {unit!r} as a unit")
-    elif isinstance(unit, (str, astropy.units.UnitBase)) and not isinstance(data, astropy.units.Quantity):
-        raise ValueError(f"cannot convert a non-quantity using {unit!r} as unit")
-
-
-    if not isinstance(data, astropy.units.Quantity):
-        data = data * astropy.units.Unit(unit)
-    else:
-        data = data.to(unit)
+        data = (
+            data.to(unit)
+            if isinstance(data, astropy.units.Quantity)
+            else astropy.units.Quantity(data, unit)
+        )
 
     return data
 

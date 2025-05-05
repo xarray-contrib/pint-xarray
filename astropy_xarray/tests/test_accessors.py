@@ -17,10 +17,6 @@ from .utils import (
     requires_scipy,
 )
 
-# pytestmark = [
-#     pytest.mark.filterwarnings("error::pint.UnitStrippedWarning"),
-# ]
-
 # make sure scalars are converted to 0d arrays so quantities can
 # always be treated like ndarrays
 import astropy.units as unit_registry

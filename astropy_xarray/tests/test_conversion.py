@@ -20,8 +20,6 @@ unit_registry = astropy.units
 Quantity = astropy.units.Quantity
 Unit = astropy.units.Unit
 
-# pytestmark = pytest.mark.filterwarnings("error::pint.UnitStrippedWarning")
-
 
 def filter_none_values(mapping):
     return {k: v for k, v in mapping.items() if v is not None}

@@ -1,4 +1,3 @@
-# TODO is it possible to import pint-xarray from within xarray if pint is present?
 import itertools
 from typing import Final
 
