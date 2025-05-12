@@ -3,9 +3,9 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
 
 concurrency:
@@ -20,13 +20,13 @@ jobs:
     outputs:
       triggered: ${{ steps.detect-trigger.outputs.trigger-found }}
     steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 2
-    - uses: xarray-contrib/ci-trigger@v1
-      id: detect-trigger
-      with:
-        keyword: "[skip-ci]"
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: xarray-contrib/ci-trigger@v1
+        id: detect-trigger
+        with:
+          keyword: "[skip-ci]"
 
   ci:
     name: ${{ matrix.os }} py${{ matrix.python-version }}
@@ -54,53 +54,53 @@ jobs:
         os: ["ubuntu-latest", "macos-latest", "windows-latest"]
 
     steps:
-    - name: checkout the repository
-      uses: actions/checkout@v4
-      with:
-        # need to fetch all tags to get a correct version
-        fetch-depth: 0  # fetch all branches and tags
+      - name: checkout the repository
+        uses: actions/checkout@v4
+        with:
+          # need to fetch all tags to get a correct version
+          fetch-depth: 0 # fetch all branches and tags
 
-    - name: cache pip
-      uses: actions/cache@v4
-      with:
-        path: ~/.cache/pip
-        key: pip-py${{ matrix.python-version }}
-        restore-keys: |
-          pip-
+      - name: cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-py${{ matrix.python-version }}
+          restore-keys: |
+            pip-
 
-    - name: setup python
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
+      - name: setup python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
 
-    - name: upgrade pip
-      run: python -m pip install --upgrade pip setuptools wheel
+      - name: upgrade pip
+        run: python -m pip install --upgrade pip setuptools wheel
 
-    - name: install dependencies
-      run: |
-        python -m pip install -r ci/requirements.txt
+      - name: install dependencies
+        run: |
+          python -m pip install -r ci/requirements.txt
 
-    - name: install pint-xarray
-      run: python -m pip install --no-deps .
+      - name: install pint-xarray
+        run: python -m pip install --no-deps .
 
-    - name: show versions
-      run: python -m pip list
+      - name: show versions
+        run: python -m pip list
 
-    - name: import pint-xarray
-      run: |
-        python -c 'import pint_xarray'
+      - name: import pint-xarray
+        run: |
+          python -c 'import pint_xarray'
 
-    - name: run tests
-      if: success()
-      id: status
-      run: |
-        python -m pytest --cov=pint_xarray --cov-report=xml
+      - name: run tests
+        if: success()
+        id: status
+        run: |
+          python -m pytest --cov=pint_xarray --cov-report=xml
 
-    - name: Upload code coverage to Codecov
-      uses: codecov/codecov-action@v5.4.2
-      with:
-        file: ./coverage.xml
-        flags: unittests
-        env_vars: RUNNER_OS,PYTHON_VERSION
-        name: codecov-umbrella
-        fail_ci_if_error: false
+      - name: Upload code coverage to Codecov
+        uses: codecov/codecov-action@v5.4.2
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          env_vars: RUNNER_OS,PYTHON_VERSION
+          name: codecov-umbrella
+          fail_ci_if_error: false

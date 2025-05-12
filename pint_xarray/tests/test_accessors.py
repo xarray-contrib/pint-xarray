@@ -6,9 +6,9 @@ import xarray as xr
 from numpy.testing import assert_array_equal
 from pint import Unit, UnitRegistry
 
-from .. import accessors, conversion
-from ..index import PintIndex
-from .utils import (
+from pint_xarray import accessors, conversion
+from pint_xarray.index import PintIndex
+from pint_xarray.tests.utils import (
     assert_equal,
     assert_identical,
     assert_units_equal,

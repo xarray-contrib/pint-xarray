@@ -1,7 +1,7 @@
 from xarray import Variable
 from xarray.core.indexes import Index, PandasIndex
 
-from . import conversion
+from pint_xarray import conversion
 
 
 class PintIndex(Index):
