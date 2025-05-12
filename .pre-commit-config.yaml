@@ -9,14 +9,24 @@ repos:
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: check-docstring-first
-      - id: check-yaml
-  # isort should run before black as black sometimes tweaks the isort output
-  - repo: https://github.com/pycqa/isort
-    rev: 6.0.1
+  - repo: https://github.com/rbubley/mirrors-prettier
+    rev: v3.5.3
     hooks:
-      - id: isort
+      - id: prettier
+        args: ["--cache-location=.prettier_cache/cache"]
+  - repo: https://github.com/ComPWA/taplo-pre-commit
+    rev: v0.9.3
+    hooks:
+      - id: taplo-format
+        args: [--option, array_auto_collapse=false]
+      - id: taplo-lint
+        args: [--no-schema]
+  - repo: https://github.com/abravalheri/validate-pyproject
+    rev: v0.24.1
+    hooks:
+      - id: validate-pyproject
   # https://github.com/python/black#version-control-integration
-  - repo: https://github.com/psf/black
+  - repo: https://github.com/psf/black-pre-commit-mirror
     rev: 25.1.0
     hooks:
       - id: black-jupyter
@@ -26,10 +36,11 @@ repos:
       - id: blackdoc
         additional_dependencies: ["black==25.1.0"]
       - id: blackdoc-autoupdate-black
-  - repo: https://github.com/pycqa/flake8
-    rev: 7.2.0
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.11.9
     hooks:
-      - id: flake8
+      - id: ruff
+        args: [--fix]
   - repo: https://github.com/kynan/nbstripout
     rev: 0.8.1
     hooks:

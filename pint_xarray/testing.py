@@ -1,4 +1,4 @@
-from . import conversion, formatting
+from pint_xarray import conversion, formatting
 
 
 def assert_units_equal(a, b):

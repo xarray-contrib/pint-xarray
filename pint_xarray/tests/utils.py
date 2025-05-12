@@ -8,13 +8,13 @@ from pint import Quantity
 from xarray import DataArray, Variable
 from xarray.testing import assert_equal, assert_identical  # noqa: F401
 
-from ..conversion import (
+from pint_xarray.conversion import (
     array_strip_units,
     extract_indexer_units,
     strip_units,
     strip_units_variable,
 )
-from ..testing import assert_units_equal  # noqa: F401
+from pint_xarray.testing import assert_units_equal  # noqa: F401
 
 
 def importorskip(name):

@@ -6,9 +6,9 @@ from pint import Unit
 from xarray import register_dataarray_accessor, register_dataset_accessor
 from xarray.core.dtypes import NA
 
-from . import conversion
-from .conversion import no_unit_values
-from .errors import format_error_message
+from pint_xarray import conversion
+from pint_xarray.conversion import no_unit_values
+from pint_xarray.errors import format_error_message
 
 _default = object()
 

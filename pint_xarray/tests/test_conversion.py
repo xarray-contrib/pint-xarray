@@ -7,8 +7,7 @@ from xarray.core.indexes import PandasIndex
 
 from pint_xarray import conversion
 from pint_xarray.index import PintIndex
-
-from .utils import (
+from pint_xarray.tests.utils import (
     assert_array_equal,
     assert_array_units_equal,
     assert_identical,

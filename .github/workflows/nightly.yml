@@ -3,11 +3,11 @@ name: Nightly CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
   schedule:
-    - cron: "0 0 * * *"  # Daily "At 00:00" UTC
+    - cron: "0 0 * * *" # Daily "At 00:00" UTC
 
   workflow_dispatch:
 
@@ -25,13 +25,13 @@ jobs:
     outputs:
       triggered: ${{ steps.detect-trigger.outputs.trigger-found }}
     steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 2
-    - uses: xarray-contrib/ci-trigger@v1.2
-      id: detect-trigger
-      with:
-        keyword: "[test-upstream]"
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: xarray-contrib/ci-trigger@v1.2
+        id: detect-trigger
+        with:
+          keyword: "[test-upstream]"
 
   upstream-dev:
     name: upstream-dev
@@ -62,45 +62,45 @@ jobs:
       FORCE_COLOR: 3
 
     steps:
-    - name: checkout the repository
-      uses: actions/checkout@v4
-      with:
-        # need to fetch all tags to get a correct version
-        fetch-depth: 0  # fetch all branches and tags
+      - name: checkout the repository
+        uses: actions/checkout@v4
+        with:
+          # need to fetch all tags to get a correct version
+          fetch-depth: 0 # fetch all branches and tags
 
-    - name: setup python
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
+      - name: setup python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
 
-    - name: upgrade pip
-      run: python -m pip install --upgrade pip
+      - name: upgrade pip
+        run: python -m pip install --upgrade pip
 
-    - name: install dependencies
-      run: |
-        python -m pip install -r ci/requirements.txt
-        python -m pip install pytest-reportlog
+      - name: install dependencies
+        run: |
+          python -m pip install -r ci/requirements.txt
+          python -m pip install pytest-reportlog
 
-    - name: install upstream-dev dependencies
-      run: bash ci/install-upstream-dev.sh
+      - name: install upstream-dev dependencies
+        run: bash ci/install-upstream-dev.sh
 
-    - name: install pint-xarray
-      run: python -m pip install .
+      - name: install pint-xarray
+        run: python -m pip install .
 
-    - name: show versions
-      run: python -m pip list
+      - name: show versions
+        run: python -m pip list
 
-    - name: run tests
-      if: success()
-      id: status
-      run: |
-        python -m pytest -rf --report-log=pytest-log.jsonl
+      - name: run tests
+        if: success()
+        id: status
+        run: |
+          python -m pytest -rf --report-log=pytest-log.jsonl
 
-    - name: report failures
-      if: |
-        failure()
-        && steps.tests.outcome == 'failure'
-        && github.event_name == 'schedule'
-      uses: xarray-contrib/issue-from-pytest-log@v1
-      with:
-        log-path: pytest-log.jsonl
+      - name: report failures
+        if: |
+          failure()
+          && steps.tests.outcome == 'failure'
+          && github.event_name == 'schedule'
+        uses: xarray-contrib/issue-from-pytest-log@v1
+        with:
+          log-path: pytest-log.jsonl

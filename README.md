@@ -13,6 +13,7 @@ A convenience wrapper for using [pint](https://pint.readthedocs.io) with
 ## Usage
 
 To convert the variables of a `Dataset` to quantities:
+
 ```python
 In [1]: import pint_xarray
    ...: import xarray as xr
@@ -37,7 +38,9 @@ Data variables:
     a        (x) int64 [s] 0 1 2
     b        (y) int64 [m] -3 5 1
 ```
+
 to convert to different units:
+
 ```python
 In [4]: c = q.pint.to({"a": "ms", "b": "km"})
    ...: c
@@ -49,7 +52,9 @@ Data variables:
     a        (x) float64 [ms] 0.0 1e+03 2e+03
     b        (y) float64 [km] -0.003 0.005 0.001
 ```
+
 to convert back to non-quantities:
+
 ```python
 In [5]: d = c.pint.dequantify()
    ...: d

@@ -2,10 +2,10 @@ from importlib.metadata import version
 
 import pint
 
-from . import accessors, formatting, testing  # noqa: F401
-from .accessors import default_registry as unit_registry
-from .accessors import setup_registry
-from .index import PintIndex
+from pint_xarray import accessors, formatting, testing  # noqa: F401
+from pint_xarray.accessors import default_registry as unit_registry
+from pint_xarray.accessors import setup_registry
+from pint_xarray.index import PintIndex
 
 try:
     __version__ = version("pint-xarray")

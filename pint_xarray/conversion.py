@@ -4,9 +4,9 @@ import re
 import pint
 from xarray import Coordinates, DataArray, Dataset, IndexVariable, Variable
 
-from .compat import call_on_dataset
-from .errors import format_error_message
-from .index import PintIndex
+from pint_xarray.compat import call_on_dataset
+from pint_xarray.errors import format_error_message
+from pint_xarray.index import PintIndex
 
 no_unit_values = ("none", None)
 unit_attribute_name = "units"
