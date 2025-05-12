@@ -9,6 +9,11 @@ repos:
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: check-docstring-first
+  - repo: https://github.com/rbubley/mirrors-prettier
+    rev: v3.4.2
+    hooks:
+      - id: prettier
+        args: ["--cache-location=.prettier_cache/cache"]
   # isort should run before black as black sometimes tweaks the isort output
   - repo: https://github.com/pycqa/isort
     rev: 6.0.1
