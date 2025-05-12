@@ -46,12 +46,49 @@ fallback_version = "999"
 [tool.pytest.ini_options]
 junit_family = "xunit2"
 
-[tool.isort]
-profile = "black"
-skip_gitignore = "true"
-force_to_top = "true"
-default_section = "THIRDPARTY"
-known_first_party = "pint_xarray"
+[tool.ruff]
+target-version = "py310"
+builtins = ["ellipsis"]
+exclude = [
+  ".git",
+  ".eggs",
+  "build",
+  "dist",
+  "__pycache__",
+]
+line-length = 100
+
+[tool.ruff.lint]
+# E402: module level import not at top of file
+# E501: line too long - let black worry about that
+# E731: do not assign a lambda expression, use a def
+ignore = [
+  "E402",
+  "E501",
+  "E731",
+]
+select = [
+  "F",   # Pyflakes
+  "E",   # Pycodestyle
+  "I",   # isort
+  "UP",  # Pyupgrade
+  "TID", # flake8-tidy-imports
+  "W",
+]
+extend-safe-fixes = [
+  "TID252", # absolute imports
+]
+fixable = ["I", "TID252"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["pint_xarray"]
+known-third-party = [
+  "xarray"
+]
+
+[tool.ruff.lint.flake8-tidy-imports]
+# Disallow all relative imports.
+ban-relative-imports = "all"
 
 [tool.coverage.run]
 source = ["pint_xarray"]
