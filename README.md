@@ -20,46 +20,46 @@ In [1]: import astropy_xarray
 In [2]: ds = xr.Dataset({"a": ("x", [0, 1, 2]), "b": ("y", [-3, 5, 1], {"units": "m"})})
    ...: ds
 Out[2]:
-<xarray.Dataset>
+<xarray.Dataset> Size: 48B
 Dimensions:  (x: 3, y: 3)
 Dimensions without coordinates: x, y
 Data variables:
-    a        (x) int64 0 1 2
-    b        (y) int64 -3 5 1
+    a        (x) int64 24B 0 1 2
+    b        (y) int64 24B -3 5 1
 
 In [3]: q = ds.astropy.quantify(a="s")
    ...: q
 Out[3]:
-<xarray.Dataset>
+<xarray.Dataset> Size: 48B
 Dimensions:  (x: 3, y: 3)
 Dimensions without coordinates: x, y
 Data variables:
-    a        (x) int64 [s] 0 1 2
-    b        (y) int64 [m] -3 5 1
+    a        (x) float64 24B [s] 0.0 1.0 2.0
+    b        (y) float64 24B [m] -3.0 5.0 1.0
 ```
 to convert to different units:
 ```python
 In [4]: c = q.astropy.to({"a": "ms", "b": "km"})
    ...: c
 Out[4]:
-<xarray.Dataset>
+<xarray.Dataset> Size: 48B
 Dimensions:  (x: 3, y: 3)
 Dimensions without coordinates: x, y
 Data variables:
-    a        (x) float64 [ms] 0.0 1e+03 2e+03
-    b        (y) float64 [km] -0.003 0.005 0.001
+    a        (x) float64 24B [ms] 0.0 1e+03 2e+03
+    b        (y) float64 24B [km] -0.003 0.005 0.001
 ```
 to convert back to non-quantities:
 ```python
 In [5]: d = c.astropy.dequantify()
    ...: d
 Out[5]:
-<xarray.Dataset>
+<xarray.Dataset> Size: 48B
 Dimensions:  (x: 3, y: 3)
 Dimensions without coordinates: x, y
 Data variables:
-    a        (x) float64 0.0 1e+03 2e+03
-    b        (y) float64 -0.003 0.005 0.001
+    a        (x) float64 24B 0.0 1e+03 2e+03
+    b        (y) float64 24B -0.003 0.005 0.001
 ```
 
-For more, see the [documentation](https://astropy-xarray.readthedocs.io)
+For more, see the [documentation](astropy-xarray.readthedocs.io/en/latest/)

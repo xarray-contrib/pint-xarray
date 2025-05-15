@@ -1,12 +1,12 @@
 API reference
 =============
-This page contains a auto-generated summary of ``pint-xarray``'s API.
+This page contains a auto-generated summary of ``astropy-xarray``'s API.
 
 .. autosummary::
    :toctree: generated/
 
-   pint_xarray.unit_registry
-   pint_xarray.setup_registry
+   astropy_xarray.unit_registry
+   astropy_xarray.setup_registry
 
 Dataset
 -------
@@ -71,4 +71,4 @@ Testing
 .. autosummary::
    :toctree: generated/
 
-   pint_xarray.testing.assert_units_equal
+   satropy_xarray.testing.assert_units_equal

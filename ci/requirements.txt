@@ -1,3 +1,4 @@
+astropy
 numpy<2
 scipy
 dask[array]

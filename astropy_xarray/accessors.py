@@ -102,7 +102,6 @@ def _decide_unit(unit, registry, unit_attribute):
             unit = astropy.units.Unit(unit_attribute)
     else:
         unit = astropy.units.Unit(unit)
-    print("decided on", repr(unit))
     return unit
 
 
@@ -230,7 +229,7 @@ class AstropyDataArrayAccessor:
             dict-like, it should map a variable name to the desired
             unit (use the DataArray's name to refer to its data). If
             not provided, ``quantify`` will try to read them from
-            ``DataArray.attrs['units']`` using pint's parser. The
+            ``DataArray.attrs['units']`` using astropy's parser. The
             ``"units"`` attribute will be removed from all variables
             except from dimension coordinates.
         unit_registry : pint.UnitRegistry, optional
@@ -369,7 +368,7 @@ class AstropyDataArrayAccessor:
         -------
         dequantified : DataArray
             DataArray whose array data is unitless, and of the type
-            that was previously wrapped by `pint.Quantity`.
+            that was previously wrapped by `astropy.Quantity`.
 
         See Also
         --------
@@ -944,7 +943,7 @@ class AstropyDatasetAccessor:
             Dataset. It should map variable names to units (unit names
             or ``astropy.units.Unit`` objects). If not provided, ``quantify``
             will try to read them from ``Dataset[var].attrs['units']``
-            using pint's parser. The ``"units"`` attribute will be
+            using astropy's parser. The ``"units"`` attribute will be
             removed from all variables except from dimension coordinates.
         unit_registry : pint.UnitRegistry, optional
             Unit registry to be used for the units attached to each
@@ -1096,7 +1095,7 @@ class AstropyDatasetAccessor:
         -------
         dequantified : Dataset
             Dataset whose data variables are unitless, and of the type
-            that was previously wrapped by ``pint.Quantity``.
+            that was previously wrapped by ``astropy.Quantity``.
 
         See Also
         --------

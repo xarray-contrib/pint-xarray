@@ -26,10 +26,10 @@ import astropy_xarray  # noqa: F401
 # -- Project information -----------------------------------------------------
 
 year = dt.datetime.now().year
-project = "pint-xarray"
+project = "astropy-xarray"
 author = f"{project} developers"
 copyright = f"{year}, {author}"
-github_url = "https://github.com/xarray-contrib/pint-xarray"
+github_url = "https://github.com/calgray/astropy-xarray"
 
 
 # -- General configuration ---------------------------------------------------
@@ -97,7 +97,7 @@ napoleon_type_aliases = {
     # xarray
     "Dataset": "~xarray.Dataset",
     "DataArray": "~xarray.DataArray",
-    # pint / pint-xarray
+    # astropy / astropy-xarray
     "unit-like": ":term:`unit-like`",
 }
 
@@ -110,6 +110,6 @@ nbsphinx_execute = "always"
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3/", None),
     "xarray": ("https://docs.xarray.dev/en/stable", None),
-    "pint": ("https://pint.readthedocs.io/en/stable", None),
+    "astropy": ("https://docs.astropy.org/en/latest/", None),
     "pandas": ("https://pandas.pydata.org/pandas-docs/stable", None),
 }

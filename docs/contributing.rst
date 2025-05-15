@@ -1,6 +1,6 @@
 Contributing
 ============
-``pint-xarray`` is developed on `github <https://github.com/xarray-contrib/pint-xarray>`_.
+``astropy-xarray`` is developed on `github <https://github.com/calgray/astropy-xarray>`_.
 
 Commit message tags
 -------------------

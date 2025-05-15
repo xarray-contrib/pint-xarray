@@ -1,8 +1,8 @@
-pint-xarray
-===========
-A convenience wrapper for using `pint`_ in `xarray`_ objects.
+astropy-xarray
+==============
+A convenience wrapper for using `astropy`_ in `xarray`_ objects.
 
-.. _pint: https://pint.readthedocs.io/en/stable
+.. _astropy: https://pint.readthedocs.io/en/stable
 .. _xarray: https://xarray.pydata.org/en/stable
 
 .. warning::

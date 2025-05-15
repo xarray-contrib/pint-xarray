@@ -8,8 +8,8 @@ Attaching units
 .. ipython:: python
     :suppress:
 
-    import pint
-    import pint_xarray
+    import astropy
+    import astropy_xarray
     import xarray as xr
 
 Usually, when loading data from disk we get a :py:class:`Dataset` or
@@ -29,7 +29,7 @@ Usually, when loading data from disk we get a :py:class:`Dataset` or
     In [2]: da = ds.b
        ...: da
 
-In order to get :py:class:`pint.Quantity` instances, we can use the
+In order to get :py:class:`astropy.Quantity` instances, we can use the
 :py:meth:`Dataset.astropy.quantify` or :py:meth:`DataArray.astropy.quantify` methods:
 
 .. ipython::
@@ -52,7 +52,7 @@ to attach units to a normal :py:class:`Dataset`:
     In [6]: temporary_ds = xr.Dataset({"a": ("x", [0, 5, 10])}, coords={"x": [1, 2, 3]})
        ...: temporary_ds.astropy.quantify({"a": "m"})
 
-Of course, we could use :py:class:`pint.Unit` instances instead of strings to
+Of course, we could use :py:class:`astropy.Unit` instances instead of strings to
 specify units, too.
 
 .. note::
@@ -87,13 +87,13 @@ have to first swap the dimensions:
 
 By default, :py:meth:`Dataset.astropy.quantify` and
 :py:meth:`DataArray.astropy.quantify` will use the unit registry at
-:py:obj:`pint_xarray.unit_registry` (the
-:py:func:`application registry <pint.get_application_registry>`). If we want a
+:py:obj:`astropy_xarray.unit_registry` (the
+:py:func:`application registry <astropy.get_application_registry>`). If we want a
 different registry, we can either pass it as the ``unit_registry`` parameter:
 
 .. ipython::
 
-   In [10]: ureg = pint.UnitRegistry(force_ndarray_like=True)
+   In [10]: ureg = astropy.UnitRegistry(force_ndarray_like=True)
        ...: # set up the registry
 
    In [11]: da.astropy.quantify("degree", unit_registry=ureg)
@@ -102,7 +102,7 @@ or overwrite the default registry:
 
 .. ipython::
 
-   In [12]: pint_xarray.unit_registry = ureg
+   In [12]: astropy_xarray.unit_registry = ureg
 
    In [13]: da.astropy.quantify("degree")
 
@@ -111,7 +111,7 @@ or overwrite the default registry:
     To properly work with ``xarray``, the ``force_ndarray_like`` or
     ``force_ndarray`` options have to be enabled on the custom registry.
 
-   Without it, python scalars wrapped by :py:class:`pint.Quantity` may raise errors or
+   Without it, python scalars wrapped by :py:class:`astropy.Quantity` may raise errors or
    have their units stripped.
 
 Saving with units
@@ -126,10 +126,10 @@ methods:
 
     In [11]: da_with_units.astropy.dequantify()
 
-This will get the string representation of a :py:class:`pint.Unit` instance and
+This will get the string representation of a :py:class:`astropy.Unit` instance and
 attach it as a ``units`` attribute. The data of the variable will now be
-whatever `pint`_ wrapped.
+whatever `astropy`_ wrapped.
 
-.. _pint: https://pint.readthedocs.io/en/stable/
+.. _astropy: https://docs.astropy.org/en/latest/
 .. _xarray: https://docs.xarray.dev/en/stable/
 .. _units in indexes: https://github.com/pydata/xarray/issues/1603

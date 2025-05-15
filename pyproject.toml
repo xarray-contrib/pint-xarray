@@ -4,7 +4,7 @@ authors = [
     {name = "Callan Gray", email = "calj.gray@gmail.com"},
     {name = "Tom Nicholas", email = "tomnicholas1@googlemail.com"}
 ]
-description = "Physical units interface to xarray using Pint"
+description = "Physical units interface to xarray using astropy"
 license = {text = "Apache-2"}
 readme = "README.md"
 classifiers = [
@@ -52,10 +52,10 @@ profile = "black"
 skip_gitignore = "true"
 force_to_top = "true"
 default_section = "THIRDPARTY"
-known_first_party = "pint_xarray"
+known_first_party = "astropy_xarray"
 
 [tool.coverage.run]
-source = ["pint_xarray"]
+source = ["astropy_xarray"]
 branch = true
 
 [tool.coverage.report]
