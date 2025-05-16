@@ -5,9 +5,6 @@ This page contains a auto-generated summary of ``astropy-xarray``'s API.
 .. autosummary::
    :toctree: generated/
 
-   astropy_xarray.unit_registry
-   astropy_xarray.setup_registry
-
 Dataset
 -------
 .. autosummary::
@@ -43,9 +40,9 @@ DataArray
    xarray.DataArray.astropy.loc
 
    xarray.DataArray.astropy.value
-   xarray.DataArray.astropy.units
-   xarray.DataArray.astropy.dimensionality
-   xarray.DataArray.astropy.registry
+   .. xarray.DataArray.astropy.units
+   .. xarray.DataArray.astropy.dimensionality
+   .. xarray.DataArray.astropy.registry
 
 .. autosummary::
    :toctree: generated/
@@ -71,4 +68,4 @@ Testing
 .. autosummary::
    :toctree: generated/
 
-   satropy_xarray.testing.assert_units_equal
+   astropy_xarray.testing.assert_units_equal

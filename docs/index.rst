@@ -2,7 +2,7 @@ astropy-xarray
 ==============
 A convenience wrapper for using `astropy`_ in `xarray`_ objects.
 
-.. _astropy: https://pint.readthedocs.io/en/stable
+.. _astropy: https://docs.astropy.org/en/latest/
 .. _xarray: https://xarray.pydata.org/en/stable
 
 .. warning::

@@ -232,7 +232,7 @@ class AstropyDataArrayAccessor:
             ``DataArray.attrs['units']`` using astropy's parser. The
             ``"units"`` attribute will be removed from all variables
             except from dimension coordinates.
-        unit_registry : pint.UnitRegistry, optional
+        unit_registry : optional
             Unit registry to be used for the units attached to this DataArray.
             If not given then a default registry will be created.
         **unit_kwargs
@@ -360,9 +360,9 @@ class AstropyDataArrayAccessor:
         Parameters
         ----------
         format : str, default: None
-            The format specification (as accepted by pint) used for the string
-            representations. If ``None``, the registry's default
-            (:py:attr:`pint.UnitRegistry.default_format`) is used instead.
+            The format specification (as accepted by astropy) used for the string
+            representations. If ``None``, the default
+            (:py:class:`astropy.units.format.Unicode`) is used instead.
 
         Returns
         -------
@@ -372,8 +372,8 @@ class AstropyDataArrayAccessor:
 
         See Also
         --------
-        :doc:`pint:user/formatting`
-            pint's string formatting guide
+        :doc:`astropy:units/format`
+            astropy's string formatting guide
 
         Examples
         --------
@@ -399,7 +399,6 @@ class AstropyDataArrayAccessor:
 
         Use the registry's default format
 
-        >>> pint_xarray.unit_registry.default_format = "~L"
         >>> q.astropy.dequantify()
         <xarray.DataArray (x: 2)> Size: 16B
         array([0, 1])
@@ -945,7 +944,7 @@ class AstropyDatasetAccessor:
             will try to read them from ``Dataset[var].attrs['units']``
             using astropy's parser. The ``"units"`` attribute will be
             removed from all variables except from dimension coordinates.
-        unit_registry : pint.UnitRegistry, optional
+        unit_registry : optional
             Unit registry to be used for the units attached to each
             DataArray in this Dataset. If not given then a default
             registry will be created.
@@ -1087,9 +1086,9 @@ class AstropyDatasetAccessor:
         Parameters
         ----------
         format : str, default: None
-            The format specification (as accepted by pint's unit formatter) used for the
-            string representations. If ``None``, the registry's default
-            (:py:attr:`pint.UnitRegistry.default_format`) is used instead.
+            The format specification (as accepted by astropy's unit formatter) used for the
+            string representations. If ``None``, the default
+            (:py:class:`astropy.units.format.Unicode`) is used instead.
 
         Returns
         -------
@@ -1099,8 +1098,8 @@ class AstropyDatasetAccessor:
 
         See Also
         --------
-        :doc:`pint:user/formatting`
-            pint's string formatting guide
+        :std:doc:`astropy:units/format`
+            astropy's string formatting guide
 
         Examples
         --------

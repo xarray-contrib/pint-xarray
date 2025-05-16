@@ -93,18 +93,16 @@ different registry, we can either pass it as the ``unit_registry`` parameter:
 
 .. ipython::
 
-   In [10]: ureg = astropy.UnitRegistry(force_ndarray_like=True)
+   In [10]: import astropy.units as u
        ...: # set up the registry
 
-   In [11]: da.astropy.quantify("degree", unit_registry=ureg)
+   In [11]: da.astropy.quantify("degree")
 
 or overwrite the default registry:
 
 .. ipython::
 
-   In [12]: astropy_xarray.unit_registry = ureg
-
-   In [13]: da.astropy.quantify("degree")
+   In [12]: da.astropy.quantify("degree")
 
 .. note::
 

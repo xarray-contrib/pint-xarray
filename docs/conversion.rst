@@ -25,6 +25,6 @@ To convert the data to different units, we can use the
 
 .. ipython::
 
-    In [3]: ds.astropy.to(a="feet", u="ks")
+    In [3]: ds.astropy.to(a="cm", u="ks")
 
-    In [4]: da.astropy.to({da.name: "nautical_mile", "u": "ms"})
+    In [4]: da.astropy.to({da.name: "km", "u": "ms"})
