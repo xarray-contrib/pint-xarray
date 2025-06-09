@@ -2,6 +2,10 @@
 
 What's new
 ==========
+0.5.1 (*unreleased*)
+--------------------
+
+
 0.5 (09 Jun 2025)
 ------------------
 - drop support for python 3.9 (:pull:`266`)
