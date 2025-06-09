@@ -2,7 +2,7 @@
 
 What's new
 ==========
-0.5 (*unreleased*)
+0.5 (09 Jun 2025)
 ------------------
 - drop support for python 3.9 (:pull:`266`)
   By `Justus Magin <https://github.com/keewis>`_.
