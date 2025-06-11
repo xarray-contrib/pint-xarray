@@ -103,12 +103,22 @@ def test_sel(labels, expected):
         ]
     )
 
+
 @pytest.mark.parametrize(
     ["labels", "expected"],
     (
-        ({"x": ureg.Quantity(1.1, "m")}, IndexSelResult(dim_indexers={"x": np.array(0)})),
-        ({"x": ureg.Quantity(3100, "mm")}, IndexSelResult(dim_indexers={"x": np.array(2)})),
-        ({"x": ureg.Quantity(0.0021, "km")}, IndexSelResult(dim_indexers={"x": np.array(1)})),
+        (
+            {"x": ureg.Quantity(1.1, "m")},
+            IndexSelResult(dim_indexers={"x": np.array(0)}),
+        ),
+        (
+            {"x": ureg.Quantity(3100, "mm")},
+            IndexSelResult(dim_indexers={"x": np.array(2)}),
+        ),
+        (
+            {"x": ureg.Quantity(0.0021, "km")},
+            IndexSelResult(dim_indexers={"x": np.array(1)}),
+        ),
         (
             {"x": ureg.Quantity([0.0021, 0.0041], "km")},
             IndexSelResult(dim_indexers={"x": np.array([1, 3])}),
