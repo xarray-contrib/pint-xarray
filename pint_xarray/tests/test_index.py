@@ -103,6 +103,34 @@ def test_sel(labels, expected):
         ]
     )
 
+@pytest.mark.parametrize(
+    ["labels", "expected"],
+    (
+        ({"x": ureg.Quantity(1.1, "m")}, IndexSelResult(dim_indexers={"x": np.array(0)})),
+        ({"x": ureg.Quantity(3100, "mm")}, IndexSelResult(dim_indexers={"x": np.array(2)})),
+        ({"x": ureg.Quantity(0.0021, "km")}, IndexSelResult(dim_indexers={"x": np.array(1)})),
+        (
+            {"x": ureg.Quantity([0.0021, 0.0041], "km")},
+            IndexSelResult(dim_indexers={"x": np.array([1, 3])}),
+        ),
+    ),
+)
+def test_sel_nearest(labels, expected):
+    index = PintIndex(
+        index=PandasIndex(pd.Index([1, 2, 3, 4]), dim="x"), units={"x": ureg.Unit("m")}
+    )
+
+    actual = index.sel(labels, method="nearest")
+
+    assert isinstance(actual, IndexSelResult)
+    assert list(actual.dim_indexers.keys()) == list(expected.dim_indexers.keys())
+    assert all(
+        [
+            indexer_equal(actual.dim_indexers[k], expected.dim_indexers[k])
+            for k in expected.dim_indexers.keys()
+        ]
+    )
+
 
 @pytest.mark.parametrize(
     "indexers",
