@@ -52,11 +52,11 @@ class PintIndex(Index):
     def unstack(self):
         raise NotImplementedError()
 
-    def sel(self, labels):
+    def sel(self, labels, **options):
         converted_labels = conversion.convert_indexer_units(labels, self.units)
         stripped_labels = conversion.strip_indexer_units(converted_labels)
 
-        return self.index.sel(stripped_labels)
+        return self.index.sel(stripped_labels, **options)
 
     def isel(self, indexers):
         subset = self.index.isel(indexers)
