@@ -133,12 +133,10 @@ def test_sel_nearest(labels, expected):
     actual = index.sel(labels, method="nearest")
 
     assert isinstance(actual, IndexSelResult)
-    assert list(actual.dim_indexers.keys()) == list(expected.dim_indexers.keys())
+    assert actual.dim_indexers.keys() == expected.dim_indexers.keys()
     assert all(
-        [
-            indexer_equal(actual.dim_indexers[k], expected.dim_indexers[k])
-            for k in expected.dim_indexers.keys()
-        ]
+        indexer_equal(actual.dim_indexers[k], expected.dim_indexers[k])
+        for k in expected.dim_indexers.keys()
     )
 
 
