@@ -70,7 +70,7 @@ def array_attach_unit(data, unit) -> astropy.units.Quantity:
     return astropy.units.Quantity(data, unit)
 
 
-def array_convert_unit(data, unit, equivalencies=[]) -> astropy.units.Quantity:
+def array_convert_unit(data, unit, equivalencies) -> astropy.units.Quantity:
     """convert the unit of an array
 
     This is roughly the same as ``data.to(unit)``.
@@ -245,7 +245,7 @@ def attach_unit_attributes(obj, units, attr="units"):
     return new_obj
 
 
-def convert_unit_variable(variable, unit, equivalencies=[]):
+def convert_unit_variable(variable, unit, equivalencies):
     if isinstance(variable, IndexVariable):
         if variable.level_names:
             # don't try to convert MultiIndexes
@@ -330,7 +330,7 @@ def convert_units_dataset(obj, units, equivalencies):
     return dataset_from_variables(reordered, obj._coord_names, indexes, obj.attrs)
 
 
-def convert_units(obj, units, equivalencies=[]):
+def convert_units(obj, units, equivalencies):
     if not isinstance(obj, (DataArray, Dataset)):
         raise ValueError(f"cannot convert object: {obj!r}: unknown type")
 
@@ -470,7 +470,7 @@ def slice_extract_units(indexer):
         return astropy.units.Quantity(1, units_).si.unit
 
 
-def convert_units_slice(indexer, units, equivalencies=[]):
+def convert_units_slice(indexer, units, equivalencies):
     attrs = {name: getattr(indexer, name) for name in slice_attributes}
     converted = {
         name: array_convert_unit(value, units, equivalencies) if value is not None else None
@@ -481,7 +481,7 @@ def convert_units_slice(indexer, units, equivalencies=[]):
     return slice(*args)
 
 
-def convert_indexer_units(indexers, units, equivalencies=[]):
+def convert_indexer_units(indexers, units, equivalencies):
     def convert(indexer, units):
         if isinstance(indexer, slice):
             return convert_units_slice(indexer, units, equivalencies)

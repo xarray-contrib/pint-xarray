@@ -551,6 +551,21 @@ class TestDequantifyDataSet:
             None,
             id="DataArray-compatible units-dims-no index",
         ),
+        # pytest.param(
+        #     xr.DataArray(
+        #         [0, 1],
+        #         dims="x",
+        #         coords=xr.Coordinates({"x": Quantity([2, 4], "s")}, indexes={}),
+        #     ),
+        #     {"x": "ms"},
+        #     xr.DataArray(
+        #         [0, 1],
+        #         dims="x",
+        #         coords=xr.Coordinates({"x": Quantity([2000, 4000], "ms")}, indexes={}),
+        #     ),
+        #     None,
+        #     id="DataArray-compatible units-dims-no index",
+        # ),
         pytest.param(
             xr.DataArray(
                 [0, 1],
@@ -576,7 +591,7 @@ def test_to(obj, units, expected, error):
 
 
 @pytest.mark.parametrize(
-    ["obj", "indexers", "expected", "error"],
+    ["obj", "indexers", "equivalencies", "expected", "error"],
     (
         pytest.param(
             xr.Dataset(
@@ -586,6 +601,7 @@ def test_to(obj, units, expected, error):
                 }
             ),
             {"x": Quantity([10, 30], "dm"), "y": Quantity([60], "s")},
+            None,
             xr.Dataset(
                 {
                     "x": ("x", [10, 30], {"units": u.Unit("dm")}),
@@ -603,6 +619,7 @@ def test_to(obj, units, expected, error):
                 }
             ),
             {"x": Quantity([1, 3], "m"), "y": Quantity([1], "min")},
+            None,
             xr.Dataset(
                 {
                     "x": ("x", [1, 3], {"units": u.Unit("m")}),
@@ -615,11 +632,30 @@ def test_to(obj, units, expected, error):
         pytest.param(
             xr.Dataset(
                 {
+                    "x": ("x", [1, 2, 3], {"units": u.Unit("arcsec")}),
+                    "y": ("y", [2, 3], {"units": u.Unit("k")}),
+                }
+            ),
+            {"x": Quantity([1, 0.5], "pc"), "y": Quantity([300], "1/m")},
+            u.parallax() + u.magnetic_flux_field(),
+            xr.Dataset(
+                {
+                    "x": ("x", [1, 0.5], {"units": u.Unit("pc")}),
+                    "y": ("y", [300], {"units": u.Unit("1/m")}),
+                }
+            ),
+            None,
+            id="Dataset-equivalent units",
+        ),
+        pytest.param(
+            xr.Dataset(
+                {
                     "x": ("x", [10, 20, 30], {"units": u.Unit("dm")}),
                     "y": ("y", [60, 120], {"units": u.Unit("s")}),
                 }
             ),
             {"x": Quantity([1, 3], "s"), "y": Quantity([1], "m")},
+            None,
             None,
             KeyError,
             id="Dataset-incompatible units",
@@ -634,6 +670,7 @@ def test_to(obj, units, expected, error):
                 },
             ),
             {"x": Quantity([10, 30], "dm"), "y": Quantity([60], "s")},
+            None,
             xr.DataArray(
                 [[0], [4]],
                 dims=("x", "y"),
@@ -655,6 +692,7 @@ def test_to(obj, units, expected, error):
                 },
             ),
             {"x": Quantity([1, 3], "m"), "y": Quantity([1], "min")},
+            None,
             xr.DataArray(
                 [[0], [4]],
                 dims=("x", "y"),
@@ -671,27 +709,50 @@ def test_to(obj, units, expected, error):
                 [[0, 1], [2, 3], [4, 5]],
                 dims=("x", "y"),
                 coords={
+                    "x": ("x", [1, 2, 3], {"units": u.Unit("arcsec")}),
+                    "y": ("y", [2, 3], {"units": u.Unit("k")}),
+                }
+            ),
+            {"x": Quantity([1, 0.5], "pc"), "y": Quantity([300], "1/m")},
+            u.parallax() + u.magnetic_flux_field(),
+            xr.DataArray(
+                [[1], [3]],
+                dims=("x", "y"),
+                coords={
+                    "x": ("x", [1, 0.5], {"units": u.Unit("pc")}),
+                    "y": ("y", [300], {"units": u.Unit("1/m")}),
+                },
+            ),
+            None,
+            id="DataArray-equivalent units",
+        ),
+        pytest.param(
+            xr.DataArray(
+                [[0, 1], [2, 3], [4, 5]],
+                dims=("x", "y"),
+                coords={
                     "x": ("x", [10, 20, 30], {"units": u.Unit("dm")}),
                     "y": ("y", [60, 120], {"units": u.Unit("s")}),
                 },
             ),
             {"x": Quantity([10, 30], "s"), "y": Quantity([60], "m")},
             None,
+            None,
             KeyError,
             id="DataArray-incompatible units",
         ),
     ),
 )
-def test_sel(obj, indexers, expected, error):
+def test_sel(obj, indexers, equivalencies, expected, error):
     obj_ = obj.astropy.quantify()
 
     if error is not None:
         with pytest.raises(error):
-            obj_.astropy.sel(indexers)
+            obj_.astropy.sel(indexers, equivalencies=equivalencies)
     else:
         expected_ = expected.astropy.quantify()
 
-        actual = obj_.astropy.sel(indexers)
+        actual = obj_.astropy.sel(indexers, equivalencies=equivalencies)
         assert_units_equal(actual, expected_)
         assert_identical(actual, expected_)
 
@@ -1181,6 +1242,15 @@ def test_chunk(obj):
             None,
             id="Dataset-compatible units",
         ),
+        # pytest.param(
+        #     xr.Dataset({"x": ("x", [10, 20, 30]), "y": ("y", [60, 120])}),
+        #     {"x": "dm", "y": "s"},
+        #     {"x": Quantity([0, 1, 3, 5], "m"), "y": Quantity([0, 2, 4], "min")},
+        #     xr.Dataset({"x": ("x", [0, 1, 3, 5]), "y": ("y", [0, 2, 4])}),
+        #     {"x": "m", "y": "min"},
+        #     None,
+        #     id="Dataset-compatible units",
+        # ),
         pytest.param(
             xr.Dataset({"x": ("x", [10, 20, 30]), "y": ("y", [60, 120])}),
             {"x": "dm", "y": "s"},
@@ -1248,6 +1318,23 @@ def test_chunk(obj):
             None,
             id="DataArray-compatible units",
         ),
+        # pytest.param(
+        #     xr.DataArray(
+        #         [[0, 1], [2, 3], [4, 5]],
+        #         dims=("x", "y"),
+        #         coords={"x": ("x", [10, 20, 30]), "y": ("y", [60, 120])},
+        #     ),
+        #     {"x": "dm", "y": "s"},
+        #     {"x": Quantity([1, 3, 5], "m"), "y": Quantity([0, 2], "min")},
+        #     xr.DataArray(
+        #         [[np.nan, 1], [np.nan, 5], [np.nan, np.nan]],
+        #         dims=("x", "y"),
+        #         coords={"x": ("x", [1, 3, 5]), "y": ("y", [0, 2])},
+        #     ),
+        #     {"x": "m", "y": "min"},
+        #     None,
+        #     id="DataArray-equivalent units",
+        # ),
         pytest.param(
             xr.DataArray(
                 [[0, 1], [2, 3], [4, 5]],
@@ -1317,6 +1404,16 @@ def test_reindex(obj, units, indexers, expected, expected_units, error):
             None,
             id="Dataset-compatible units",
         ),
+        # pytest.param(
+        #     xr.Dataset({"x": ("x", [10, 20, 30]), "y": ("y", [60, 120])}),
+        #     {"x": "dm", "y": "s"},
+        #     xr.Dataset({"x": ("x", [0, 1, 3, 5]), "y": ("y", [0, 2, 4])}),
+        #     {"x": "m", "y": "min"},
+        #     xr.Dataset({"x": ("x", [0, 1, 3, 5]), "y": ("y", [0, 2, 4])}),
+        #     {"x": "m", "y": "min"},
+        #     None,
+        #     id="Dataset-compatible units",
+        # ),
         pytest.param(
             xr.Dataset({"x": ("x", [10, 20, 30]), "y": ("y", [60, 120])}),
             {"x": "dm", "y": "s"},
@@ -1385,6 +1482,24 @@ def test_reindex(obj, units, indexers, expected, expected_units, error):
             None,
             id="DataArray-compatible units",
         ),
+        # pytest.param(
+        #     xr.DataArray(
+        #         [[0, 1], [2, 3], [4, 5]],
+        #         dims=("x", "y"),
+        #         coords={"x": ("x", [10, 20, 30]), "y": ("y", [60, 120])},
+        #     ),
+        #     {"x": "dm", "y": "s"},
+        #     xr.Dataset({"x": ("x", [1, 3, 5]), "y": ("y", [0, 2])}),
+        #     {"x": "m", "y": "min"},
+        #     xr.DataArray(
+        #         [[np.nan, 1], [np.nan, 5], [np.nan, np.nan]],
+        #         dims=("x", "y"),
+        #         coords={"x": ("x", [1, 3, 5]), "y": ("y", [0, 2])},
+        #     ),
+        #     {"x": "m", "y": "min"},
+        #     None,
+        #     id="DataArray-compatible units",
+        # ),
         pytest.param(
             xr.DataArray(
                 [[0, 1], [2, 3], [4, 5]],
