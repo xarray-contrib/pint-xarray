@@ -67,11 +67,11 @@ class AstropyIndex(Index):
     def unstack(self):
         raise NotImplementedError()
 
-    def sel(self, labels, equivalencies=None):
+    def sel(self, labels, equivalencies=None, **options):
         converted_labels = conversion.convert_indexer_units(labels, self.units, equivalencies)
         stripped_labels = conversion.strip_indexer_units(converted_labels)
 
-        return self.index.sel(stripped_labels)
+        return self.index.sel(stripped_labels, **options)
 
     def isel(self, indexers):
         subset = self.index.isel(indexers)
