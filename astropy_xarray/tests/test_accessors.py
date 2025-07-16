@@ -1222,11 +1222,12 @@ def test_chunk(obj):
 
 
 @pytest.mark.parametrize(
-    ["obj", "units", "indexers", "expected", "expected_units", "error"],
+    ["obj", "units", "equivalencies", "indexers", "expected", "expected_units", "error"],
     (
         pytest.param(
             xr.Dataset({"x": ("x", [10, 20, 30]), "y": ("y", [60, 120])}),
             {"x": "dm", "y": "s"},
+            None,
             {"x": Quantity([10, 30, 50], "dm"), "y": Quantity([0, 120, 240], "s")},
             xr.Dataset({"x": ("x", [10, 30, 50]), "y": ("y", [0, 120, 240])}),
             {"x": "dm", "y": "s"},
@@ -1236,24 +1237,27 @@ def test_chunk(obj):
         pytest.param(
             xr.Dataset({"x": ("x", [10, 20, 30]), "y": ("y", [60, 120])}),
             {"x": "dm", "y": "s"},
+            None,
             {"x": Quantity([0, 1, 3, 5], "m"), "y": Quantity([0, 2, 4], "min")},
             xr.Dataset({"x": ("x", [0, 1, 3, 5]), "y": ("y", [0, 2, 4])}),
             {"x": "m", "y": "min"},
             None,
             id="Dataset-compatible units",
         ),
-        # pytest.param(
-        #     xr.Dataset({"x": ("x", [10, 20, 30]), "y": ("y", [60, 120])}),
-        #     {"x": "dm", "y": "s"},
-        #     {"x": Quantity([0, 1, 3, 5], "m"), "y": Quantity([0, 2, 4], "min")},
-        #     xr.Dataset({"x": ("x", [0, 1, 3, 5]), "y": ("y", [0, 2, 4])}),
-        #     {"x": "m", "y": "min"},
-        #     None,
-        #     id="Dataset-compatible units",
-        # ),
+        pytest.param(
+            xr.Dataset({"x": ("x", [1, 2, 3]), "y": ("y", [60, 120])}),
+            {"x": "k", "y": "s"},
+            u.parallax(),
+            {"x": Quantity([0, 100, 300, 500], "1/m"), "y": Quantity([0, 2, 4], "min")},
+            xr.Dataset({"x": ("x", [0, 100, 300, 500]), "y": ("y", [0, 2, 4])}),
+            {"x": "1/m", "y": "min"},
+            None,
+            id="Dataset-equivalent units",
+        ),
         pytest.param(
             xr.Dataset({"x": ("x", [10, 20, 30]), "y": ("y", [60, 120])}),
             {"x": "dm", "y": "s"},
+            None,
             {"x": Quantity([1, 3], "s"), "y": Quantity([1], "m")},
             None,
             {},
@@ -1269,6 +1273,7 @@ def test_chunk(obj):
                 }
             ),
             {"a": "kg"},
+            None,
             {
                 "x": [15, 25],
                 "y": [75, 105],
@@ -1291,6 +1296,7 @@ def test_chunk(obj):
                 coords={"x": ("x", [10, 20, 30]), "y": ("y", [60, 120])},
             ),
             {"x": "dm", "y": "s"},
+            None,
             {"x": Quantity([10, 30, 50], "dm"), "y": Quantity([0, 240], "s")},
             xr.DataArray(
                 [[np.nan, np.nan], [np.nan, np.nan], [np.nan, np.nan]],
@@ -1308,6 +1314,7 @@ def test_chunk(obj):
                 coords={"x": ("x", [10, 20, 30]), "y": ("y", [60, 120])},
             ),
             {"x": "dm", "y": "s"},
+            None,
             {"x": Quantity([1, 3, 5], "m"), "y": Quantity([0, 2], "min")},
             xr.DataArray(
                 [[np.nan, 1], [np.nan, 5], [np.nan, np.nan]],
@@ -1318,23 +1325,24 @@ def test_chunk(obj):
             None,
             id="DataArray-compatible units",
         ),
-        # pytest.param(
-        #     xr.DataArray(
-        #         [[0, 1], [2, 3], [4, 5]],
-        #         dims=("x", "y"),
-        #         coords={"x": ("x", [10, 20, 30]), "y": ("y", [60, 120])},
-        #     ),
-        #     {"x": "dm", "y": "s"},
-        #     {"x": Quantity([1, 3, 5], "m"), "y": Quantity([0, 2], "min")},
-        #     xr.DataArray(
-        #         [[np.nan, 1], [np.nan, 5], [np.nan, np.nan]],
-        #         dims=("x", "y"),
-        #         coords={"x": ("x", [1, 3, 5]), "y": ("y", [0, 2])},
-        #     ),
-        #     {"x": "m", "y": "min"},
-        #     None,
-        #     id="DataArray-equivalent units",
-        # ),
+        pytest.param(
+            xr.DataArray(
+                [[0, 1], [2, 3], [4, 5]],
+                dims=("x", "y"),
+                coords={"x": ("x", [1, 2, 3]), "y": ("y", [60, 120])},
+            ),
+            {"x": "k", "y": "s"},
+            u.parallax(),
+            {"x": Quantity([100, 300, 500], "1/m"), "y": Quantity([0, 2], "min")},
+            xr.DataArray(
+                [[np.nan, 1], [np.nan, 5], [np.nan, np.nan]],
+                dims=("x", "y"),
+                coords={"x": ("x", [100, 300, 500]), "y": ("y", [0, 2])},
+            ),
+            {"x": "1/m", "y": "min"},
+            None,
+            id="DataArray-equivalent units",
+        ),
         pytest.param(
             xr.DataArray(
                 [[0, 1], [2, 3], [4, 5]],
@@ -1342,6 +1350,7 @@ def test_chunk(obj):
                 coords={"x": ("x", [10, 20, 30]), "y": ("y", [60, 120])},
             ),
             {"x": "dm", "y": "s"},
+            None,
             {"x": Quantity([10, 30], "s"), "y": Quantity([60], "m")},
             None,
             {},
@@ -1355,6 +1364,7 @@ def test_chunk(obj):
                 coords={"x": [10, 20, 30], "y": [60, 120]},
             ),
             {None: "kg"},
+            None,
             {"x": [15, 25], "y": [75, 105]},
             xr.DataArray(
                 [[np.nan, np.nan], [np.nan, np.nan]],
@@ -1367,26 +1377,27 @@ def test_chunk(obj):
         ),
     ),
 )
-def test_reindex(obj, units, indexers, expected, expected_units, error):
+def test_reindex(obj, units, equivalencies, indexers, expected, expected_units, error):
     obj_ = obj.astropy.quantify(units)
 
     if error is not None:
         with pytest.raises(error):
             obj.astropy.reindex(indexers)
     else:
-        expected_ = expected.astropy.quantify(expected_units)
+        expected_ = expected.astropy.quantify(units=expected_units)
 
-        actual = obj_.astropy.reindex(indexers)
+        actual = obj_.astropy.reindex(indexers, equivalencies=equivalencies)
         assert_units_equal(actual, expected_)
         assert_identical(actual, expected_)
 
 
 @pytest.mark.parametrize(
-    ["obj", "units", "other", "other_units", "expected", "expected_units", "error"],
+    ["obj", "units", "equivalencies", "other", "other_units", "expected", "expected_units", "error"],
     (
         pytest.param(
             xr.Dataset({"x": ("x", [10, 20, 30]), "y": ("y", [60, 120])}),
             {"x": "dm", "y": "s"},
+            None,
             xr.Dataset({"x": ("x", [10, 30, 50]), "y": ("y", [0, 120, 240])}),
             {"x": "dm", "y": "s"},
             xr.Dataset({"x": ("x", [10, 30, 50]), "y": ("y", [0, 120, 240])}),
@@ -1397,6 +1408,7 @@ def test_reindex(obj, units, indexers, expected, expected_units, error):
         pytest.param(
             xr.Dataset({"x": ("x", [10, 20, 30]), "y": ("y", [60, 120])}),
             {"x": "dm", "y": "s"},
+            None,
             xr.Dataset({"x": ("x", [0, 1, 3, 5]), "y": ("y", [0, 2, 4])}),
             {"x": "m", "y": "min"},
             xr.Dataset({"x": ("x", [0, 1, 3, 5]), "y": ("y", [0, 2, 4])}),
@@ -1404,19 +1416,21 @@ def test_reindex(obj, units, indexers, expected, expected_units, error):
             None,
             id="Dataset-compatible units",
         ),
-        # pytest.param(
-        #     xr.Dataset({"x": ("x", [10, 20, 30]), "y": ("y", [60, 120])}),
-        #     {"x": "dm", "y": "s"},
-        #     xr.Dataset({"x": ("x", [0, 1, 3, 5]), "y": ("y", [0, 2, 4])}),
-        #     {"x": "m", "y": "min"},
-        #     xr.Dataset({"x": ("x", [0, 1, 3, 5]), "y": ("y", [0, 2, 4])}),
-        #     {"x": "m", "y": "min"},
-        #     None,
-        #     id="Dataset-compatible units",
-        # ),
+        pytest.param(
+            xr.Dataset({"x": ("x", [10, 20, 30]), "y": ("y", [60, 120])}),
+            {"x": "k", "y": "s"},
+            u.parallax(),
+            xr.Dataset({"x": ("x", [0, 1000, 3000, 5000]), "y": ("y", [0, 2, 4])}),
+            {"x": "1/m", "y": "min"},
+            xr.Dataset({"x": ("x", [0, 1000, 3000, 5000]), "y": ("y", [0, 2, 4])}),
+            {"x": "1/m", "y": "min"},
+            None,
+            id="Dataset-equivalent units",
+        ),
         pytest.param(
             xr.Dataset({"x": ("x", [10, 20, 30]), "y": ("y", [60, 120])}),
             {"x": "dm", "y": "s"},
+            None,
             xr.Dataset({"x": ("x", [1, 3]), "y": ("y", [1])}),
             {"x": "s", "y": "m"},
             None,
@@ -1431,6 +1445,7 @@ def test_reindex(obj, units, indexers, expected, expected_units, error):
                 coords={"x": ("x", [10, 20, 30]), "y": ("y", [60, 120])},
             ),
             {"x": "dm", "y": "s"},
+            None,
             xr.Dataset({"x": ("x", [10, 30, 50]), "y": ("y", [0, 240])}),
             {"x": "dm", "y": "s"},
             xr.DataArray(
@@ -1451,6 +1466,7 @@ def test_reindex(obj, units, indexers, expected, expected_units, error):
                 }
             ),
             {"a": "kg"},
+            None,
             xr.Dataset({"x": [15, 25], "y": [75, 105]}),
             {},
             xr.Dataset(
@@ -1471,6 +1487,7 @@ def test_reindex(obj, units, indexers, expected, expected_units, error):
                 coords={"x": ("x", [10, 20, 30]), "y": ("y", [60, 120])},
             ),
             {"x": "dm", "y": "s"},
+            None,
             xr.Dataset({"x": ("x", [1, 3, 5]), "y": ("y", [0, 2])}),
             {"x": "m", "y": "min"},
             xr.DataArray(
@@ -1482,24 +1499,25 @@ def test_reindex(obj, units, indexers, expected, expected_units, error):
             None,
             id="DataArray-compatible units",
         ),
-        # pytest.param(
-        #     xr.DataArray(
-        #         [[0, 1], [2, 3], [4, 5]],
-        #         dims=("x", "y"),
-        #         coords={"x": ("x", [10, 20, 30]), "y": ("y", [60, 120])},
-        #     ),
-        #     {"x": "dm", "y": "s"},
-        #     xr.Dataset({"x": ("x", [1, 3, 5]), "y": ("y", [0, 2])}),
-        #     {"x": "m", "y": "min"},
-        #     xr.DataArray(
-        #         [[np.nan, 1], [np.nan, 5], [np.nan, np.nan]],
-        #         dims=("x", "y"),
-        #         coords={"x": ("x", [1, 3, 5]), "y": ("y", [0, 2])},
-        #     ),
-        #     {"x": "m", "y": "min"},
-        #     None,
-        #     id="DataArray-compatible units",
-        # ),
+        pytest.param(
+            xr.DataArray(
+                [[0, 1], [2, 3], [4, 5]],
+                dims=("x", "y"),
+                coords={"x": ("x", [10, 20, 30]), "y": ("y", [60, 120])},
+            ),
+            {"x": "k", "y": "s"},
+            u.parallax(),
+            xr.Dataset({"x": ("x", [1000, 3000, 5000]), "y": ("y", [0, 2])}),
+            {"x": "1/m", "y": "min"},
+            xr.DataArray(
+                [[np.nan, 1], [np.nan, 5], [np.nan, np.nan]],
+                dims=("x", "y"),
+                coords={"x": ("x", [1000, 3000, 5000]), "y": ("y", [0, 2])},
+            ),
+            {"x": "1/m", "y": "min"},
+            None,
+            id="DataArray-equivalent units",
+        ),
         pytest.param(
             xr.DataArray(
                 [[0, 1], [2, 3], [4, 5]],
@@ -1507,6 +1525,7 @@ def test_reindex(obj, units, indexers, expected, expected_units, error):
                 coords={"x": ("x", [10, 20, 30]), "y": ("y", [60, 120])},
             ),
             {"x": "dm", "y": "s"},
+            None,
             xr.Dataset({"x": ("x", [10, 30]), "y": ("y", [60])}),
             {"x": "s", "y": "m"},
             None,
@@ -1521,6 +1540,7 @@ def test_reindex(obj, units, indexers, expected, expected_units, error):
                 coords={"x": [10, 20, 30], "y": [60, 120]},
             ),
             {"a": "kg"},
+            None,
             xr.Dataset({"x": [15, 25], "y": [75, 105]}),
             {},
             xr.DataArray(
@@ -1534,13 +1554,13 @@ def test_reindex(obj, units, indexers, expected, expected_units, error):
         ),
     ),
 )
-def test_reindex_like(obj, units, other, other_units, expected, expected_units, error):
+def test_reindex_like(obj, units, equivalencies, other, other_units, expected, expected_units, error):
     obj_ = obj.astropy.quantify(units)
     other_ = other.astropy.quantify(other_units)
 
     if error is not None:
         with pytest.raises(error):
-            obj_.astropy.reindex_like(other_)
+            obj_.astropy.reindex_like(other_, equivalencies=equivalencies)
     else:
         expected_ = expected.astropy.quantify(expected_units)
 
