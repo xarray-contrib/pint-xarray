@@ -637,7 +637,7 @@ def test_to(obj, units, expected, error):
                 }
             ),
             {"x": Quantity([1, 0.5], "pc"), "y": Quantity([300], "1/m")},
-            u.parallax() + u.magnetic_flux_field(),
+            u.parallax(),
             xr.Dataset(
                 {
                     "x": ("x", [1, 0.5], {"units": u.Unit("pc")}),
@@ -714,7 +714,7 @@ def test_to(obj, units, expected, error):
                 }
             ),
             {"x": Quantity([1, 0.5], "pc"), "y": Quantity([300], "1/m")},
-            u.parallax() + u.magnetic_flux_field(),
+            u.parallax(),
             xr.DataArray(
                 [[1], [3]],
                 dims=("x", "y"),

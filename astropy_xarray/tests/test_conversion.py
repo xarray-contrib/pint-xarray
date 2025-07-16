@@ -355,6 +355,14 @@ class TestXarrayFunctions:
             ),
             pytest.param(
                 "data",
+                {"a": Unit("eV"), "b": Unit("Pa")},
+                u.mass_energy(),
+                None,
+                None,
+                id="data-equivalent units",
+            ),
+            pytest.param(
+                "data",
                 {"a": Unit("s"), "b": Unit("m")},
                 None,
                 ValueError,
@@ -376,6 +384,14 @@ class TestXarrayFunctions:
                 None,
                 None,
                 id="dims-compatible units",
+            ),
+            pytest.param(
+                "dims",
+                {"x": Unit("deg")},
+                u.parallax(),
+                None,
+                None,
+                id="dims-equivalent units",
             ),
             pytest.param(
                 "dims",
@@ -403,43 +419,27 @@ class TestXarrayFunctions:
             ),
             pytest.param(
                 "coords",
+                {"x": Unit("pc")},
+                u.parallax(),
+                None,
+                None,
+                id="coords-equivalent units",
+            ),
+            pytest.param(
+                "coords",
                 {"u": Unit("mm")},
                 None,
                 ValueError,
                 "(?s)Cannot convert variables:.+'u'",
                 id="coords-incompatible units",
             ),
-            # pytest.param(
-            #     "data",
-            #     {"a": Unit("g"), "b": Unit("Pa")},
-            #     None,
-            #     None,
-            #     None,
-            #     id="data-parallax-equivalent units",
-            # ),
-            pytest.param(
-                "dims",
-                {"x": Unit("deg")},
-                u.parallax(),
-                None,
-                None,
-                id="dims-parallax-equivalent units",
-            ),
-            # pytest.param(
-            #     "coords",
-            #     {"u": Unit("deg")},
-            #     u.parallax(),
-            #     None,
-            #     None,
-            #     id="coords-parallax-equivalent units",
-            # ),
         ),
     )
     def test_convert_units(self, type, variant, units, equivalencies, error, match):
         variants = {
             "none": {"a": None, "b": None, "u": None, "x": None},
             "data": {"a": Unit("kg"), "b": Unit("hPa"), "u": None, "x": None},
-            "coords": {"a": None, "b": None, "u": Unit("s"), "x": None},
+            "coords": {"a": None, "b": None, "u": Unit("s"), "x": Unit("arcsec")},
             "dims": {"a": None, "b": None, "u": None, "x": Unit("m")},
         }
 
