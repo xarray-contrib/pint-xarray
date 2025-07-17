@@ -87,7 +87,7 @@ def either_dict_or_kwargs(positional, keywords, method_name):
         return keywords
 
 
-def _decide_unit(unit, registry, unit_attribute):
+def _decide_unit(unit, unit_attribute):
     if unit is _default and unit_attribute in (None, _default):
         # or warn and return None?
         raise ValueError("no units given")
@@ -123,7 +123,7 @@ class DatasetLocIndexer:
 
         # convert the indexes to the indexer's units
         try:
-            converted = conversion.convert_units(self.ds, indexer_units)
+            converted = conversion.convert_units(self.ds, indexer_units, None)
         except ValueError as e:
             raise KeyError(*e.args) from e
 
@@ -155,7 +155,7 @@ class DataArrayLocIndexer:
 
         # convert the indexes to the indexer's units
         try:
-            converted = conversion.convert_units(self.da, indexer_units)
+            converted = conversion.convert_units(self.da, indexer_units, None)
         except ValueError as e:
             raise KeyError(*e.args) from e
 
@@ -180,7 +180,7 @@ class DataArrayLocIndexer:
 
         # convert the indexers to the index units
         try:
-            converted = conversion.convert_indexer_units(indexers, index_units)
+            converted = conversion.convert_indexer_units(indexers, index_units, None)
         except ValueError as e:
             raise KeyError(*e.args) from e
 
@@ -200,12 +200,12 @@ class AstropyDataArrayAccessor:
     def __init__(self, da):
         self.da = da
 
-    def quantify(self, units=_default, unit_registry=None, **unit_kwargs):
+    def quantify(self, units=_default, **unit_kwargs):
         """
         Attach units to the DataArray.
 
         Units can be specified as a astropy.units.Unit or as a string, which will be
-        parsed by the given unit registry. If no units are specified then the
+        parsed by the astropy unit registry. If no units are specified then the
         units will be parsed from the `'units'` entry of the DataArray's
         `.attrs`. Will raise a ValueError if the DataArray already contains a
         unit-aware array with a different unit.
@@ -232,9 +232,6 @@ class AstropyDataArrayAccessor:
             ``DataArray.attrs['units']`` using astropy's parser. The
             ``"units"`` attribute will be removed from all variables
             except from dimension coordinates.
-        unit_registry : optional
-            Unit registry to be used for the units attached to this DataArray.
-            If not given then a default registry will be created.
         **unit_kwargs
             Keyword argument form of units.
 
@@ -297,8 +294,6 @@ class AstropyDataArrayAccessor:
 
         units = either_dict_or_kwargs(units, unit_kwargs, "quantify")
 
-        registry = astropy.units
-
         unit_attrs = conversion.extract_unit_attributes(self.da)
 
         possible_new_units = zip_mappings(units, unit_attrs, fill_value=_default)
@@ -307,7 +302,7 @@ class AstropyDataArrayAccessor:
         for name, (unit, attr) in possible_new_units.items():
             if unit not in (_default, None) or attr not in (_default, None):
                 try:
-                    new_units[name] = _decide_unit(unit, registry, attr)
+                    new_units[name] = _decide_unit(unit, attr)
                 except (ValueError, AttributeError) as e:
                     if unit not in (_default, None):
                         type = "parameter"
@@ -439,16 +434,22 @@ class AstropyDataArrayAccessor:
         """get the dimensionality of the data or :py:obj:`None` if not a quantity."""
         return getattr(self.da.data, "physical_type", None)
 
-    def to(self, units=None, **unit_kwargs):
+    def to(self, units=None, equivalencies=None, **unit_kwargs):
         """convert the quantities in a DataArray
 
         Parameters
         ----------
         units : unit-like or mapping of hashable to unit-like, optional
             The units to convert to. If a unit name or ``astropy.units.Unit``
-            object, convert the DataArray's data. If a dict-like, it
-            has to map a variable name to a unit name or ``astropy.units.Unit``
+            object, convert the DataArray's data. If a dict-like, it has to map
+            a variable name to a unit name or :py:class:`astropy.units.Unit`
             object.
+        equivalencies : :class:`list`
+            A list of equivalence pairs to try if the units are not
+            directly convertible. See :py:doc:`astropy:units/equivalencies`.
+            This list is in addition to possible global defaults set by,
+            e.g., :py:func:`astropy.units.set_enabled_equivalencies`.
+            Use None to turn off all equivalencies.
         **unit_kwargs
             The kwargs form of ``units``. Can only be used for
             variable names that are strings and valid python identifiers.
@@ -541,7 +542,7 @@ class AstropyDataArrayAccessor:
 
         units = either_dict_or_kwargs(units, unit_kwargs, "to")
 
-        return conversion.convert_units(self.da, units)
+        return conversion.convert_units(self.da, units, equivalencies)
 
     def chunk(self, chunks, name_prefix="xarray-", token=None, lock=False):
         """unit-aware version of chunk
@@ -573,6 +574,7 @@ class AstropyDataArrayAccessor:
         tolerance=None,
         copy=True,
         fill_value=NA,
+        equivalencies=None,
         **indexers_kwargs,
     ):
         """unit-aware version of reindex
@@ -602,7 +604,7 @@ class AstropyDataArrayAccessor:
         # TODO: handle fill_value
 
         # convert the indexes to the indexer's units
-        converted = conversion.convert_units(self.da, indexer_units)
+        converted = conversion.convert_units(self.da, indexer_units, equivalencies)
         converted_units = conversion.extract_units(converted)
         stripped = conversion.strip_units(converted)
 
@@ -618,7 +620,7 @@ class AstropyDataArrayAccessor:
         return conversion.attach_units(indexed, converted_units)
 
     def reindex_like(
-        self, other, method=None, tolerance=None, copy=True, fill_value=NA
+        self, other, method=None, tolerance=None, copy=True, fill_value=NA, equivalencies=None,
     ):
         """unit-aware version of reindex_like
 
@@ -637,7 +639,7 @@ class AstropyDataArrayAccessor:
         """
         indexer_units = conversion.extract_units(other)
 
-        converted = conversion.convert_units(self.da, indexer_units)
+        converted = conversion.convert_units(self.da, indexer_units, equivalencies)
         units = conversion.extract_units(converted)
         stripped = conversion.strip_units(converted)
         stripped_other = conversion.strip_units(other)
@@ -659,6 +661,7 @@ class AstropyDataArrayAccessor:
         coords=None,
         method="linear",
         assume_sorted=False,
+        equivalencies=None,
         kwargs=None,
         **coords_kwargs,
     ):
@@ -686,7 +689,7 @@ class AstropyDataArrayAccessor:
         }
 
         # convert the indexes to the indexer's units
-        converted = conversion.convert_units(self.da, indexer_units)
+        converted = conversion.convert_units(self.da, indexer_units, equivalencies)
         units = conversion.extract_units(converted)
         stripped = conversion.strip_units(converted)
 
@@ -700,7 +703,7 @@ class AstropyDataArrayAccessor:
         )
         return conversion.attach_units(interpolated, units)
 
-    def interp_like(self, other, method="linear", assume_sorted=False, kwargs=None):
+    def interp_like(self, other, method="linear", assume_sorted=False, equivalencies=None, kwargs=None):
         """unit-aware version of interp_like
 
         Like :py:meth:`xarray.DataArray.interp_like`, except the object's indexes are converted
@@ -718,7 +721,7 @@ class AstropyDataArrayAccessor:
         """
         indexer_units = conversion.extract_units(other)
 
-        converted = conversion.convert_units(self.da, indexer_units)
+        converted = conversion.convert_units(self.da, indexer_units, equivalencies)
         units = conversion.extract_units(converted)
         stripped = conversion.strip_units(converted)
         stripped_other = conversion.strip_units(other)
@@ -731,7 +734,7 @@ class AstropyDataArrayAccessor:
         return conversion.attach_units(interpolated, units)
 
     def sel(
-        self, indexers=None, method=None, tolerance=None, drop=False, **indexers_kwargs
+        self, indexers=None, method=None, tolerance=None, drop=False, equivalencies=None, **indexers_kwargs
     ):
         """unit-aware version of sel
 
@@ -760,7 +763,7 @@ class AstropyDataArrayAccessor:
 
         # convert the indexes to the indexer's units
         try:
-            converted = conversion.convert_units(self.da, indexer_units)
+            converted = conversion.convert_units(self.da, indexer_units, equivalencies)
         except ValueError as e:
             raise KeyError(*e.args) from e
 
@@ -791,7 +794,7 @@ class AstropyDataArrayAccessor:
         """
         return DataArrayLocIndexer(self.da)
 
-    def drop_sel(self, labels=None, *, errors="raise", **labels_kwargs):
+    def drop_sel(self, labels=None, *, equivalencies=None, errors="raise", **labels_kwargs):
         """unit-aware version of drop_sel
 
         Just like :py:meth:`xarray.DataArray.drop_sel`, except the indexers are converted
@@ -813,7 +816,7 @@ class AstropyDataArrayAccessor:
 
         # convert the indexers to the indexes units
         try:
-            converted_indexers = conversion.convert_indexer_units(indexers, index_units)
+            converted_indexers = conversion.convert_indexer_units(indexers, index_units, equivalencies)
         except ValueError as e:
             raise KeyError(*e.args) from e
 
@@ -911,12 +914,12 @@ class AstropyDatasetAccessor:
     def __init__(self, ds):
         self.ds = ds
 
-    def quantify(self, units=_default, unit_registry=None, **unit_kwargs):
+    def quantify(self, units=_default, **unit_kwargs):
         """
         Attach units to the variables of the Dataset.
 
         Units can be specified as a ``astropy.units.Unit`` or as a
-        string, which will be parsed by the given unit registry. If no
+        string, which will be parsed by the astropy unit registry. If no
         units are specified then the units will be parsed from the
         ``"units"`` entry of the Dataset variable's ``.attrs``. Will
         raise a ValueError if any of the variables already contain a
@@ -942,10 +945,6 @@ class AstropyDatasetAccessor:
             will try to read them from ``Dataset[var].attrs['units']``
             using astropy's parser. The ``"units"`` attribute will be
             removed from all variables except from dimension coordinates.
-        unit_registry : optional
-            Unit registry to be used for the units attached to each
-            DataArray in this Dataset. If not given then a default
-            registry will be created.
         **unit_kwargs
             Keyword argument form of ``units``.
 
@@ -1021,7 +1020,6 @@ class AstropyDatasetAccessor:
             b        (x) int64 24B 5 -2 1
         """
         units = either_dict_or_kwargs(units, unit_kwargs, "quantify")
-        registry = astropy.units
 
         unit_attrs = conversion.extract_unit_attributes(self.ds)
 
@@ -1031,7 +1029,7 @@ class AstropyDatasetAccessor:
         for name, (unit, attr) in possible_new_units.items():
             if unit is not _default or attr not in (None, _default):
                 try:
-                    new_units[name] = _decide_unit(unit, registry, attr)
+                    new_units[name] = _decide_unit(unit, attr)
                 except (ValueError, AttributeError) as e:
                     if unit is not _default:
                         type = "parameter"
@@ -1096,7 +1094,7 @@ class AstropyDatasetAccessor:
 
         See Also
         --------
-        :std:doc:`astropy:units/format`
+        :doc:`astropy:units/format`
             astropy's string formatting guide
 
         Examples
@@ -1165,7 +1163,7 @@ class AstropyDatasetAccessor:
             .pipe(conversion.attach_unit_attributes, units)
         )
 
-    def to(self, units=None, **unit_kwargs):
+    def to(self, units=None, equivalencies=None, **unit_kwargs):
         """convert the quantities in a Dataset
 
         Parameters
@@ -1173,8 +1171,14 @@ class AstropyDatasetAccessor:
         units : unit-like or mapping of hashable to unit-like, optional
             The units to convert to. If a unit name or ``astropy.units.Unit``
             object, convert all the object's data variables. If a dict-like, it
-            maps variable names to unit names or ``astropy.units.Unit``
+            maps variable names to unit names or :py:class:`astropy.units.Unit`
             objects.
+        equivalencies : :class:`list`
+            A list of equivalence pairs to try if the units are not
+            directly convertible. See :py:doc:`astropy:units/equivalencies`.
+            This list is in addition to possible global defaults set by,
+            e.g., :py:func:`astropy.units.set_enabled_equivalencies`.
+            Use None to turn off all equivalencies.
         **unit_kwargs
             The kwargs form of ``units``. Can only be used for
             variable names that are strings and valid python identifiers.
@@ -1307,7 +1311,7 @@ class AstropyDatasetAccessor:
 
         units = either_dict_or_kwargs(units, unit_kwargs, "to")
 
-        return conversion.convert_units(self.ds, units)
+        return conversion.convert_units(self.ds, units, equivalencies)
 
     def chunk(self, chunks, name_prefix="xarray-", token=None, lock=False):
         """unit-aware version of chunk
@@ -1339,6 +1343,7 @@ class AstropyDatasetAccessor:
         tolerance=None,
         copy=True,
         fill_value=NA,
+        equivalencies=None,
         **indexers_kwargs,
     ):
         """unit-aware version of reindex
@@ -1368,7 +1373,7 @@ class AstropyDatasetAccessor:
         # TODO: handle fill_value
 
         # convert the indexes to the indexer's units
-        converted = conversion.convert_units(self.ds, indexer_units)
+        converted = conversion.convert_units(self.ds, indexer_units, equivalencies)
         converted_units = conversion.extract_units(converted)
         stripped = conversion.strip_units(converted)
 
@@ -1384,7 +1389,7 @@ class AstropyDatasetAccessor:
         return conversion.attach_units(indexed, converted_units)
 
     def reindex_like(
-        self, other, method=None, tolerance=None, copy=True, fill_value=NA
+        self, other, method=None, tolerance=None, copy=True, fill_value=NA, equivalencies=None
     ):
         """unit-aware version of reindex_like
 
@@ -1403,7 +1408,7 @@ class AstropyDatasetAccessor:
         """
         indexer_units = conversion.extract_units(other)
 
-        converted = conversion.convert_units(self.ds, indexer_units)
+        converted = conversion.convert_units(self.ds, indexer_units, equivalencies)
         units = conversion.extract_units(converted)
         stripped = conversion.strip_units(converted)
         stripped_other = conversion.strip_units(other)
@@ -1425,6 +1430,7 @@ class AstropyDatasetAccessor:
         coords=None,
         method="linear",
         assume_sorted=False,
+        equivalencies=None,
         kwargs=None,
         **coords_kwargs,
     ):
@@ -1452,7 +1458,7 @@ class AstropyDatasetAccessor:
         }
 
         # convert the indexes to the indexer's units
-        converted = conversion.convert_units(self.ds, indexer_units)
+        converted = conversion.convert_units(self.ds, indexer_units, equivalencies)
         units = conversion.extract_units(converted)
         stripped = conversion.strip_units(converted)
 
@@ -1466,7 +1472,7 @@ class AstropyDatasetAccessor:
         )
         return conversion.attach_units(interpolated, units)
 
-    def interp_like(self, other, method="linear", assume_sorted=False, kwargs=None):
+    def interp_like(self, other, method="linear", assume_sorted=False, equivalencies=None, kwargs=None):
         """unit-aware version of interp_like
 
         Like :py:meth:`xarray.Dataset.interp_like`, except the object's indexes are
@@ -1484,7 +1490,7 @@ class AstropyDatasetAccessor:
         """
         indexer_units = conversion.extract_units(other)
 
-        converted = conversion.convert_units(self.ds, indexer_units)
+        converted = conversion.convert_units(self.ds, indexer_units, equivalencies)
         units = conversion.extract_units(converted)
         stripped = conversion.strip_units(converted)
         stripped_other = conversion.strip_units(other)
@@ -1497,7 +1503,7 @@ class AstropyDatasetAccessor:
         return conversion.attach_units(interpolated, units)
 
     def sel(
-        self, indexers=None, method=None, tolerance=None, drop=False, **indexers_kwargs
+        self, indexers=None, method=None, tolerance=None, drop=False, equivalencies=None, **indexers_kwargs
     ):
         """unit-aware version of sel
 
@@ -1526,7 +1532,7 @@ class AstropyDatasetAccessor:
 
         # convert the indexes to the indexer's units
         try:
-            converted = conversion.convert_units(self.ds, indexer_units)
+            converted = conversion.convert_units(self.ds, indexer_units, equivalencies)
         except ValueError as e:
             raise KeyError(*e.args) from e
 
@@ -1559,7 +1565,7 @@ class AstropyDatasetAccessor:
         """
         return DatasetLocIndexer(self.ds)
 
-    def drop_sel(self, labels=None, *, errors="raise", **labels_kwargs):
+    def drop_sel(self, labels=None, *, equivalencies=None, errors="raise", **labels_kwargs):
         """unit-aware version of drop_sel
 
         Just like :py:meth:`xarray.Dataset.drop_sel`, except the indexers are converted
@@ -1581,7 +1587,7 @@ class AstropyDatasetAccessor:
 
         # convert the indexers to the indexes units
         try:
-            converted_indexers = conversion.convert_indexer_units(indexers, index_units)
+            converted_indexers = conversion.convert_indexer_units(indexers, index_units, equivalencies)
         except ValueError as e:
             raise KeyError(*e.args) from e
 

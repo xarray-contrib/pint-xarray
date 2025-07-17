@@ -19,7 +19,7 @@ from astropy_xarray.tests.utils import (
 
 # make sure scalars are converted to 0d arrays so quantities can
 # always be treated like ndarrays
-import astropy.units as unit_registry
+import astropy.units as u
 from astropy.units import Quantity
 
 nan = np.nan
@@ -41,11 +41,11 @@ def assert_all_str_or_none(mapping):
 def example_unitless_da():
     array = np.linspace(0, 10, 20)
     x = np.arange(20)
-    u = np.linspace(0, 1, 20)
+    y = np.linspace(0, 1, 20)
     da = xr.DataArray(
         data=array,
         dims="x",
-        coords={"x": ("x", x), "u": ("x", u, {"units": "hour"})},
+        coords={"x": ("x", x), "u": ("x", y, {"units": "hour"})},
         attrs={"units": "m"},
     )
     return da
@@ -53,10 +53,10 @@ def example_unitless_da():
 
 @pytest.fixture()
 def example_quantity_da():
-    array = np.linspace(0, 10, 20) * unit_registry.m
+    array = np.linspace(0, 10, 20) * u.m
     x = np.arange(20)
-    u = np.linspace(0, 1, 20) * unit_registry.hour
-    return xr.DataArray(data=array, dims="x", coords={"x": ("x", x), "u": ("x", u)})
+    y = np.linspace(0, 1, 20) * u.hour
+    return xr.DataArray(data=array, dims="x", coords={"x": ("x", x), "u": ("x", y)})
 
 
 class TestQuantifyDataArray:
@@ -64,15 +64,14 @@ class TestQuantifyDataArray:
         orig = example_unitless_da
         result = orig.astropy.quantify("s")
         assert_array_equal(result.data.value, orig.data)
-        # TODO better comparisons for when you can't access the unit_registry?
+        # TODO better comparisons for when you can't access the u?
         assert str(result.data.unit) == "s"
 
     def test_attach_units_given_registry(self, example_unitless_da):
         orig = example_unitless_da
-        ureg = unit_registry
-        result = orig.astropy.quantify("m", unit_registry=ureg)
+        result = orig.astropy.quantify("m")
         assert_array_equal(result.data.value, orig.data)
-        assert result.data.unit == ureg.Unit("m")
+        assert result.data.unit == u.Unit("m")
 
     def test_attach_units_from_attrs(self, example_unitless_da):
         orig = example_unitless_da
@@ -92,10 +91,9 @@ class TestQuantifyDataArray:
 
     def test_attach_units_given_unit_objs(self, example_unitless_da):
         orig = example_unitless_da
-        ureg = unit_registry
-        result = orig.astropy.quantify(ureg.Unit("m"), unit_registry=ureg)
+        result = orig.astropy.quantify(u.Unit("m"))
         assert_array_equal(result.data.value, orig.data)
-        assert result.data.unit == ureg.Unit("m")
+        assert result.data.unit == u.Unit("m")
 
     @pytest.mark.parametrize("no_unit_value", conversion.no_unit_values)
     def test_override_units(self, example_unitless_da, no_unit_value):
@@ -119,13 +117,13 @@ class TestQuantifyDataArray:
         assert_units_equal(quantified, arr)
 
     def test_attach_no_new_units(self):
-        da = xr.DataArray(unit_registry.Quantity([1, 2, 3], "m"), dims="x")
+        da = xr.DataArray(u.Quantity([1, 2, 3], "m"), dims="x")
         quantified = da.astropy.quantify()
         assert_identical(quantified, da)
         assert_units_equal(quantified, da)
 
     def test_attach_same_units(self):
-        da = xr.DataArray(unit_registry.Quantity([1, 2, 3], "m"), dims="x")
+        da = xr.DataArray(u.Quantity([1, 2, 3], "m"), dims="x")
         quantified = da.astropy.quantify("m")
         assert_identical(quantified, da)
         assert_units_equal(quantified, da)
@@ -134,7 +132,7 @@ class TestQuantifyDataArray:
         arr = xr.DataArray(
             [1, 2, 3],
             dims="x",
-            coords={"x": ("x", [-1, 0, 1], {"units": unit_registry.Unit("m")})},
+            coords={"x": ("x", [-1, 0, 1], {"units": u.Unit("m")})},
         )
         with pytest.raises(ValueError, match="already has units"):
             arr.astropy.quantify({"x": "s"})
@@ -149,14 +147,14 @@ class TestQuantifyDataArray:
         assert isinstance(q.attrs["units"], UnitBase)
 
     def test_dimension_coordinate_array_already_quantified(self):
-        ds = xr.Dataset(coords={"x": ("x", [10], {"units": unit_registry.Unit("m")})})
+        ds = xr.Dataset(coords={"x": ("x", [10], {"units": u.Unit("m")})})
         arr = ds.x
 
         with pytest.raises(ValueError):
             arr.astropy.quantify({"x": "s"})
 
     def test_dimension_coordinate_array_already_quantified_same_units(self):
-        x = unit_registry.Quantity([10], "m")
+        x = u.Quantity([10], "m")
         coords = xr.Coordinates(
             {"x": x},
             indexes={
@@ -203,7 +201,7 @@ def test_units_to_str_or_none(unit_attrs, formatters):
     import astropy.units.imperial
     astropy.units.imperial.enable()
 
-    units = {key: unit_registry.Unit(value) for key, value in unit_attrs.items()}
+    units = {key: u.Unit(value) for key, value in unit_attrs.items()}
     for formatter in formatters:
         unit_format = f"{{:{formatter}}}"
 
@@ -211,7 +209,7 @@ def test_units_to_str_or_none(unit_attrs, formatters):
         actual = accessors.units_to_str_or_none(units, unit_format)
 
         assert expected == actual
-        assert units == {key: unit_registry.Unit(value) for key, value in actual.items()}
+        assert units == {key: u.Unit(value) for key, value in actual.items()}
 
         expected = {None: None}
         assert expected == accessors.units_to_str_or_none(expected, unit_format)
@@ -264,8 +262,8 @@ class TestPropertiesDataArray:
     def test_units_getattr(self, example_quantity_da):
         da = example_quantity_da
         actual = da.astropy.unit
-        assert isinstance(actual, unit_registry.UnitBase)
-        assert actual == unit_registry.m
+        assert isinstance(actual, u.UnitBase)
+        assert actual == u.m
 
     def test_units_setattr(self, example_quantity_da):
         da = example_quantity_da
@@ -278,8 +276,8 @@ class TestPropertiesDataArray:
 
     def test_units_setattr_unitless(self, example_unitless_da):
         da = example_unitless_da
-        da.astropy.unit = unit_registry.s
-        assert da.astropy.unit == unit_registry.s
+        da.astropy.unit = u.s
+        assert da.astropy.unit == u.s
 
 
 @pytest.fixture()
@@ -297,8 +295,8 @@ def example_unitless_ds():
 
 @pytest.fixture()
 def example_quantity_ds():
-    users = np.linspace(0, 10, 20) * unit_registry.dimensionless_unscaled
-    funds = np.logspace(0, 10, 20) * unit_registry.gram
+    users = np.linspace(0, 10, 20) * u.dimensionless_unscaled
+    funds = np.logspace(0, 10, 20) * u.gram
     t = np.arange(20)
     ds = xr.Dataset(
         data_vars={"users": (["t"], users), "funds": (["t"], funds)}, coords={"t": t}
@@ -317,7 +315,7 @@ class TestQuantifyDataSet:
         orig = example_unitless_ds
         orig["users"].attrs.clear()
         result = orig.astropy.quantify(
-            {"users": ""}, unit_registry=unit_registry
+            {"users": ""},
         )
         assert_array_equal(result["users"].data.value, orig["users"].data)
         assert str(result["users"].data.unit) == ""
@@ -335,7 +333,7 @@ class TestQuantifyDataSet:
     def test_attach_units_given_unit_objs(self, example_unitless_ds):
         orig = example_unitless_ds
         orig["users"].attrs.clear()
-        dimensionless = unit_registry.Unit("")
+        dimensionless = u.Unit("")
         result = orig.astropy.quantify({"users": dimensionless})
         assert_array_equal(result["users"].data.value, orig["users"].data)
         assert str(result["users"].data.unit) == ""
@@ -366,14 +364,14 @@ class TestQuantifyDataSet:
         assert_units_equal(quantified, ds)
 
     def test_attach_no_new_units(self):
-        ds = xr.Dataset({"a": ("x", unit_registry.Quantity([1, 2, 3], "m"))})
+        ds = xr.Dataset({"a": ("x", u.Quantity([1, 2, 3], "m"))})
         quantified = ds.astropy.quantify()
 
         assert_identical(quantified, ds)
         assert_units_equal(quantified, ds)
 
     def test_attach_same_units(self):
-        ds = xr.Dataset({"a": ("x", unit_registry.Quantity([1, 2, 3], "m"))})
+        ds = xr.Dataset({"a": ("x", u.Quantity([1, 2, 3], "m"))})
         quantified = ds.astropy.quantify({"a": "m"})
 
         assert_identical(quantified, ds)
@@ -381,7 +379,7 @@ class TestQuantifyDataSet:
 
     def test_error_when_changing_units_dimension_coordinates(self):
         ds = xr.Dataset(
-            coords={"x": ("x", [-1, 0, 1], {"units": unit_registry.Unit("m")})},
+            coords={"x": ("x", [-1, 0, 1], {"units": u.Unit("m")})},
         )
         with pytest.raises(ValueError, match="already has units"):
             ds.astropy.quantify({"x": "s"})
@@ -406,14 +404,14 @@ class TestQuantifyDataSet:
 
     def test_existing_units(self, example_quantity_ds):
         ds = example_quantity_ds.copy()
-        ds.t.attrs["units"] = unit_registry.Unit("m")
+        ds.t.attrs["units"] = u.Unit("m")
 
         with pytest.raises(ValueError, match="Cannot attach"):
             ds.astropy.quantify({"funds": "kg"})
 
     def test_existing_units_dimension(self, example_quantity_ds):
         ds = example_quantity_ds.copy()
-        ds.t.attrs["units"] = unit_registry.Unit("m")
+        ds.t.attrs["units"] = u.Unit("m")
 
         with pytest.raises(ValueError, match="Cannot attach"):
             ds.astropy.quantify({"t": "s"})
@@ -553,6 +551,21 @@ class TestDequantifyDataSet:
             None,
             id="DataArray-compatible units-dims-no index",
         ),
+        # pytest.param(
+        #     xr.DataArray(
+        #         [0, 1],
+        #         dims="x",
+        #         coords=xr.Coordinates({"x": Quantity([2, 4], "s")}, indexes={}),
+        #     ),
+        #     {"x": "ms"},
+        #     xr.DataArray(
+        #         [0, 1],
+        #         dims="x",
+        #         coords=xr.Coordinates({"x": Quantity([2000, 4000], "ms")}, indexes={}),
+        #     ),
+        #     None,
+        #     id="DataArray-compatible units-dims-no index",
+        # ),
         pytest.param(
             xr.DataArray(
                 [0, 1],
@@ -578,20 +591,21 @@ def test_to(obj, units, expected, error):
 
 
 @pytest.mark.parametrize(
-    ["obj", "indexers", "expected", "error"],
+    ["obj", "indexers", "equivalencies", "expected", "error"],
     (
         pytest.param(
             xr.Dataset(
                 {
-                    "x": ("x", [10, 20, 30], {"units": unit_registry.Unit("dm")}),
-                    "y": ("y", [60, 120], {"units": unit_registry.Unit("s")}),
+                    "x": ("x", [10, 20, 30], {"units": u.Unit("dm")}),
+                    "y": ("y", [60, 120], {"units": u.Unit("s")}),
                 }
             ),
             {"x": Quantity([10, 30], "dm"), "y": Quantity([60], "s")},
+            None,
             xr.Dataset(
                 {
-                    "x": ("x", [10, 30], {"units": unit_registry.Unit("dm")}),
-                    "y": ("y", [60], {"units": unit_registry.Unit("s")}),
+                    "x": ("x", [10, 30], {"units": u.Unit("dm")}),
+                    "y": ("y", [60], {"units": u.Unit("s")}),
                 }
             ),
             None,
@@ -600,15 +614,16 @@ def test_to(obj, units, expected, error):
         pytest.param(
             xr.Dataset(
                 {
-                    "x": ("x", [10, 20, 30], {"units": unit_registry.Unit("dm")}),
-                    "y": ("y", [60, 120], {"units": unit_registry.Unit("s")}),
+                    "x": ("x", [10, 20, 30], {"units": u.Unit("dm")}),
+                    "y": ("y", [60, 120], {"units": u.Unit("s")}),
                 }
             ),
             {"x": Quantity([1, 3], "m"), "y": Quantity([1], "min")},
+            None,
             xr.Dataset(
                 {
-                    "x": ("x", [1, 3], {"units": unit_registry.Unit("m")}),
-                    "y": ("y", [1], {"units": unit_registry.Unit("min")}),
+                    "x": ("x", [1, 3], {"units": u.Unit("m")}),
+                    "y": ("y", [1], {"units": u.Unit("min")}),
                 }
             ),
             None,
@@ -617,11 +632,30 @@ def test_to(obj, units, expected, error):
         pytest.param(
             xr.Dataset(
                 {
-                    "x": ("x", [10, 20, 30], {"units": unit_registry.Unit("dm")}),
-                    "y": ("y", [60, 120], {"units": unit_registry.Unit("s")}),
+                    "x": ("x", [1, 2, 3], {"units": u.Unit("arcsec")}),
+                    "y": ("y", [2, 3], {"units": u.Unit("k")}),
+                }
+            ),
+            {"x": Quantity([1, 0.5], "pc"), "y": Quantity([300], "1/m")},
+            u.parallax(),
+            xr.Dataset(
+                {
+                    "x": ("x", [1, 0.5], {"units": u.Unit("pc")}),
+                    "y": ("y", [300], {"units": u.Unit("1/m")}),
+                }
+            ),
+            None,
+            id="Dataset-equivalent units",
+        ),
+        pytest.param(
+            xr.Dataset(
+                {
+                    "x": ("x", [10, 20, 30], {"units": u.Unit("dm")}),
+                    "y": ("y", [60, 120], {"units": u.Unit("s")}),
                 }
             ),
             {"x": Quantity([1, 3], "s"), "y": Quantity([1], "m")},
+            None,
             None,
             KeyError,
             id="Dataset-incompatible units",
@@ -631,17 +665,18 @@ def test_to(obj, units, expected, error):
                 [[0, 1], [2, 3], [4, 5]],
                 dims=("x", "y"),
                 coords={
-                    "x": ("x", [10, 20, 30], {"units": unit_registry.Unit("dm")}),
-                    "y": ("y", [60, 120], {"units": unit_registry.Unit("s")}),
+                    "x": ("x", [10, 20, 30], {"units": u.Unit("dm")}),
+                    "y": ("y", [60, 120], {"units": u.Unit("s")}),
                 },
             ),
             {"x": Quantity([10, 30], "dm"), "y": Quantity([60], "s")},
+            None,
             xr.DataArray(
                 [[0], [4]],
                 dims=("x", "y"),
                 coords={
-                    "x": ("x", [10, 30], {"units": unit_registry.Unit("dm")}),
-                    "y": ("y", [60], {"units": unit_registry.Unit("s")}),
+                    "x": ("x", [10, 30], {"units": u.Unit("dm")}),
+                    "y": ("y", [60], {"units": u.Unit("s")}),
                 },
             ),
             None,
@@ -652,17 +687,18 @@ def test_to(obj, units, expected, error):
                 [[0, 1], [2, 3], [4, 5]],
                 dims=("x", "y"),
                 coords={
-                    "x": ("x", [10, 20, 30], {"units": unit_registry.Unit("dm")}),
-                    "y": ("y", [60, 120], {"units": unit_registry.Unit("s")}),
+                    "x": ("x", [10, 20, 30], {"units": u.Unit("dm")}),
+                    "y": ("y", [60, 120], {"units": u.Unit("s")}),
                 },
             ),
             {"x": Quantity([1, 3], "m"), "y": Quantity([1], "min")},
+            None,
             xr.DataArray(
                 [[0], [4]],
                 dims=("x", "y"),
                 coords={
-                    "x": ("x", [1, 3], {"units": unit_registry.Unit("m")}),
-                    "y": ("y", [1], {"units": unit_registry.Unit("min")}),
+                    "x": ("x", [1, 3], {"units": u.Unit("m")}),
+                    "y": ("y", [1], {"units": u.Unit("min")}),
                 },
             ),
             None,
@@ -673,27 +709,50 @@ def test_to(obj, units, expected, error):
                 [[0, 1], [2, 3], [4, 5]],
                 dims=("x", "y"),
                 coords={
-                    "x": ("x", [10, 20, 30], {"units": unit_registry.Unit("dm")}),
-                    "y": ("y", [60, 120], {"units": unit_registry.Unit("s")}),
+                    "x": ("x", [1, 2, 3], {"units": u.Unit("arcsec")}),
+                    "y": ("y", [2, 3], {"units": u.Unit("k")}),
+                }
+            ),
+            {"x": Quantity([1, 0.5], "pc"), "y": Quantity([300], "1/m")},
+            u.parallax(),
+            xr.DataArray(
+                [[1], [3]],
+                dims=("x", "y"),
+                coords={
+                    "x": ("x", [1, 0.5], {"units": u.Unit("pc")}),
+                    "y": ("y", [300], {"units": u.Unit("1/m")}),
+                },
+            ),
+            None,
+            id="DataArray-equivalent units",
+        ),
+        pytest.param(
+            xr.DataArray(
+                [[0, 1], [2, 3], [4, 5]],
+                dims=("x", "y"),
+                coords={
+                    "x": ("x", [10, 20, 30], {"units": u.Unit("dm")}),
+                    "y": ("y", [60, 120], {"units": u.Unit("s")}),
                 },
             ),
             {"x": Quantity([10, 30], "s"), "y": Quantity([60], "m")},
+            None,
             None,
             KeyError,
             id="DataArray-incompatible units",
         ),
     ),
 )
-def test_sel(obj, indexers, expected, error):
+def test_sel(obj, indexers, equivalencies, expected, error):
     obj_ = obj.astropy.quantify()
 
     if error is not None:
         with pytest.raises(error):
-            obj_.astropy.sel(indexers)
+            obj_.astropy.sel(indexers, equivalencies=equivalencies)
     else:
         expected_ = expected.astropy.quantify()
 
-        actual = obj_.astropy.sel(indexers)
+        actual = obj_.astropy.sel(indexers, equivalencies=equivalencies)
         assert_units_equal(actual, expected_)
         assert_identical(actual, expected_)
 
@@ -704,15 +763,15 @@ def test_sel(obj, indexers, expected, error):
         pytest.param(
             xr.Dataset(
                 {
-                    "x": ("x", [10, 20, 30], {"units": unit_registry.Unit("dm")}),
-                    "y": ("y", [60, 120], {"units": unit_registry.Unit("s")}),
+                    "x": ("x", [10, 20, 30], {"units": u.Unit("dm")}),
+                    "y": ("y", [60, 120], {"units": u.Unit("s")}),
                 }
             ),
             {"x": Quantity([10, 30], "dm"), "y": Quantity([60], "s")},
             xr.Dataset(
                 {
-                    "x": ("x", [10, 30], {"units": unit_registry.Unit("dm")}),
-                    "y": ("y", [60], {"units": unit_registry.Unit("s")}),
+                    "x": ("x", [10, 30], {"units": u.Unit("dm")}),
+                    "y": ("y", [60], {"units": u.Unit("s")}),
                 }
             ),
             None,
@@ -721,15 +780,15 @@ def test_sel(obj, indexers, expected, error):
         pytest.param(
             xr.Dataset(
                 {
-                    "x": ("x", [10, 20, 30], {"units": unit_registry.Unit("dm")}),
-                    "y": ("y", [60, 120], {"units": unit_registry.Unit("s")}),
+                    "x": ("x", [10, 20, 30], {"units": u.Unit("dm")}),
+                    "y": ("y", [60, 120], {"units": u.Unit("s")}),
                 }
             ),
             {"x": Quantity([1, 3], "m"), "y": Quantity([1], "min")},
             xr.Dataset(
                 {
-                    "x": ("x", [1, 3], {"units": unit_registry.Unit("m")}),
-                    "y": ("y", [1], {"units": unit_registry.Unit("min")}),
+                    "x": ("x", [1, 3], {"units": u.Unit("m")}),
+                    "y": ("y", [1], {"units": u.Unit("min")}),
                 }
             ),
             None,
@@ -738,8 +797,8 @@ def test_sel(obj, indexers, expected, error):
         pytest.param(
             xr.Dataset(
                 {
-                    "x": ("x", [10, 20, 30], {"units": unit_registry.Unit("dm")}),
-                    "y": ("y", [60, 120], {"units": unit_registry.Unit("s")}),
+                    "x": ("x", [10, 20, 30], {"units": u.Unit("dm")}),
+                    "y": ("y", [60, 120], {"units": u.Unit("s")}),
                 }
             ),
             {"x": Quantity([1, 3], "s"), "y": Quantity([1], "m")},
@@ -752,8 +811,8 @@ def test_sel(obj, indexers, expected, error):
                 [[0, 1], [2, 3], [4, 5]],
                 dims=("x", "y"),
                 coords={
-                    "x": ("x", [10, 20, 30], {"units": unit_registry.Unit("dm")}),
-                    "y": ("y", [60, 120], {"units": unit_registry.Unit("s")}),
+                    "x": ("x", [10, 20, 30], {"units": u.Unit("dm")}),
+                    "y": ("y", [60, 120], {"units": u.Unit("s")}),
                 },
             ),
             {"x": Quantity([10, 30], "dm"), "y": Quantity([60], "s")},
@@ -761,8 +820,8 @@ def test_sel(obj, indexers, expected, error):
                 [[0], [4]],
                 dims=("x", "y"),
                 coords={
-                    "x": ("x", [10, 30], {"units": unit_registry.Unit("dm")}),
-                    "y": ("y", [60], {"units": unit_registry.Unit("s")}),
+                    "x": ("x", [10, 30], {"units": u.Unit("dm")}),
+                    "y": ("y", [60], {"units": u.Unit("s")}),
                 },
             ),
             None,
@@ -773,8 +832,8 @@ def test_sel(obj, indexers, expected, error):
                 [[0, 1], [2, 3], [4, 5]],
                 dims=("x", "y"),
                 coords={
-                    "x": ("x", [10, 20, 30], {"units": unit_registry.Unit("dm")}),
-                    "y": ("y", [60, 120], {"units": unit_registry.Unit("s")}),
+                    "x": ("x", [10, 20, 30], {"units": u.Unit("dm")}),
+                    "y": ("y", [60, 120], {"units": u.Unit("s")}),
                 },
             ),
             {"x": Quantity([1, 3], "m"), "y": Quantity([1], "min")},
@@ -782,8 +841,8 @@ def test_sel(obj, indexers, expected, error):
                 [[0], [4]],
                 dims=("x", "y"),
                 coords={
-                    "x": ("x", [1, 3], {"units": unit_registry.Unit("m")}),
-                    "y": ("y", [1], {"units": unit_registry.Unit("min")}),
+                    "x": ("x", [1, 3], {"units": u.Unit("m")}),
+                    "y": ("y", [1], {"units": u.Unit("min")}),
                 },
             ),
             None,
@@ -794,8 +853,8 @@ def test_sel(obj, indexers, expected, error):
                 [[0, 1], [2, 3], [4, 5]],
                 dims=("x", "y"),
                 coords={
-                    "x": ("x", [10, 20, 30], {"units": unit_registry.Unit("dm")}),
-                    "y": ("y", [60, 120], {"units": unit_registry.Unit("s")}),
+                    "x": ("x", [10, 20, 30], {"units": u.Unit("dm")}),
+                    "y": ("y", [60, 120], {"units": u.Unit("s")}),
                 },
             ),
             {"x": Quantity([10, 30], "s"), "y": Quantity([60], "m")},
@@ -827,8 +886,8 @@ def test_loc(obj, indexers, expected, error):
                 [[0, 1], [2, 3], [4, 5]],
                 dims=("x", "y"),
                 coords={
-                    "x": ("x", [10, 20, 30], {"units": unit_registry.Unit("dm")}),
-                    "y": ("y", [60, 120], {"units": unit_registry.Unit("s")}),
+                    "x": ("x", [10, 20, 30], {"units": u.Unit("dm")}),
+                    "y": ("y", [60, 120], {"units": u.Unit("s")}),
                 },
             ),
             {"x": Quantity([10, 30], "dm"), "y": Quantity([60], "s")},
@@ -837,8 +896,8 @@ def test_loc(obj, indexers, expected, error):
                 [[-1, 1], [2, 3], [-2, 5]],
                 dims=("x", "y"),
                 coords={
-                    "x": ("x", [10, 20, 30], {"units": unit_registry.Unit("dm")}),
-                    "y": ("y", [60, 120], {"units": unit_registry.Unit("s")}),
+                    "x": ("x", [10, 20, 30], {"units": u.Unit("dm")}),
+                    "y": ("y", [60, 120], {"units": u.Unit("s")}),
                 },
             ),
             None,
@@ -849,8 +908,8 @@ def test_loc(obj, indexers, expected, error):
                 [[0, 1], [2, 3], [4, 5]],
                 dims=("x", "y"),
                 coords={
-                    "x": ("x", [10, 20, 30], {"units": unit_registry.Unit("dm")}),
-                    "y": ("y", [60, 120], {"units": unit_registry.Unit("s")}),
+                    "x": ("x", [10, 20, 30], {"units": u.Unit("dm")}),
+                    "y": ("y", [60, 120], {"units": u.Unit("s")}),
                 },
             ),
             {"x": Quantity([1, 3], "m"), "y": Quantity([1], "min")},
@@ -859,8 +918,8 @@ def test_loc(obj, indexers, expected, error):
                 [[-1, 1], [2, 3], [-2, 5]],
                 dims=("x", "y"),
                 coords={
-                    "x": ("x", [10, 20, 30], {"units": unit_registry.Unit("dm")}),
-                    "y": ("y", [60, 120], {"units": unit_registry.Unit("s")}),
+                    "x": ("x", [10, 20, 30], {"units": u.Unit("dm")}),
+                    "y": ("y", [60, 120], {"units": u.Unit("s")}),
                 },
             ),
             None,
@@ -871,8 +930,8 @@ def test_loc(obj, indexers, expected, error):
                 [[0, 1], [2, 3], [4, 5]],
                 dims=("x", "y"),
                 coords={
-                    "x": ("x", [10, 20, 30], {"units": unit_registry.Unit("dm")}),
-                    "y": ("y", [60, 120], {"units": unit_registry.Unit("s")}),
+                    "x": ("x", [10, 20, 30], {"units": u.Unit("dm")}),
+                    "y": ("y", [60, 120], {"units": u.Unit("s")}),
                 },
             ),
             {"x": Quantity([1, 3], "s"), "y": Quantity([1], "m")},
@@ -886,8 +945,8 @@ def test_loc(obj, indexers, expected, error):
                 Quantity([[0, 1], [2, 3], [4, 5]], "m"),
                 dims=("x", "y"),
                 coords={
-                    "x": ("x", [10, 20, 30], {"units": unit_registry.Unit("dm")}),
-                    "y": ("y", [60, 120], {"units": unit_registry.Unit("s")}),
+                    "x": ("x", [10, 20, 30], {"units": u.Unit("dm")}),
+                    "y": ("y", [60, 120], {"units": u.Unit("s")}),
                 },
             ),
             {"x": Quantity([10, 30], "dm"), "y": Quantity([60], "s")},
@@ -896,8 +955,8 @@ def test_loc(obj, indexers, expected, error):
                 Quantity([[-1, 1], [2, 3], [-2, 5]], "m"),
                 dims=("x", "y"),
                 coords={
-                    "x": ("x", [10, 20, 30], {"units": unit_registry.Unit("dm")}),
-                    "y": ("y", [60, 120], {"units": unit_registry.Unit("s")}),
+                    "x": ("x", [10, 20, 30], {"units": u.Unit("dm")}),
+                    "y": ("y", [60, 120], {"units": u.Unit("s")}),
                 },
             ),
             None,
@@ -908,8 +967,8 @@ def test_loc(obj, indexers, expected, error):
                 Quantity([[0, 1], [2, 3], [4, 5]], "m"),
                 dims=("x", "y"),
                 coords={
-                    "x": ("x", [10, 20, 30], {"units": unit_registry.Unit("dm")}),
-                    "y": ("y", [60, 120], {"units": unit_registry.Unit("s")}),
+                    "x": ("x", [10, 20, 30], {"units": u.Unit("dm")}),
+                    "y": ("y", [60, 120], {"units": u.Unit("s")}),
                 },
             ),
             {"x": Quantity([10, 30], "dm"), "y": Quantity([60], "s")},
@@ -918,8 +977,8 @@ def test_loc(obj, indexers, expected, error):
                 Quantity([[-1000, 1], [2, 3], [-2000, 5]], "m"),
                 dims=("x", "y"),
                 coords={
-                    "x": ("x", [10, 20, 30], {"units": unit_registry.Unit("dm")}),
-                    "y": ("y", [60, 120], {"units": unit_registry.Unit("s")}),
+                    "x": ("x", [10, 20, 30], {"units": u.Unit("dm")}),
+                    "y": ("y", [60, 120], {"units": u.Unit("s")}),
                 },
             ),
             None,
@@ -930,8 +989,8 @@ def test_loc(obj, indexers, expected, error):
                 Quantity([[0, 1], [2, 3], [4, 5]], "m"),
                 dims=("x", "y"),
                 coords={
-                    "x": ("x", [10, 20, 30], {"units": unit_registry.Unit("dm")}),
-                    "y": ("y", [60, 120], {"units": unit_registry.Unit("s")}),
+                    "x": ("x", [10, 20, 30], {"units": u.Unit("dm")}),
+                    "y": ("y", [60, 120], {"units": u.Unit("s")}),
                 },
             ),
             {"x": Quantity([10, 30], "dm"), "y": Quantity([60], "s")},
@@ -958,15 +1017,15 @@ def test_loc_setitem(obj, indexers, values, expected, error):
         pytest.param(
             xr.Dataset(
                 {
-                    "x": ("x", [10, 20, 30], {"units": unit_registry.Unit("dm")}),
-                    "y": ("y", [60, 120], {"units": unit_registry.Unit("s")}),
+                    "x": ("x", [10, 20, 30], {"units": u.Unit("dm")}),
+                    "y": ("y", [60, 120], {"units": u.Unit("s")}),
                 }
             ),
             {"x": Quantity([10, 30], "dm"), "y": Quantity([60], "s")},
             xr.Dataset(
                 {
-                    "x": ("x", [20], {"units": unit_registry.Unit("dm")}),
-                    "y": ("y", [120], {"units": unit_registry.Unit("s")}),
+                    "x": ("x", [20], {"units": u.Unit("dm")}),
+                    "y": ("y", [120], {"units": u.Unit("s")}),
                 }
             ),
             None,
@@ -975,15 +1034,15 @@ def test_loc_setitem(obj, indexers, values, expected, error):
         pytest.param(
             xr.Dataset(
                 {
-                    "x": ("x", [10, 20, 30], {"units": unit_registry.Unit("dm")}),
-                    "y": ("y", [60, 120], {"units": unit_registry.Unit("s")}),
+                    "x": ("x", [10, 20, 30], {"units": u.Unit("dm")}),
+                    "y": ("y", [60, 120], {"units": u.Unit("s")}),
                 }
             ),
             {"x": Quantity([1, 3], "m"), "y": Quantity([1], "min")},
             xr.Dataset(
                 {
-                    "x": ("x", [20], {"units": unit_registry.Unit("dm")}),
-                    "y": ("y", [120], {"units": unit_registry.Unit("s")}),
+                    "x": ("x", [20], {"units": u.Unit("dm")}),
+                    "y": ("y", [120], {"units": u.Unit("s")}),
                 }
             ),
             None,
@@ -992,8 +1051,8 @@ def test_loc_setitem(obj, indexers, values, expected, error):
         pytest.param(
             xr.Dataset(
                 {
-                    "x": ("x", [10, 20, 30], {"units": unit_registry.Unit("dm")}),
-                    "y": ("y", [60, 120], {"units": unit_registry.Unit("s")}),
+                    "x": ("x", [10, 20, 30], {"units": u.Unit("dm")}),
+                    "y": ("y", [60, 120], {"units": u.Unit("s")}),
                 }
             ),
             {"x": Quantity([1, 3], "s"), "y": Quantity([1], "m")},
@@ -1004,8 +1063,8 @@ def test_loc_setitem(obj, indexers, values, expected, error):
         pytest.param(
             xr.Dataset(
                 {
-                    "x": ("x", [10, 20, 30], {"units": unit_registry.Unit("dm")}),
-                    "y": ("y", [60, 120], {"units": unit_registry.Unit("s")}),
+                    "x": ("x", [10, 20, 30], {"units": u.Unit("dm")}),
+                    "y": ("y", [60, 120], {"units": u.Unit("s")}),
                 }
             ),
             {"x": Quantity([10, 30], "m"), "y": Quantity([60], "min")},
@@ -1018,8 +1077,8 @@ def test_loc_setitem(obj, indexers, values, expected, error):
                 [[0, 1], [2, 3], [4, 5]],
                 dims=("x", "y"),
                 coords={
-                    "x": ("x", [10, 20, 30], {"units": unit_registry.Unit("dm")}),
-                    "y": ("y", [60, 120], {"units": unit_registry.Unit("s")}),
+                    "x": ("x", [10, 20, 30], {"units": u.Unit("dm")}),
+                    "y": ("y", [60, 120], {"units": u.Unit("s")}),
                 },
             ),
             {"x": Quantity([10, 30], "dm"), "y": Quantity([60], "s")},
@@ -1027,8 +1086,8 @@ def test_loc_setitem(obj, indexers, values, expected, error):
                 [[3]],
                 dims=("x", "y"),
                 coords={
-                    "x": ("x", [20], {"units": unit_registry.Unit("dm")}),
-                    "y": ("y", [120], {"units": unit_registry.Unit("s")}),
+                    "x": ("x", [20], {"units": u.Unit("dm")}),
+                    "y": ("y", [120], {"units": u.Unit("s")}),
                 },
             ),
             None,
@@ -1039,8 +1098,8 @@ def test_loc_setitem(obj, indexers, values, expected, error):
                 [[0, 1], [2, 3], [4, 5]],
                 dims=("x", "y"),
                 coords={
-                    "x": ("x", [10, 20, 30], {"units": unit_registry.Unit("dm")}),
-                    "y": ("y", [60, 120], {"units": unit_registry.Unit("s")}),
+                    "x": ("x", [10, 20, 30], {"units": u.Unit("dm")}),
+                    "y": ("y", [60, 120], {"units": u.Unit("s")}),
                 },
             ),
             {"x": Quantity([1, 3], "m"), "y": Quantity([1], "min")},
@@ -1048,8 +1107,8 @@ def test_loc_setitem(obj, indexers, values, expected, error):
                 [[3]],
                 dims=("x", "y"),
                 coords={
-                    "x": ("x", [20], {"units": unit_registry.Unit("dm")}),
-                    "y": ("y", [120], {"units": unit_registry.Unit("s")}),
+                    "x": ("x", [20], {"units": u.Unit("dm")}),
+                    "y": ("y", [120], {"units": u.Unit("s")}),
                 },
             ),
             None,
@@ -1060,8 +1119,8 @@ def test_loc_setitem(obj, indexers, values, expected, error):
                 [[0, 1], [2, 3], [4, 5]],
                 dims=("x", "y"),
                 coords={
-                    "x": ("x", [10, 20, 30], {"units": unit_registry.Unit("dm")}),
-                    "y": ("y", [60, 120], {"units": unit_registry.Unit("s")}),
+                    "x": ("x", [10, 20, 30], {"units": u.Unit("dm")}),
+                    "y": ("y", [60, 120], {"units": u.Unit("s")}),
                 },
             ),
             {"x": Quantity([10, 30], "s"), "y": Quantity([60], "m")},
@@ -1074,8 +1133,8 @@ def test_loc_setitem(obj, indexers, values, expected, error):
                 [[0, 1], [2, 3], [4, 5]],
                 dims=("x", "y"),
                 coords={
-                    "x": ("x", [10, 20, 30], {"units": unit_registry.Unit("dm")}),
-                    "y": ("y", [60, 120], {"units": unit_registry.Unit("s")}),
+                    "x": ("x", [10, 20, 30], {"units": u.Unit("dm")}),
+                    "y": ("y", [60, 120], {"units": u.Unit("s")}),
                 },
             ),
             {"x": Quantity([10, 30], "m"), "y": Quantity([60], "min")},
@@ -1155,7 +1214,7 @@ def test_chunk(obj):
     actual = obj.astropy.chunk({"x": 2})
 
     expected = (
-        obj.astropy.dequantify().chunk({"x": 2}).astropy.quantify(unit_registry=unit_registry)
+        obj.astropy.dequantify().chunk({"x": 2}).astropy.quantify()
     )
 
     assert_units_equal(actual, expected)
@@ -1163,11 +1222,12 @@ def test_chunk(obj):
 
 
 @pytest.mark.parametrize(
-    ["obj", "units", "indexers", "expected", "expected_units", "error"],
+    ["obj", "units", "equivalencies", "indexers", "expected", "expected_units", "error"],
     (
         pytest.param(
             xr.Dataset({"x": ("x", [10, 20, 30]), "y": ("y", [60, 120])}),
             {"x": "dm", "y": "s"},
+            None,
             {"x": Quantity([10, 30, 50], "dm"), "y": Quantity([0, 120, 240], "s")},
             xr.Dataset({"x": ("x", [10, 30, 50]), "y": ("y", [0, 120, 240])}),
             {"x": "dm", "y": "s"},
@@ -1177,6 +1237,7 @@ def test_chunk(obj):
         pytest.param(
             xr.Dataset({"x": ("x", [10, 20, 30]), "y": ("y", [60, 120])}),
             {"x": "dm", "y": "s"},
+            None,
             {"x": Quantity([0, 1, 3, 5], "m"), "y": Quantity([0, 2, 4], "min")},
             xr.Dataset({"x": ("x", [0, 1, 3, 5]), "y": ("y", [0, 2, 4])}),
             {"x": "m", "y": "min"},
@@ -1184,8 +1245,19 @@ def test_chunk(obj):
             id="Dataset-compatible units",
         ),
         pytest.param(
+            xr.Dataset({"x": ("x", [1, 2, 3]), "y": ("y", [60, 120])}),
+            {"x": "k", "y": "s"},
+            u.parallax(),
+            {"x": Quantity([0, 100, 300, 500], "1/m"), "y": Quantity([0, 2, 4], "min")},
+            xr.Dataset({"x": ("x", [0, 100, 300, 500]), "y": ("y", [0, 2, 4])}),
+            {"x": "1/m", "y": "min"},
+            None,
+            id="Dataset-equivalent units",
+        ),
+        pytest.param(
             xr.Dataset({"x": ("x", [10, 20, 30]), "y": ("y", [60, 120])}),
             {"x": "dm", "y": "s"},
+            None,
             {"x": Quantity([1, 3], "s"), "y": Quantity([1], "m")},
             None,
             {},
@@ -1201,6 +1273,7 @@ def test_chunk(obj):
                 }
             ),
             {"a": "kg"},
+            None,
             {
                 "x": [15, 25],
                 "y": [75, 105],
@@ -1223,6 +1296,7 @@ def test_chunk(obj):
                 coords={"x": ("x", [10, 20, 30]), "y": ("y", [60, 120])},
             ),
             {"x": "dm", "y": "s"},
+            None,
             {"x": Quantity([10, 30, 50], "dm"), "y": Quantity([0, 240], "s")},
             xr.DataArray(
                 [[np.nan, np.nan], [np.nan, np.nan], [np.nan, np.nan]],
@@ -1240,6 +1314,7 @@ def test_chunk(obj):
                 coords={"x": ("x", [10, 20, 30]), "y": ("y", [60, 120])},
             ),
             {"x": "dm", "y": "s"},
+            None,
             {"x": Quantity([1, 3, 5], "m"), "y": Quantity([0, 2], "min")},
             xr.DataArray(
                 [[np.nan, 1], [np.nan, 5], [np.nan, np.nan]],
@@ -1254,9 +1329,28 @@ def test_chunk(obj):
             xr.DataArray(
                 [[0, 1], [2, 3], [4, 5]],
                 dims=("x", "y"),
+                coords={"x": ("x", [1, 2, 3]), "y": ("y", [60, 120])},
+            ),
+            {"x": "k", "y": "s"},
+            u.parallax(),
+            {"x": Quantity([100, 300, 500], "1/m"), "y": Quantity([0, 2], "min")},
+            xr.DataArray(
+                [[np.nan, 1], [np.nan, 5], [np.nan, np.nan]],
+                dims=("x", "y"),
+                coords={"x": ("x", [100, 300, 500]), "y": ("y", [0, 2])},
+            ),
+            {"x": "1/m", "y": "min"},
+            None,
+            id="DataArray-equivalent units",
+        ),
+        pytest.param(
+            xr.DataArray(
+                [[0, 1], [2, 3], [4, 5]],
+                dims=("x", "y"),
                 coords={"x": ("x", [10, 20, 30]), "y": ("y", [60, 120])},
             ),
             {"x": "dm", "y": "s"},
+            None,
             {"x": Quantity([10, 30], "s"), "y": Quantity([60], "m")},
             None,
             {},
@@ -1270,6 +1364,7 @@ def test_chunk(obj):
                 coords={"x": [10, 20, 30], "y": [60, 120]},
             ),
             {None: "kg"},
+            None,
             {"x": [15, 25], "y": [75, 105]},
             xr.DataArray(
                 [[np.nan, np.nan], [np.nan, np.nan]],
@@ -1282,26 +1377,27 @@ def test_chunk(obj):
         ),
     ),
 )
-def test_reindex(obj, units, indexers, expected, expected_units, error):
+def test_reindex(obj, units, equivalencies, indexers, expected, expected_units, error):
     obj_ = obj.astropy.quantify(units)
 
     if error is not None:
         with pytest.raises(error):
             obj.astropy.reindex(indexers)
     else:
-        expected_ = expected.astropy.quantify(expected_units)
+        expected_ = expected.astropy.quantify(units=expected_units)
 
-        actual = obj_.astropy.reindex(indexers)
+        actual = obj_.astropy.reindex(indexers, equivalencies=equivalencies)
         assert_units_equal(actual, expected_)
         assert_identical(actual, expected_)
 
 
 @pytest.mark.parametrize(
-    ["obj", "units", "other", "other_units", "expected", "expected_units", "error"],
+    ["obj", "units", "equivalencies", "other", "other_units", "expected", "expected_units", "error"],
     (
         pytest.param(
             xr.Dataset({"x": ("x", [10, 20, 30]), "y": ("y", [60, 120])}),
             {"x": "dm", "y": "s"},
+            None,
             xr.Dataset({"x": ("x", [10, 30, 50]), "y": ("y", [0, 120, 240])}),
             {"x": "dm", "y": "s"},
             xr.Dataset({"x": ("x", [10, 30, 50]), "y": ("y", [0, 120, 240])}),
@@ -1312,6 +1408,7 @@ def test_reindex(obj, units, indexers, expected, expected_units, error):
         pytest.param(
             xr.Dataset({"x": ("x", [10, 20, 30]), "y": ("y", [60, 120])}),
             {"x": "dm", "y": "s"},
+            None,
             xr.Dataset({"x": ("x", [0, 1, 3, 5]), "y": ("y", [0, 2, 4])}),
             {"x": "m", "y": "min"},
             xr.Dataset({"x": ("x", [0, 1, 3, 5]), "y": ("y", [0, 2, 4])}),
@@ -1321,7 +1418,19 @@ def test_reindex(obj, units, indexers, expected, expected_units, error):
         ),
         pytest.param(
             xr.Dataset({"x": ("x", [10, 20, 30]), "y": ("y", [60, 120])}),
+            {"x": "k", "y": "s"},
+            u.parallax(),
+            xr.Dataset({"x": ("x", [0, 1000, 3000, 5000]), "y": ("y", [0, 2, 4])}),
+            {"x": "1/m", "y": "min"},
+            xr.Dataset({"x": ("x", [0, 1000, 3000, 5000]), "y": ("y", [0, 2, 4])}),
+            {"x": "1/m", "y": "min"},
+            None,
+            id="Dataset-equivalent units",
+        ),
+        pytest.param(
+            xr.Dataset({"x": ("x", [10, 20, 30]), "y": ("y", [60, 120])}),
             {"x": "dm", "y": "s"},
+            None,
             xr.Dataset({"x": ("x", [1, 3]), "y": ("y", [1])}),
             {"x": "s", "y": "m"},
             None,
@@ -1336,6 +1445,7 @@ def test_reindex(obj, units, indexers, expected, expected_units, error):
                 coords={"x": ("x", [10, 20, 30]), "y": ("y", [60, 120])},
             ),
             {"x": "dm", "y": "s"},
+            None,
             xr.Dataset({"x": ("x", [10, 30, 50]), "y": ("y", [0, 240])}),
             {"x": "dm", "y": "s"},
             xr.DataArray(
@@ -1356,6 +1466,7 @@ def test_reindex(obj, units, indexers, expected, expected_units, error):
                 }
             ),
             {"a": "kg"},
+            None,
             xr.Dataset({"x": [15, 25], "y": [75, 105]}),
             {},
             xr.Dataset(
@@ -1376,6 +1487,7 @@ def test_reindex(obj, units, indexers, expected, expected_units, error):
                 coords={"x": ("x", [10, 20, 30]), "y": ("y", [60, 120])},
             ),
             {"x": "dm", "y": "s"},
+            None,
             xr.Dataset({"x": ("x", [1, 3, 5]), "y": ("y", [0, 2])}),
             {"x": "m", "y": "min"},
             xr.DataArray(
@@ -1393,7 +1505,27 @@ def test_reindex(obj, units, indexers, expected, expected_units, error):
                 dims=("x", "y"),
                 coords={"x": ("x", [10, 20, 30]), "y": ("y", [60, 120])},
             ),
+            {"x": "k", "y": "s"},
+            u.parallax(),
+            xr.Dataset({"x": ("x", [1000, 3000, 5000]), "y": ("y", [0, 2])}),
+            {"x": "1/m", "y": "min"},
+            xr.DataArray(
+                [[np.nan, 1], [np.nan, 5], [np.nan, np.nan]],
+                dims=("x", "y"),
+                coords={"x": ("x", [1000, 3000, 5000]), "y": ("y", [0, 2])},
+            ),
+            {"x": "1/m", "y": "min"},
+            None,
+            id="DataArray-equivalent units",
+        ),
+        pytest.param(
+            xr.DataArray(
+                [[0, 1], [2, 3], [4, 5]],
+                dims=("x", "y"),
+                coords={"x": ("x", [10, 20, 30]), "y": ("y", [60, 120])},
+            ),
             {"x": "dm", "y": "s"},
+            None,
             xr.Dataset({"x": ("x", [10, 30]), "y": ("y", [60])}),
             {"x": "s", "y": "m"},
             None,
@@ -1408,6 +1540,7 @@ def test_reindex(obj, units, indexers, expected, expected_units, error):
                 coords={"x": [10, 20, 30], "y": [60, 120]},
             ),
             {"a": "kg"},
+            None,
             xr.Dataset({"x": [15, 25], "y": [75, 105]}),
             {},
             xr.DataArray(
@@ -1421,13 +1554,13 @@ def test_reindex(obj, units, indexers, expected, expected_units, error):
         ),
     ),
 )
-def test_reindex_like(obj, units, other, other_units, expected, expected_units, error):
+def test_reindex_like(obj, units, equivalencies, other, other_units, expected, expected_units, error):
     obj_ = obj.astropy.quantify(units)
     other_ = other.astropy.quantify(other_units)
 
     if error is not None:
         with pytest.raises(error):
-            obj_.astropy.reindex_like(other_)
+            obj_.astropy.reindex_like(other_, equivalencies=equivalencies)
     else:
         expected_ = expected.astropy.quantify(expected_units)
 

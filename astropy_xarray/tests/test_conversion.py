@@ -16,7 +16,7 @@ from .utils import (
     assert_indexers_equal,
 )
 
-unit_registry = astropy.units
+u = astropy.units
 Quantity = astropy.units.Quantity
 Unit = astropy.units.Unit
 
@@ -32,14 +32,14 @@ def to_quantity(v, u):
     return Quantity(v, u)
 
 
-def convert_quantity(q, u):
+def convert_quantity(q, u, equivalencies):
     if u is None:
         return q
 
     if not isinstance(q, Quantity):
         q = Quantity(q)
 
-    return q.to(u)
+    return q.to(u, equivalencies=equivalencies)
 
 
 def strip_quantity(q):
@@ -104,13 +104,14 @@ class TestArrayFunctions:
 
         actual = conversion.array_attach_unit(data, unit)
         assert_array_units_equal(expected, actual)
-        assert_array_equal(expected, actual)
+        assert_array_equal(actual, expected)
 
     @pytest.mark.parametrize(
-        ["unit", "data", "expected", "error", "match"],
+        ["unit", "equivalencies", "data", "expected", "error", "match"],
         (
             pytest.param(
                 1.2,
+                None,
                 np.array([0, 1, 2]),
                 None,
                 ValueError,
@@ -119,6 +120,7 @@ class TestArrayFunctions:
             ),
             pytest.param(
                 1,
+                None,
                 np.array([0, 1, 2]),
                 None,
                 ValueError,
@@ -126,6 +128,7 @@ class TestArrayFunctions:
                 id="no unit (1)-ndarray",
             ),
             pytest.param(
+                None,
                 None,
                 np.array([0, 1, 2]),
                 np.array([0, 1, 2]),
@@ -135,6 +138,7 @@ class TestArrayFunctions:
             ),
             pytest.param(
                 "mm",
+                None,
                 np.array([0, 1, 2]),
                 None,
                 ValueError,
@@ -143,6 +147,7 @@ class TestArrayFunctions:
             ),
             pytest.param(
                 Unit("deg"),
+                None,
                 Quantity(np.array([0, np.pi / 2, np.pi]), "rad"),
                 Quantity([0, 90, 180], "deg"),
                 None,
@@ -151,7 +156,8 @@ class TestArrayFunctions:
             ),
             pytest.param(
                 Unit("mm"),
-                Quantity(np.array([0, np.pi / 2, np.pi]), "rad"),
+                None,
+                Quantity(np.array([0, np.pi / 2, np.pi])),
                 None,
                 astropy.units.core.UnitConversionError,
                 None,
@@ -159,6 +165,7 @@ class TestArrayFunctions:
             ),
             pytest.param(
                 "mm",
+                None,
                 Quantity([0, 1, 2], "m"),
                 Quantity([0, 1000, 2000], "mm"),
                 None,
@@ -166,7 +173,8 @@ class TestArrayFunctions:
                 id="string-quantity",
             ),
             pytest.param(
-                unit_registry.mm,
+                u.mm,
+                None,
                 Quantity([0, 1, 2], "m"),
                 Quantity([0, 1000, 2000], "mm"),
                 None,
@@ -175,23 +183,52 @@ class TestArrayFunctions:
             ),
             pytest.param(
                 "s",
+                None,
                 Quantity([0, 1, 2], "m"),
                 None,
                 astropy.units.core.UnitConversionError,
                 None,
                 id="quantity-incompatible unit",
             ),
+            pytest.param(
+                "arcsec",
+                u.parallax(),
+                Quantity([0, 1, 2], "parsec"),
+                Quantity([np.inf, 1.0, 0.5], "arcsec"),
+                None,
+                None,
+                id="parallax-equivalent unit",
+            ),
+            pytest.param(
+                "",
+                u.dimensionless_angles(),
+                Quantity([0, 1, 2], "rad"),
+                Quantity([0, 1, 2]),
+                None,
+                None,
+                id="dimensionless-angles-equivalent unit",
+            ),
+            pytest.param(
+                "rad",
+                u.dimensionless_angles(),
+                Quantity([0, 1, 2], ""),
+                Quantity([0, 1, 2], "rad"),
+                None,
+                None,
+                id="dimensionless-angles-equivalent unit",
+            ),
         ),
     )
-    def test_array_convert_units(self, data, unit, expected, error, match):
+    def test_array_convert_units(self, data, equivalencies, unit, expected, error, match):
         if error is not None:
             with pytest.raises(error, match=match):
-                conversion.array_convert_unit(data, unit)
+                conversion.array_convert_unit(data, unit, equivalencies)
 
             return
 
-        actual = conversion.array_convert_unit(data, unit)
-        assert_array_equal(expected, actual)
+        actual = conversion.array_convert_unit(data, unit, equivalencies)
+        assert_array_equal(actual, expected)
+        assert_array_units_equal(actual, expected)
 
     @pytest.mark.parametrize(
         ["data", "expected"],
@@ -215,7 +252,7 @@ class TestArrayFunctions:
     def test_array_strip_units(self, data, expected):
         actual = conversion.array_strip_unit(data)
 
-        assert_array_equal(expected, actual)
+        assert_array_equal(actual, expected)
 
 
 class TestXarrayFunctions:
@@ -226,15 +263,15 @@ class TestXarrayFunctions:
             pytest.param({}, id="empty units"),
             pytest.param({"a": None, "b": None, "u": None, "x": None}, id="no units"),
             pytest.param(
-                {"a": unit_registry.m, "b": unit_registry.m, "u": None, "x": None},
+                {"a": u.m, "b": u.m, "u": None, "x": None},
                 id="data units",
             ),
             pytest.param(
-                {"a": None, "b": None, "u": unit_registry.s, "x": None},
+                {"a": None, "b": None, "u": u.s, "x": None},
                 id="coord units",
             ),
             pytest.param(
-                {"a": None, "b": None, "u": None, "x": unit_registry.m}, id="dim units"
+                {"a": None, "b": None, "u": None, "x": u.m}, id="dim units"
             ),
         ),
     )
@@ -296,27 +333,38 @@ class TestXarrayFunctions:
 
     @pytest.mark.parametrize("type", ("DataArray", "Dataset"))
     @pytest.mark.parametrize(
-        ["variant", "units", "error", "match"],
+        ["variant", "units", "equivalencies", "error", "match"],
         (
-            pytest.param("none", {}, None, None, id="none-no units"),
+            pytest.param("none", {}, None, None, None, id="none-no units"),
             pytest.param(
                 "none",
                 {"a": Unit("g"), "b": Unit("Pa"), "u": Unit("ms"), "x": Unit("mm")},
+                None,
                 ValueError,
                 "(?s)Cannot convert variables:.+'u'",
                 id="none-with units",
             ),
-            pytest.param("data", {}, None, None, id="data-no units"),
+            pytest.param("data", {}, None, None, None, id="data-no units"),
             pytest.param(
                 "data",
                 {"a": Unit("g"), "b": Unit("Pa")},
+                None,
                 None,
                 None,
                 id="data-compatible units",
             ),
             pytest.param(
                 "data",
+                {"a": Unit("eV"), "b": Unit("Pa")},
+                u.mass_energy(),
+                None,
+                None,
+                id="data-equivalent units",
+            ),
+            pytest.param(
+                "data",
                 {"a": Unit("s"), "b": Unit("m")},
+                None,
                 ValueError,
                 "(?s)Cannot convert variables:.+'a'",
                 id="data-incompatible units",
@@ -326,6 +374,7 @@ class TestXarrayFunctions:
                 {},
                 None,
                 None,
+                None,
                 id="dims-no units",
             ),
             pytest.param(
@@ -333,11 +382,21 @@ class TestXarrayFunctions:
                 {"x": Unit("mm")},
                 None,
                 None,
+                None,
                 id="dims-compatible units",
             ),
             pytest.param(
                 "dims",
+                {"x": Unit("deg")},
+                u.parallax(),
+                None,
+                None,
+                id="dims-equivalent units",
+            ),
+            pytest.param(
+                "dims",
                 {"x": Unit("ms")},
+                None,
                 ValueError,
                 "(?s)Cannot convert variables:.+'x'",
                 id="dims-incompatible units",
@@ -347,6 +406,7 @@ class TestXarrayFunctions:
                 {},
                 None,
                 None,
+                None,
                 id="coords-no units",
             ),
             pytest.param(
@@ -354,22 +414,32 @@ class TestXarrayFunctions:
                 {"u": Unit("ms")},
                 None,
                 None,
+                None,
                 id="coords-compatible units",
             ),
             pytest.param(
                 "coords",
+                {"x": Unit("pc")},
+                u.parallax(),
+                None,
+                None,
+                id="coords-equivalent units",
+            ),
+            pytest.param(
+                "coords",
                 {"u": Unit("mm")},
+                None,
                 ValueError,
                 "(?s)Cannot convert variables:.+'u'",
                 id="coords-incompatible units",
             ),
         ),
     )
-    def test_convert_units(self, type, variant, units, error, match):
+    def test_convert_units(self, type, variant, units, equivalencies, error, match):
         variants = {
             "none": {"a": None, "b": None, "u": None, "x": None},
             "data": {"a": Unit("kg"), "b": Unit("hPa"), "u": None, "x": None},
-            "coords": {"a": None, "b": None, "u": Unit("s"), "x": None},
+            "coords": {"a": None, "b": None, "u": Unit("s"), "x": Unit("arcsec")},
             "dims": {"a": None, "b": None, "u": None, "x": Unit("m")},
         }
 
@@ -403,14 +473,14 @@ class TestXarrayFunctions:
 
         if error is not None:
             with pytest.raises(error, match=match):
-                conversion.convert_units(obj, units)
+                conversion.convert_units(obj, units, equivalencies)
 
             return
 
-        expected_a = convert_quantity(q_a, units.get("a", original_units.get("a")))
-        expected_b = convert_quantity(q_b, units.get("b", original_units.get("b")))
-        expected_u = convert_quantity(q_u, units.get("u", original_units.get("u")))
-        expected_x = convert_quantity(q_x, units.get("x"))
+        expected_a = convert_quantity(q_a, units.get("a", original_units.get("a")), equivalencies)
+        expected_b = convert_quantity(q_b, units.get("b", original_units.get("b")), equivalencies)
+        expected_u = convert_quantity(q_u, units.get("u", original_units.get("u")), equivalencies)
+        expected_x = convert_quantity(q_x, units.get("x"), equivalencies)
         expected_index = PandasIndex(pd.Index(strip_quantity(expected_x)), "x")
         if units.get("x") is not None:
             expected_index = AstropyIndex(
@@ -431,7 +501,7 @@ class TestXarrayFunctions:
         if type == "DataArray":
             expected = expected["a"]
 
-        actual = conversion.convert_units(obj, units)
+        actual = conversion.convert_units(obj, units, equivalencies)
 
         assert conversion.extract_units(actual) == conversion.extract_units(expected)
         assert_identical(actual, expected)
@@ -606,14 +676,21 @@ class TestXarrayFunctions:
 
 class TestIndexerFunctions:
     @pytest.mark.parametrize(
-        ["indexers", "units", "expected", "error", "match"],
+        ["indexers", "units", "equivalencies", "expected", "error", "match"],
         (
             pytest.param(
-                {"x": 1}, {"x": None}, {"x": 1}, None, None, id="scalar-no units"
+                {"x": 1},
+                {"x": None},
+                None,
+                {"x": 1},
+                None,
+                None,
+                id="scalar-no units"
             ),
             pytest.param(
                 {"x": 1},
                 {"x": "dimensionless"},
+                None,
                 None,
                 ValueError,
                 "(?s)Cannot convert indexers:.+'x'",
@@ -622,6 +699,7 @@ class TestIndexerFunctions:
             pytest.param(
                 {"x": Quantity(1, "m")},
                 {"x": Unit("dm")},
+                None,
                 {"x": Quantity(10, "dm")},
                 None,
                 None,
@@ -630,6 +708,7 @@ class TestIndexerFunctions:
             pytest.param(
                 {"x": np.array([1, 2])},
                 {"x": None},
+                None,
                 {"x": np.array([1, 2])},
                 None,
                 None,
@@ -638,6 +717,7 @@ class TestIndexerFunctions:
             pytest.param(
                 {"x": Quantity([1, 2], "m")},
                 {"x": Unit("dm")},
+                None,
                 {"x": Quantity([10, 20], "dm")},
                 None,
                 None,
@@ -646,6 +726,7 @@ class TestIndexerFunctions:
             pytest.param(
                 {"x": Variable("x", [1, 2])},
                 {"x": None},
+                None,
                 {"x": Variable("x", [1, 2])},
                 None,
                 None,
@@ -654,6 +735,7 @@ class TestIndexerFunctions:
             pytest.param(
                 {"x": Variable("x", Quantity([1, 2], "m"))},
                 {"x": Unit("dm")},
+                None,
                 {"x": Variable("x", Quantity([10, 20], "dm"))},
                 None,
                 None,
@@ -662,6 +744,7 @@ class TestIndexerFunctions:
             pytest.param(
                 {"x": DataArray([1, 2], dims="x")},
                 {"x": None},
+                None,
                 {"x": DataArray([1, 2], dims="x")},
                 None,
                 None,
@@ -670,6 +753,7 @@ class TestIndexerFunctions:
             pytest.param(
                 {"x": DataArray(Quantity([1, 2], "m"), dims="x")},
                 {"x": Unit("dm")},
+                None,
                 {"x": DataArray(Quantity([10, 20], "dm"), dims="x")},
                 None,
                 None,
@@ -678,6 +762,7 @@ class TestIndexerFunctions:
             pytest.param(
                 {"x": slice(None)},
                 {"x": None},
+                None,
                 {"x": slice(None)},
                 None,
                 None,
@@ -686,6 +771,7 @@ class TestIndexerFunctions:
             pytest.param(
                 {"x": slice(1, None)},
                 {"x": None},
+                None,
                 {"x": slice(1, None)},
                 None,
                 None,
@@ -694,6 +780,7 @@ class TestIndexerFunctions:
             pytest.param(
                 {"x": slice(Quantity(1, "m"), Quantity(2, "m"))},
                 {"x": Unit("m")},
+                None,
                 {"x": slice(Quantity(1, "m"), Quantity(2, "m"))},
                 None,
                 None,
@@ -702,6 +789,7 @@ class TestIndexerFunctions:
             pytest.param(
                 {"x": slice(Quantity(1, "m"), Quantity(2000, "mm"))},
                 {"x": Unit("dm")},
+                None,
                 {"x": slice(Quantity(10, "dm"), Quantity(20, "dm"))},
                 None,
                 None,
@@ -711,6 +799,7 @@ class TestIndexerFunctions:
                 {"x": slice(Quantity(1, "m"), Quantity(2, "m"))},
                 {"x": Unit("ms")},
                 None,
+                None,
                 ValueError,
                 "(?s)Cannot convert indexers:.+'x'",
                 id="slice-incompatible units",
@@ -719,18 +808,28 @@ class TestIndexerFunctions:
                 {"x": slice(1000, Quantity(2000, "ms"))},
                 {"x": Unit("s")},
                 None,
+                None,
                 ValueError,
                 "(?s)Cannot convert indexers:.+'x'",
                 id="slice-incompatible units-mixed",
             ),
+            pytest.param(
+                {"x": slice(Quantity(1, "pc"), Quantity(2000, "mpc"))},
+                {"x": Unit("arcsec")},
+                u.parallax(),
+                {"x": slice(Quantity(1, "arcsec"), Quantity(0.5, "arcsec"))},
+                None,
+                None,
+                id="slice-parallax-equivalent units",
+            ),
         ),
     )
-    def test_convert_indexer_units(self, indexers, units, expected, error, match):
+    def test_convert_indexer_units(self, indexers, units, equivalencies, expected, error, match):
         if error is not None:
             with pytest.raises(error, match=match):
-                conversion.convert_indexer_units(indexers, units)
+                conversion.convert_indexer_units(indexers, units, equivalencies)
         else:
-            actual = conversion.convert_indexer_units(indexers, units)
+            actual = conversion.convert_indexer_units(indexers, units, equivalencies)
             assert_indexers_equal(actual, expected)
             assert_indexer_units_equal(actual, expected)
 
