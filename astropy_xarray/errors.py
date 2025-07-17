@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 def format_error_message(mapping, op):
     sep = "\n    " if len(mapping) == 1 else "\n -- "
     if op == "attach":

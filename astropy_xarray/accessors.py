@@ -620,7 +620,13 @@ class AstropyDataArrayAccessor:
         return conversion.attach_units(indexed, converted_units)
 
     def reindex_like(
-        self, other, method=None, tolerance=None, copy=True, fill_value=NA, equivalencies=None,
+        self,
+        other,
+        method=None,
+        tolerance=None,
+        copy=True,
+        fill_value=NA,
+        equivalencies=None,
     ):
         """unit-aware version of reindex_like
 
@@ -703,7 +709,14 @@ class AstropyDataArrayAccessor:
         )
         return conversion.attach_units(interpolated, units)
 
-    def interp_like(self, other, method="linear", assume_sorted=False, equivalencies=None, kwargs=None):
+    def interp_like(
+        self,
+        other,
+        method="linear",
+        assume_sorted=False,
+        equivalencies=None,
+        kwargs=None,
+    ):
         """unit-aware version of interp_like
 
         Like :py:meth:`xarray.DataArray.interp_like`, except the object's indexes are converted
@@ -734,7 +747,13 @@ class AstropyDataArrayAccessor:
         return conversion.attach_units(interpolated, units)
 
     def sel(
-        self, indexers=None, method=None, tolerance=None, drop=False, equivalencies=None, **indexers_kwargs
+        self,
+        indexers=None,
+        method=None,
+        tolerance=None,
+        drop=False,
+        equivalencies=None,
+        **indexers_kwargs,
     ):
         """unit-aware version of sel
 
@@ -794,7 +813,9 @@ class AstropyDataArrayAccessor:
         """
         return DataArrayLocIndexer(self.da)
 
-    def drop_sel(self, labels=None, *, equivalencies=None, errors="raise", **labels_kwargs):
+    def drop_sel(
+        self, labels=None, *, equivalencies=None, errors="raise", **labels_kwargs
+    ):
         """unit-aware version of drop_sel
 
         Just like :py:meth:`xarray.DataArray.drop_sel`, except the indexers are converted
@@ -816,7 +837,9 @@ class AstropyDataArrayAccessor:
 
         # convert the indexers to the indexes units
         try:
-            converted_indexers = conversion.convert_indexer_units(indexers, index_units, equivalencies)
+            converted_indexers = conversion.convert_indexer_units(
+                indexers, index_units, equivalencies
+            )
         except ValueError as e:
             raise KeyError(*e.args) from e
 
@@ -1389,7 +1412,13 @@ class AstropyDatasetAccessor:
         return conversion.attach_units(indexed, converted_units)
 
     def reindex_like(
-        self, other, method=None, tolerance=None, copy=True, fill_value=NA, equivalencies=None
+        self,
+        other,
+        method=None,
+        tolerance=None,
+        copy=True,
+        fill_value=NA,
+        equivalencies=None,
     ):
         """unit-aware version of reindex_like
 
@@ -1472,7 +1501,14 @@ class AstropyDatasetAccessor:
         )
         return conversion.attach_units(interpolated, units)
 
-    def interp_like(self, other, method="linear", assume_sorted=False, equivalencies=None, kwargs=None):
+    def interp_like(
+        self,
+        other,
+        method="linear",
+        assume_sorted=False,
+        equivalencies=None,
+        kwargs=None,
+    ):
         """unit-aware version of interp_like
 
         Like :py:meth:`xarray.Dataset.interp_like`, except the object's indexes are
@@ -1503,7 +1539,13 @@ class AstropyDatasetAccessor:
         return conversion.attach_units(interpolated, units)
 
     def sel(
-        self, indexers=None, method=None, tolerance=None, drop=False, equivalencies=None, **indexers_kwargs
+        self,
+        indexers=None,
+        method=None,
+        tolerance=None,
+        drop=False,
+        equivalencies=None,
+        **indexers_kwargs,
     ):
         """unit-aware version of sel
 
@@ -1565,7 +1607,9 @@ class AstropyDatasetAccessor:
         """
         return DatasetLocIndexer(self.ds)
 
-    def drop_sel(self, labels=None, *, equivalencies=None, errors="raise", **labels_kwargs):
+    def drop_sel(
+        self, labels=None, *, equivalencies=None, errors="raise", **labels_kwargs
+    ):
         """unit-aware version of drop_sel
 
         Just like :py:meth:`xarray.Dataset.drop_sel`, except the indexers are converted
@@ -1587,7 +1631,9 @@ class AstropyDatasetAccessor:
 
         # convert the indexers to the indexes units
         try:
-            converted_indexers = conversion.convert_indexer_units(indexers, index_units, equivalencies)
+            converted_indexers = conversion.convert_indexer_units(
+                indexers, index_units, equivalencies
+            )
         except ValueError as e:
             raise KeyError(*e.args) from e
 

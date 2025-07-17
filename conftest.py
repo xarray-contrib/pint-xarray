@@ -3,10 +3,10 @@ import pytest
 
 @pytest.fixture(autouse=True)
 def add_standard_imports(doctest_namespace, tmpdir):
-    import numpy as np
-    import pandas as pd
     import astropy
     import astropy.units
+    import numpy as np
+    import pandas as pd
     import xarray as xr
 
     import astropy_xarray

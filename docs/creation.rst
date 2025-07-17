@@ -94,6 +94,7 @@ different registry, we can either pass it as the ``unit_registry`` parameter:
 .. ipython::
 
    In [10]: import astropy.units as u
+       ...:
        ...: # set up the registry
 
    In [11]: da.astropy.quantify("degree")

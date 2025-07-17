@@ -5,8 +5,8 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "astropy-xarray"
 authors = [
-    { name = "Tom Nicholas", email = "tomnicholas1@googlemail.com" },
-    { name = "Callan Gray", email = "calj.gray@gmail.com" },
+  { name = "Tom Nicholas", email = "tomnicholas1@googlemail.com" },
+  { name = "Callan Gray", email = "calj.gray@gmail.com" },
 ]
 description = "Physical units interface to xarray using astropy"
 license = { text = "Apache-2" }
@@ -43,7 +43,7 @@ docs = [
   "sphinx>=8.0",
   "sphinx_auto_summary_accessors",
   "nbsphinx",
-  "sphinx_rtd_theme"
+  "sphinx_rtd_theme",
 ]
 
 [tool.setuptools.packages.find]
@@ -99,8 +99,8 @@ extend-safe-fixes = [
 fixable = ["I", "TID252"]
 
 [tool.ruff.lint.isort]
-known-first-party = [ "astropy_xarray" ]
-known-third-party = [ "xarray" ]
+known-first-party = ["astropy_xarray"]
+known-third-party = ["xarray"]
 
 [tool.ruff.lint.flake8-tidy-imports]
 # Disallow all relative imports.

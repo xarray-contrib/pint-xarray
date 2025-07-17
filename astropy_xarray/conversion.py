@@ -97,7 +97,9 @@ def array_convert_unit(data, unit, equivalencies) -> astropy.units.Quantity:
     if unit is not None:
         if not isinstance(unit, (str, astropy.units.UnitBase)):
             raise ValueError(f"cannot use {unit!r} as a unit")
-        elif isinstance(unit, (str, astropy.units.UnitBase)) and not isinstance(data, astropy.units.Quantity):
+        elif isinstance(unit, (str, astropy.units.UnitBase)) and not isinstance(
+            data, astropy.units.Quantity
+        ):
             raise ValueError(f"cannot convert a non-quantity using {unit!r} as unit")
 
         data = (
@@ -314,7 +316,9 @@ def convert_units_dataset(obj, units, equivalencies):
             continue
 
         try:
-            converted_index = convert_units_index(idx, idx_vars, idx_units, equivalencies)
+            converted_index = convert_units_index(
+                idx, idx_vars, idx_units, equivalencies
+            )
             indexes.update({k: converted_index for k in idx_vars})
             index_vars.update(converted_index.create_variables())
         except (ValueError, astropy.units.core.UnitConversionError) as e:
@@ -341,7 +345,11 @@ def convert_units(obj, units, equivalencies):
 
     try:
         new_obj = call_on_dataset(
-            convert_units_dataset, obj, name=temporary_name, units=units, equivalencies=equivalencies
+            convert_units_dataset,
+            obj,
+            name=temporary_name,
+            units=units,
+            equivalencies=equivalencies,
         )
     except ValueError as e:
         (failed,) = e.args
@@ -473,7 +481,11 @@ def slice_extract_units(indexer):
 def convert_units_slice(indexer, units, equivalencies):
     attrs = {name: getattr(indexer, name) for name in slice_attributes}
     converted = {
-        name: array_convert_unit(value, units, equivalencies) if value is not None else None
+        name: (
+            array_convert_unit(value, units, equivalencies)
+            if value is not None
+            else None
+        )
         for name, value in attrs.items()
     }
     args = [converted[name] for name in slice_attributes]
