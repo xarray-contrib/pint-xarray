@@ -17,8 +17,8 @@ from importlib.metadata import version
 
 import astropy.units
 
-from . import accessors, formatting, testing  # noqa: F401
-from .index import AstropyIndex
+from astropy_xarray import accessors, formatting, testing  # noqa: F401
+from astropy_xarray.index import AstropyIndex
 
 try:
     __version__ = version("astropy-xarray")

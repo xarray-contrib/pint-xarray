@@ -1,14 +1,13 @@
+import astropy.units
 import numpy as np
 import pandas as pd
-import astropy.units
 import pytest
 from xarray import Coordinates, DataArray, Dataset, Variable
 from xarray.core.indexes import PandasIndex
 
 from astropy_xarray import conversion
 from astropy_xarray.index import AstropyIndex
-
-from .utils import (
+from astropy_xarray.tests.utils import (
     assert_array_equal,
     assert_array_units_equal,
     assert_identical,
@@ -219,7 +218,9 @@ class TestArrayFunctions:
             ),
         ),
     )
-    def test_array_convert_units(self, data, equivalencies, unit, expected, error, match):
+    def test_array_convert_units(
+        self, data, equivalencies, unit, expected, error, match
+    ):
         if error is not None:
             with pytest.raises(error, match=match):
                 conversion.array_convert_unit(data, unit, equivalencies)
@@ -270,9 +271,7 @@ class TestXarrayFunctions:
                 {"a": None, "b": None, "u": u.s, "x": None},
                 id="coord units",
             ),
-            pytest.param(
-                {"a": None, "b": None, "u": None, "x": u.m}, id="dim units"
-            ),
+            pytest.param({"a": None, "b": None, "u": None, "x": u.m}, id="dim units"),
         ),
     )
     def test_attach_units(self, type, units):
@@ -477,9 +476,15 @@ class TestXarrayFunctions:
 
             return
 
-        expected_a = convert_quantity(q_a, units.get("a", original_units.get("a")), equivalencies)
-        expected_b = convert_quantity(q_b, units.get("b", original_units.get("b")), equivalencies)
-        expected_u = convert_quantity(q_u, units.get("u", original_units.get("u")), equivalencies)
+        expected_a = convert_quantity(
+            q_a, units.get("a", original_units.get("a")), equivalencies
+        )
+        expected_b = convert_quantity(
+            q_b, units.get("b", original_units.get("b")), equivalencies
+        )
+        expected_u = convert_quantity(
+            q_u, units.get("u", original_units.get("u")), equivalencies
+        )
         expected_x = convert_quantity(q_x, units.get("x"), equivalencies)
         expected_index = PandasIndex(pd.Index(strip_quantity(expected_x)), "x")
         if units.get("x") is not None:
@@ -679,13 +684,7 @@ class TestIndexerFunctions:
         ["indexers", "units", "equivalencies", "expected", "error", "match"],
         (
             pytest.param(
-                {"x": 1},
-                {"x": None},
-                None,
-                {"x": 1},
-                None,
-                None,
-                id="scalar-no units"
+                {"x": 1}, {"x": None}, None, {"x": 1}, None, None, id="scalar-no units"
             ),
             pytest.param(
                 {"x": 1},
@@ -824,7 +823,9 @@ class TestIndexerFunctions:
             ),
         ),
     )
-    def test_convert_indexer_units(self, indexers, units, equivalencies, expected, error, match):
+    def test_convert_indexer_units(
+        self, indexers, units, equivalencies, expected, error, match
+    ):
         if error is not None:
             with pytest.raises(error, match=match):
                 conversion.convert_indexer_units(indexers, units, equivalencies)

@@ -2,8 +2,8 @@
 
 What's new
 ==========
-0.1 (*unreleased*)
-------------------
+0.1 (17 Jul 2025)
+-----------------
 
 - Added `equivalencies` parameter to :py:meth:`DataArray.astropy.to` and :py:meth:`Dataset.astropy.to`.
 - Removed `registry` parameter from :py:meth:`DataArray.astropy.quantify` and :py:meth:`Dataset.astropy.quantify`.

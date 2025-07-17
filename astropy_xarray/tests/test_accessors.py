@@ -1,10 +1,13 @@
+# make sure scalars are converted to 0d arrays so quantities can
+# always be treated like ndarrays
+import astropy.units as u
+import astropy.units.core
 import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
+from astropy.units import Quantity, Unit, UnitBase
 from numpy.testing import assert_array_equal
-from astropy.units import Unit, UnitBase
-import astropy.units.core
 
 from astropy_xarray import accessors, conversion
 from astropy_xarray.index import AstropyIndex
@@ -16,11 +19,6 @@ from astropy_xarray.tests.utils import (
     requires_dask_array,
     requires_scipy,
 )
-
-# make sure scalars are converted to 0d arrays so quantities can
-# always be treated like ndarrays
-import astropy.units as u
-from astropy.units import Quantity
 
 nan = np.nan
 
@@ -192,13 +190,29 @@ class TestQuantifyDataArray:
         assert result.astropy.unit == Unit("1 / meter")
 
 
-@pytest.mark.parametrize("unit_attrs,formatters", [
-    pytest.param({None: "m", "a": "s", "d": "Kelvin"}, ("", "fits", "vounit", "cds", "ogip", "generic", "unicode", "console"), id="si"),
-    pytest.param({None: "m", "a": "s", "b": "Celsius", "d": "Kelvin"}, ("", "fits", "generic", "unicode", "console"), id="metric"),
-    pytest.param({None: "m", "a": "s", "b": "Celsius", "c": "Fahrenheit", "d": "Kelvin"}, ("", "generic", "unicode", "console"), id="mixed"),
-])
+@pytest.mark.parametrize(
+    "unit_attrs,formatters",
+    [
+        pytest.param(
+            {None: "m", "a": "s", "d": "Kelvin"},
+            ("", "fits", "vounit", "cds", "ogip", "generic", "unicode", "console"),
+            id="si",
+        ),
+        pytest.param(
+            {None: "m", "a": "s", "b": "Celsius", "d": "Kelvin"},
+            ("", "fits", "generic", "unicode", "console"),
+            id="metric",
+        ),
+        pytest.param(
+            {None: "m", "a": "s", "b": "Celsius", "c": "Fahrenheit", "d": "Kelvin"},
+            ("", "generic", "unicode", "console"),
+            id="mixed",
+        ),
+    ],
+)
 def test_units_to_str_or_none(unit_attrs, formatters):
     import astropy.units.imperial
+
     astropy.units.imperial.enable()
 
     units = {key: u.Unit(value) for key, value in unit_attrs.items()}
@@ -711,7 +725,7 @@ def test_to(obj, units, expected, error):
                 coords={
                     "x": ("x", [1, 2, 3], {"units": u.Unit("arcsec")}),
                     "y": ("y", [2, 3], {"units": u.Unit("k")}),
-                }
+                },
             ),
             {"x": Quantity([1, 0.5], "pc"), "y": Quantity([300], "1/m")},
             u.parallax(),
@@ -1213,16 +1227,22 @@ def test_drop_sel(obj, indexers, expected, error):
 def test_chunk(obj):
     actual = obj.astropy.chunk({"x": 2})
 
-    expected = (
-        obj.astropy.dequantify().chunk({"x": 2}).astropy.quantify()
-    )
+    expected = obj.astropy.dequantify().chunk({"x": 2}).astropy.quantify()
 
     assert_units_equal(actual, expected)
     assert_identical(actual, expected)
 
 
 @pytest.mark.parametrize(
-    ["obj", "units", "equivalencies", "indexers", "expected", "expected_units", "error"],
+    [
+        "obj",
+        "units",
+        "equivalencies",
+        "indexers",
+        "expected",
+        "expected_units",
+        "error",
+    ],
     (
         pytest.param(
             xr.Dataset({"x": ("x", [10, 20, 30]), "y": ("y", [60, 120])}),
@@ -1392,7 +1412,16 @@ def test_reindex(obj, units, equivalencies, indexers, expected, expected_units, 
 
 
 @pytest.mark.parametrize(
-    ["obj", "units", "equivalencies", "other", "other_units", "expected", "expected_units", "error"],
+    [
+        "obj",
+        "units",
+        "equivalencies",
+        "other",
+        "other_units",
+        "expected",
+        "expected_units",
+        "error",
+    ],
     (
         pytest.param(
             xr.Dataset({"x": ("x", [10, 20, 30]), "y": ("y", [60, 120])}),
@@ -1554,7 +1583,9 @@ def test_reindex(obj, units, equivalencies, indexers, expected, expected_units, 
         ),
     ),
 )
-def test_reindex_like(obj, units, equivalencies, other, other_units, expected, expected_units, error):
+def test_reindex_like(
+    obj, units, equivalencies, other, other_units, expected, expected_units, error
+):
     obj_ = obj.astropy.quantify(units)
     other_ = other.astropy.quantify(other_units)
 

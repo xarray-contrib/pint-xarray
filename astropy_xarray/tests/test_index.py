@@ -1,10 +1,10 @@
+import astropy.units as ureg
 import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
 from xarray.core.indexes import IndexSelResult, PandasIndex
 
-import astropy.units as ureg
 from astropy_xarray.index import AstropyIndex
 
 

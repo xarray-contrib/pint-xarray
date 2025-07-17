@@ -67,4 +67,4 @@ Data variables:
     b        (y) float64 24B -0.003 0.005 0.001
 ```
 
-For more, see the [documentation](astropy-xarray.readthedocs.io/en/latest/)
+For more, see the [documentation](https://astropy-xarray.readthedocs.io/en/latest/)
