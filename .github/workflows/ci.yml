@@ -99,8 +99,9 @@ jobs:
       - name: Upload code coverage to Codecov
         uses: codecov/codecov-action@v5.4.3
         with:
-          file: ./coverage.xml
+          files: ./coverage.xml
           flags: unittests
           env_vars: RUNNER_OS,PYTHON_VERSION
           name: codecov-umbrella
+          token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: false

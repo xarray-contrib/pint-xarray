@@ -2,7 +2,7 @@ codecov:
   ci:
     # by default, codecov doesn't recognize azure as a CI provider
     - dev.azure.com
-  require_ci_to_pass: yes
+  require_ci_to_pass: true
 
 coverage:
   status:
@@ -13,4 +13,10 @@ coverage:
     patch: false
     changes: false
 
-comment: off
+comment:
+  layout: " diff, flags, files"
+  behavior: default
+  require_changes: false
+  require_base: false
+  require_head: true
+  hide_project_coverage: false
