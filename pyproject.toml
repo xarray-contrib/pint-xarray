@@ -5,8 +5,8 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "astropy-xarray"
 authors = [
-  { name = "Tom Nicholas", email = "tomnicholas1@googlemail.com" },
   { name = "Callan Gray", email = "calj.gray@gmail.com" },
+  { name = "Tom Nicholas", email = "tomnicholas1@googlemail.com" },
 ]
 description = "Physical units interface to xarray using astropy"
 license = { text = "Apache-2" }
