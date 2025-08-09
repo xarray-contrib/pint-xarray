@@ -3,6 +3,7 @@ from importlib.metadata import version
 import pint
 
 from pint_xarray import accessors, formatting, testing  # noqa: F401
+from pint_xarray._expects import expects
 from pint_xarray.accessors import default_registry as unit_registry
 from pint_xarray.accessors import setup_registry
 from pint_xarray.index import PintIndex
@@ -23,4 +24,5 @@ __all__ = [
     "unit_registry",
     "setup_registry",
     "PintIndex",
+    "expects",
 ]
