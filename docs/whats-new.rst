@@ -7,6 +7,7 @@ What's new
 - Pass ``sel`` options to the wrapped array (:pull:`304`, :issue:`303`)
   By `Bhavin Patel <https://github.com/bpatel2107>`_.
 - Support python 3.13 (:pull:`310`)
+  By `Justus Magin <https://github.com/keewis>`_.
 
 0.5 (09 Jun 2025)
 ------------------
