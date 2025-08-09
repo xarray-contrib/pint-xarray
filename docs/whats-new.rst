@@ -4,7 +4,7 @@ What's new
 ==========
 0.6.0 (*unreleased*)
 --------------------
-- Bump dependency versions:
+- Bump dependency versions (:pull:`313`):
 
   ============ ==============  ==============
    dependency    old minimum     new minimum
@@ -14,6 +14,8 @@ What's new
    numpy               1.23             1.26
    pint                0.21             0.24
   ============ ==============  ==============
+
+  By `Justus Magin <https://github.com/keewis>`_.
 
 0.5.1 (10 Aug 2025)
 -------------------
