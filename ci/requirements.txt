@@ -1,5 +1,5 @@
 pint!=0.24.0
-numpy<2
+numpy
 scipy
 dask[array]
 bottleneck
