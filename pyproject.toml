@@ -4,7 +4,7 @@ authors = [
   { name = "Tom Nicholas", email = "tomnicholas1@googlemail.com" },
 ]
 description = "Physical units interface to xarray using Pint"
-license = "Apache-2"
+license = "Apache-2.0"
 readme = "README.md"
 classifiers = [
   "Development Status :: 3 - Alpha",
