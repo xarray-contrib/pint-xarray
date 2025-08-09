@@ -4,7 +4,18 @@ What's new
 ==========
 0.6.0 (*unreleased*)
 --------------------
+- Bump dependency versions (:pull:`313`):
 
+  ============ ==============  ==============
+   dependency    old minimum     new minimum
+  ============ ==============  ==============
+   python              3.10             3.11
+   xarray         2022.06.0        2023.07.0
+   numpy               1.23             1.26
+   pint                0.21             0.24
+  ============ ==============  ==============
+
+  By `Justus Magin <https://github.com/keewis>`_.
 
 0.5.1 (10 Aug 2025)
 -------------------
