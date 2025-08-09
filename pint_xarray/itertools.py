@@ -18,7 +18,13 @@ def unique(iterable):
 
 
 def zip_mappings(*mappings):
-    keys = list(reduce(lambda x, y: set(x.keys()).intersection(y.keys()), mappings))
+    def common_keys(a, b):
+        all_keys = unique(itertools.chain(a.keys(), b.keys()))
+        intersection = set(a.keys()).intersection(b.keys())
+
+        return [key for key in all_keys if key in intersection]
+
+    keys = list(reduce(common_keys, mappings))
 
     for key in keys:
         yield key, tuple(m[key] for m in mappings)
