@@ -2,6 +2,10 @@
 
 What's new
 ==========
+0.6.0 (*unreleased*)
+--------------------
+
+
 0.5.1 (10 Aug 2025)
 -------------------
 - Pass ``sel`` options to the wrapped array (:pull:`304`, :issue:`303`)
