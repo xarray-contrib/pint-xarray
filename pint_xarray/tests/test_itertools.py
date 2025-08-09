@@ -1,6 +1,6 @@
 import pytest
 
-from pint_xarray.itertools import separate
+from pint_xarray.itertools import separate, unique
 
 
 @pytest.mark.parametrize(
@@ -19,3 +19,16 @@ def test_separate(predicate, iterable):
 
     assert actual_true == expected_true
     assert actual_false == expected_false
+
+
+@pytest.mark.parametrize(
+    ["iterable", "expected"],
+    (
+        ([5, 4, 4, 1, 2, 3, 2, 1], [5, 4, 1, 2, 3]),
+        (list("dadgafffgaefed"), list("dagfe")),
+    ),
+)
+def test_unique(iterable, expected):
+    actual = unique(iterable)
+
+    assert actual == expected

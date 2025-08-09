@@ -10,3 +10,7 @@ def separate(predicate, iterable):
     groups = {label: [el for _, el in group] for label, group in grouped}
 
     return groups[False], groups[True]
+
+
+def unique(iterable):
+    return list(dict.fromkeys(iterable))
