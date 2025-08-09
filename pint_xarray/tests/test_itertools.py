@@ -1,6 +1,6 @@
 import pytest
 
-from pint_xarray.itertools import separate, unique
+from pint_xarray.itertools import separate, unique, zip_mappings
 
 
 @pytest.mark.parametrize(
@@ -31,4 +31,16 @@ def test_separate(predicate, iterable):
 def test_unique(iterable, expected):
     actual = unique(iterable)
 
+    assert actual == expected
+
+
+@pytest.mark.parametrize(
+    ["mappings", "expected"],
+    (
+        (({"a": 1, "c": 2}, {"a": 2, "b": 0}), [("a", (1, 2))]),
+        (({"a": 1, "b": 2}, {"a": 2, "b": 3}), [("a", (1, 2)), ("b", (2, 3))]),
+    ),
+)
+def test_zip_mappings(mappings, expected):
+    actual = list(zip_mappings(*mappings))
     assert actual == expected

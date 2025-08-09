@@ -1,4 +1,5 @@
 import itertools
+from functools import reduce
 
 
 def separate(predicate, iterable):
@@ -14,3 +15,10 @@ def separate(predicate, iterable):
 
 def unique(iterable):
     return list(dict.fromkeys(iterable))
+
+
+def zip_mappings(*mappings):
+    keys = list(reduce(lambda x, y: set(x.keys()).intersection(y.keys()), mappings))
+
+    for key in keys:
+        yield key, tuple(m[key] for m in mappings)
