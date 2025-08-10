@@ -97,3 +97,54 @@ branch = true
 [tool.coverage.report]
 show_missing = true
 exclude_lines = ["pragma: no cover", "if TYPE_CHECKING"]
+
+[tool.pixi.workspace]
+channels = ["conda-forge"]
+platforms = ["linux-64"]
+
+[tool.pixi.dependencies]
+numpy = "*"
+pint = "*"
+xarray = "*"
+
+[tool.pixi.pypi-dependencies]
+pint-xarray = { path = ".", editable = true }
+
+[tool.pixi.feature.tests.dependencies]
+pytest = ">=8"
+pytest-cov = "*"
+pytest-xdist = "*"
+
+[tool.pixi.feature.nightly.pypi-options]
+extra-index-urls = [
+  "https://pypi.anaconda.org/scientific-python-nightly-wheels/simple",
+]
+
+[tool.pixi.feature.nightly.pypi-dependencies]
+pint-xarray = { path = ".", editable = true }
+pint = { git = "git+https://github.com/hgrecco/pint.git" }
+
+[tool.pixi.feature.docs.dependencies]
+sphinx = "*"
+sphinx-rtd-theme = ">=1.0"
+sphinx-autosummary-accessors = "*"
+nbsphinx = "*"
+cf-xarray = ">=0.10"
+pooch = "*"
+netcdf4 = "*"
+ipython = "*"
+ipykernel = "*"
+jupyter_client = "*"
+matplotlib-base = "*"
+sphinx-autobuild = ">=2024.10.3,<2025"
+
+[tool.pixi.feature.docs.tasks]
+build-docs = { cmd = "rm -rf generated/; python -m sphinx -b html -w warnings.log -W -Tn -j auto . _build", cwd = "docs" }
+autobuild-docs = { cmd = "sphinx-autobuild -b html -w warnings.log -W -Tn -j auto . _build", cwd = "docs" }
+
+[tool.pixi.environments]
+tests = ["tests"]
+nightly = { features = ["tests", "nightly"], no-default-feature = true }
+docs = ["docs"]
+
+[tool.pixi.tasks]
