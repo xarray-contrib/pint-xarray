@@ -199,7 +199,7 @@ environments:
         - conda: https://conda.anaconda.org/conda-forge/noarch/jupyter_core-5.8.1-pyh31011fe_0.conda
         - conda: https://conda.anaconda.org/conda-forge/noarch/jupyterlab_pygments-0.3.0-pyhd8ed1ab_2.conda
         - conda: https://conda.anaconda.org/conda-forge/linux-64/keyutils-1.6.1-h166bdaf_0.tar.bz2
-        - conda: https://conda.anaconda.org/conda-forge/linux-64/kiwisolver-1.4.8-py313h33d0bda_1.conda
+        - conda: https://conda.anaconda.org/conda-forge/linux-64/kiwisolver-1.4.8-py313hc8edb43_2.conda
         - conda: https://conda.anaconda.org/conda-forge/linux-64/krb5-1.21.3-h659f571_0.conda
         - conda: https://conda.anaconda.org/conda-forge/linux-64/lcms2-2.17-h717163a_0.conda
         - conda: https://conda.anaconda.org/conda-forge/linux-64/ld_impl_linux-64-2.44-h1423503_1.conda
@@ -394,7 +394,7 @@ environments:
         - conda: https://conda.anaconda.org/conda-forge/noarch/jupyter_client-8.6.3-pyhd8ed1ab_1.conda
         - conda: https://conda.anaconda.org/conda-forge/noarch/jupyter_core-5.8.1-pyh31011fe_0.conda
         - conda: https://conda.anaconda.org/conda-forge/noarch/jupyterlab_pygments-0.3.0-pyhd8ed1ab_2.conda
-        - conda: https://conda.anaconda.org/conda-forge/osx-arm64/kiwisolver-1.4.8-py313h0ebd0e5_1.conda
+        - conda: https://conda.anaconda.org/conda-forge/osx-arm64/kiwisolver-1.4.8-py313hf88c9ab_2.conda
         - conda: https://conda.anaconda.org/conda-forge/osx-arm64/krb5-1.21.3-h237132a_0.conda
         - conda: https://conda.anaconda.org/conda-forge/osx-arm64/lcms2-2.17-h7eeda09_0.conda
         - conda: https://conda.anaconda.org/conda-forge/osx-arm64/lerc-4.0.0-hd64df32_1.conda
@@ -3192,36 +3192,34 @@ packages:
     purls: []
     size: 117831
     timestamp: 1646151697040
-  - conda: https://conda.anaconda.org/conda-forge/linux-64/kiwisolver-1.4.8-py313h33d0bda_1.conda
-    sha256: 59099e42c46c08b0a59e179cc845ae9fb181316cc018d0fc58560370467af419
-    md5: 6d8d806d9db877ace75ca67aa572bf84
+  - conda: https://conda.anaconda.org/conda-forge/linux-64/kiwisolver-1.4.8-py313hc8edb43_2.conda
+    sha256: 0426944b9a8a477cd6c92de0797a441d417e5c63761f753b597b28a76a53add8
+    md5: 80ad58cd5754aafe2d38814279ab3163
     depends:
+      - python
+      - libstdcxx >=14
+      - libgcc >=14
       - __glibc >=2.17,<3.0.a0
-      - libgcc >=13
-      - libstdcxx >=13
-      - python >=3.13,<3.14.0a0
       - python_abi 3.13.* *_cp313
     license: BSD-3-Clause
-    license_family: BSD
     purls:
-      - pkg:pypi/kiwisolver?source=hash-mapping
-    size: 72112
-    timestamp: 1751494043915
-  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/kiwisolver-1.4.8-py313h0ebd0e5_1.conda
-    sha256: 9dc940f23beb3e6776480ad64be563ea2dc383ea2220dbe3e982a6ee71bdb07e
-    md5: e42353e408a69308f3801400222f81d8
+      - pkg:pypi/kiwisolver?source=compressed-mapping
+    size: 77222
+    timestamp: 1754824685625
+  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/kiwisolver-1.4.8-py313hf88c9ab_2.conda
+    sha256: 6fefd6a8090fe0fd4963b0a029135a341005aa0ca8f6bb41cb04e38976c61118
+    md5: 3a70d0038148eeabf3781211323f4fda
     depends:
+      - python
       - __osx >=11.0
-      - libcxx >=18
-      - python >=3.13,<3.14.0a0
-      - python >=3.13,<3.14.0a0 *_cp313
+      - libcxx >=19
+      - python 3.13.* *_cp313
       - python_abi 3.13.* *_cp313
     license: BSD-3-Clause
-    license_family: BSD
     purls:
       - pkg:pypi/kiwisolver?source=hash-mapping
-    size: 62331
-    timestamp: 1751494152507
+    size: 68348
+    timestamp: 1754824775338
   - conda: https://conda.anaconda.org/conda-forge/win-64/kiwisolver-1.4.8-py313h1a38498_2.conda
     sha256: 963a2e46cc20fd829ffe18dff598cc0f758b8337a04992a2ba05d0908e07fe56
     md5: 0e0232599be3d0a3f8788a730bf2f9bb
@@ -6442,12 +6440,12 @@ packages:
     timestamp: 1753127340588
   - pypi: ./
     name: pint-xarray
-    version: 0.5.2.dev22+g02da360
-    sha256: 5def65c978457f9b5d182dfae8b2b798b6d583a172dc0cdf89e745e8974281b6
+    version: 0.5.2.dev29+ged02321.d20250810
+    sha256: 5ed7872ea4fbd39195dc8729eb7d41f0a68975e6fb57519a56dbd2507d654dc2
     requires_dist:
-      - xarray>=2023.7.0
-      - numpy>=1.26
-      - pint>=0.24
+      - xarray
+      - numpy
+      - pint
     requires_python: ">=3.11"
     editable: true
   - pypi: https://files.pythonhosted.org/packages/fe/39/979e8e21520d4e47a0bbe349e2713c0aac6f3d853d0e5b34d76206c439aa/platformdirs-4.3.8-py3-none-any.whl
