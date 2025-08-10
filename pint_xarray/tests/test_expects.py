@@ -140,3 +140,38 @@ class TestExpects:
             pint.testing.assert_equal(actual, expected)
         else:
             assert actual == expected
+
+    @pytest.mark.parametrize(
+        ["values", "return_value_units", "expected"],
+        (
+            ((1, 2), ("m", "s"), (ureg.Quantity(1, "m"), ureg.Quantity(2, "s"))),
+            ((1, 2), "m / s", ureg.Quantity(0.5, "m / s")),
+            (
+                (xr.DataArray(2), 2),
+                ("m", "s"),
+                (xr.DataArray(2).pint.quantify("m"), ureg.Quantity(2, "s")),
+            ),
+            (
+                (xr.DataArray(2), 2),
+                "kg / m^2",
+                xr.DataArray(1).pint.quantify("kg / m^2"),
+            ),
+        ),
+    )
+    def test_return_value(self, values, return_value_units, expected):
+        multiple = isinstance(return_value_units, tuple)
+
+        @pint_xarray.expects(a=None, b=None, return_value=return_value_units)
+        def func(a, b):
+            if multiple:
+                return a, b
+            else:
+                return a / b
+
+        actual = func(*values)
+        if isinstance(actual, xr.DataArray):
+            xr.testing.assert_identical(actual, expected)
+        elif isinstance(actual, pint.Quantity):
+            pint.testing.assert_equal(actual, expected)
+        else:
+            assert actual == expected
