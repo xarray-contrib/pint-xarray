@@ -1,17 +1,31 @@
 import functools
 import inspect
+from inspect import Parameter
 
 import pint
 import xarray as xr
 
 from pint_xarray.itertools import zip_mappings
 
+variable_parameters = (Parameter.VAR_POSITIONAL, Parameter.VAR_KEYWORD)
+
 
 def expects(*args_units, return_value=None, **kwargs_units):
     def outer(func):
         signature = inspect.signature(func)
 
-        params_units = signature.bind_partial(*args_units, **kwargs_units)
+        params_units = signature.bind(*args_units, **kwargs_units)
+
+        missing_params = [
+            name
+            for name, p in signature.parameters.items()
+            if p.kind not in variable_parameters and name not in params_units.arguments
+        ]
+        if missing_params:
+            raise ValueError(
+                "Missing units for the following parameters: "
+                + ", ".join(map(repr, missing_params))
+            )
 
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
