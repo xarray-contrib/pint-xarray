@@ -6440,12 +6440,12 @@ packages:
     timestamp: 1753127340588
   - pypi: ./
     name: pint-xarray
-    version: 0.5.2.dev29+ged02321.d20250810
-    sha256: 5ed7872ea4fbd39195dc8729eb7d41f0a68975e6fb57519a56dbd2507d654dc2
+    version: 0.5.2.dev31+gc9306ba.d20250810
+    sha256: bc8542ad204c48c38cd0adb20a151662ea2e47cd5d5c7438396cbbe4440ef1d9
     requires_dist:
-      - xarray
-      - numpy
-      - pint
+      - xarray>=2023.7.0
+      - numpy>=1.26
+      - pint>=0.24
     requires_python: ">=3.11"
     editable: true
   - pypi: https://files.pythonhosted.org/packages/fe/39/979e8e21520d4e47a0bbe349e2713c0aac6f3d853d0e5b34d76206c439aa/platformdirs-4.3.8-py3-none-any.whl
