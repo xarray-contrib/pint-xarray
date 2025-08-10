@@ -184,3 +184,54 @@ class TestExpects:
 
         actual = func(1)
         assert actual is None
+
+    @pytest.mark.parametrize(
+        [
+            "return_value_units",
+            "multiple_units",
+            "errors",
+            "multiple_errors",
+            "message",
+        ],
+        (
+            (
+                ("m", "s"),
+                False,
+                ValueError,
+                False,
+                "mismatched number of return values",
+            ),
+            ("m", True, ValueError, False, "mismatched number of return values"),
+            (("m",), True, ValueError, False, "mismatched number of return values"),
+            (1, False, TypeError, True, "units must be of type"),
+        ),
+    )
+    def test_return_value_errors(
+        self, return_value_units, multiple_units, errors, multiple_errors, message
+    ):
+        if multiple_errors:
+            root_error = ExceptionGroup
+            root_message = "Errors while converting return values"
+        else:
+            root_error = errors
+            root_message = message
+
+        with pytest.raises(root_error, match=root_message) as excinfo:
+
+            @pint_xarray.expects(a=None, b=None, return_value=return_value_units)
+            def func(a, b):
+                if multiple_units:
+                    return a, b
+                else:
+                    return a / b
+
+            func(1, 2)
+
+        if not multiple_errors:
+            return
+
+        group = excinfo.value
+        assert len(group.exceptions) == 1, f"Found {len(group.exceptions)} exceptions"
+        exc = group.exceptions[0]
+        if not re.search(message, str(exc)):
+            raise AssertionError(f"exception {exc!r} did not match pattern {message!r}")
