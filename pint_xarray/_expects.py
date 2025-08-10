@@ -1,10 +1,14 @@
 import functools
 import inspect
+import itertools
 from inspect import Parameter
 
 import pint
+import pint.testing
 import xarray as xr
 
+from pint_xarray.accessors import get_registry
+from pint_xarray.conversion import extract_units
 from pint_xarray.itertools import zip_mappings
 
 variable_parameters = (Parameter.VAR_POSITIONAL, Parameter.VAR_KEYWORD)
@@ -32,7 +36,37 @@ def expects(*args_units, return_value=None, **kwargs_units):
             nonlocal return_value
 
             params = signature.bind(*args, **kwargs)
-            # don't apply defaults, as those have to already be in the correct units
+            # don't apply defaults, as those can't be quantities and thus must
+            # already be in the correct units
+
+            spec_units = dict(
+                enumerate(
+                    itertools.chain.from_iterable(
+                        spec.values() if isinstance(spec, dict) else (spec,)
+                        for spec in params_units.arguments.values()
+                        if spec is not None
+                    )
+                )
+            )
+            params_units_ = dict(
+                enumerate(
+                    itertools.chain.from_iterable(
+                        (
+                            extract_units(param)
+                            if isinstance(param, (xr.DataArray, xr.Dataset))
+                            else (param.units,)
+                        )
+                        for name, param in params.arguments.items()
+                        if isinstance(param, (xr.DataArray, xr.Dataset, pint.Quantity))
+                    )
+                )
+            )
+
+            ureg = get_registry(
+                None,
+                dict(spec_units) if spec_units else {},
+                dict(params_units_) if params_units else {},
+            )
 
             errors = []
             for name, (value, units) in zip_mappings(
@@ -90,7 +124,7 @@ def expects(*args_units, return_value=None, **kwargs_units):
                         if isinstance(value, (xr.Dataset, xr.DataArray)):
                             value = value.pint.quantify(units)
                         else:
-                            value = units.m_from(value)
+                            value = ureg.Quantity(value, units)
                     except Exception as e:
                         e.add_note(
                             f"expects: raised while trying to convert return value {index}"
