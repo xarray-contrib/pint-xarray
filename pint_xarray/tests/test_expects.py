@@ -93,3 +93,50 @@ class TestExpects:
         exc = group.exceptions[0]
         if not re.search(message, str(exc)):
             raise AssertionError(f"exception {exc!r} did not match pattern {message!r}")
+
+    @pytest.mark.parametrize(
+        ["values", "units", "expected"],
+        (
+            (
+                {"a": ureg.Quantity(1, "m"), "b": 2},
+                {"a": "mm", "b": None, "c": None},
+                1000,
+            ),
+            (
+                {"a": 2, "b": ureg.Quantity(100, "cm")},
+                {"a": None, "b": "m", "c": None},
+                4,
+            ),
+            (
+                {"a": ureg.Quantity(1, "m"), "b": ureg.Quantity(0.5, "s")},
+                {"a": "mm", "b": "ms", "c": None},
+                4,
+            ),
+            (
+                {"a": xr.DataArray(4).pint.quantify("km"), "b": 2},
+                {"a": "m", "b": None, "c": None},
+                xr.DataArray(4000),
+            ),
+            (
+                {
+                    "a": xr.DataArray([4, 2, 0]).pint.quantify("cm"),
+                    "b": xr.DataArray([4, 2, 1]).pint.quantify("mg"),
+                },
+                {"a": "m", "b": "g", "c": None},
+                xr.DataArray([20, 20, 0]),
+            ),
+        ),
+    )
+    def test_kwargs(self, values, units, expected):
+        @pint_xarray.expects(**units)
+        def func(a, b, c=2):
+            return a / b * c
+
+        actual = func(**values)
+
+        if isinstance(actual, xr.DataArray):
+            xr.testing.assert_identical(actual, expected)
+        elif isinstance(actual, pint.Quantity):
+            pint.testing.assert_equal(actual, expected)
+        else:
+            assert actual == expected
