@@ -64,7 +64,7 @@ jobs:
         uses: prefix-dev/setup-pixi@8ca4608ef7f4daeb54f5205b20d0b7cb42f11143 # 0.8.14
         with:
           cache: true
-          environments: ${{ matrix.env }}
+          environments: "${{ matrix.env }}"
 
       - name: import pint-xarray
         run: |
