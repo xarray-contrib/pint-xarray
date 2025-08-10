@@ -17,3 +17,6 @@ build:
     build:
       html:
         - pixi run -e docs build-docs-rtd
+
+sphinx:
+  configuration: docs/conf.py
