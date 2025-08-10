@@ -123,6 +123,9 @@ extra-index-urls = [
 [tool.pixi.feature.nightly.pypi-dependencies]
 pint-xarray = { path = ".", editable = true }
 pint = { git = "git+https://github.com/hgrecco/pint.git" }
+xarray = "*"
+numpy = "*"
+scipy = "*"
 
 [tool.pixi.feature.docs.dependencies]
 sphinx = "*"
