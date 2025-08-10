@@ -78,6 +78,9 @@ def expects(*args_units, return_value=None, **kwargs_units):
         units specified. Also thrown if any parameter does not have a unit
         specified.
 
+    See Also
+    --------
+    pint.wraps
 
     Examples
     --------
