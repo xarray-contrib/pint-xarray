@@ -65,6 +65,11 @@ jobs:
         with:
           environments: "${{ matrix.env }}"
 
+      - name: investigate env variables
+        run: |
+          echo PYTHON_VERSION=$(pixi run -e ${{ matrix.env }} python -c 'import sys; print(".".join(map(str, sys.version_info[:2])))') >> $GITHUB_ENV
+          echo RUNNER_OS="${{ matrix.os }}"
+
       - name: import pint-xarray
         run: |
           pixi run -e ${{ matrix.env }} python -c 'import pint_xarray'
@@ -78,7 +83,8 @@ jobs:
       - name: Upload code coverage to Codecov
         uses: codecov/codecov-action@v5.4.3
         with:
-          file: ./coverage.xml
+          token: "${{ secrets.CODECOV_TOKEN }}"
+          files: ./coverage.xml
           flags: unittests
           env_vars: RUNNER_OS,PYTHON_VERSION
           name: codecov-umbrella
