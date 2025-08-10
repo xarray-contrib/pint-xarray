@@ -176,3 +176,11 @@ class TestExpects:
             pint.testing.assert_equal(actual, expected)
         else:
             assert actual == expected
+
+    def test_return_value_none(self):
+        @pint_xarray.expects(None)
+        def func(a):
+            return None
+
+        actual = func(1)
+        assert actual is None
