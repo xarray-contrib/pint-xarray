@@ -50,27 +50,44 @@ class TestExpects:
             assert actual == expected
 
     @pytest.mark.parametrize(
-        ["value", "units", "errors", "message"],
+        ["value", "units", "errors", "message", "multiple"],
         (
             (
                 ureg.Quantity(1, "m"),
-                None,
+                (None, None),
                 ValueError,
                 "quantity where none was expected",
+                True,
             ),
-            (1, "m", ValueError, "Attempting to convert non-quantity"),
+            (1, ("m", None), ValueError, "Attempting to convert non-quantity", True),
+            (
+                1,
+                (None,),
+                ValueError,
+                "Missing units for the following parameters: 'b'",
+                False,
+            ),
         ),
     )
-    def test_args_error(self, value, units, errors, message):
-        with pytest.raises(
-            ExceptionGroup, match="Errors while converting parameters"
-        ) as excinfo:
+    def test_args_error(self, value, units, errors, message, multiple):
+        if multiple:
+            root_error = ExceptionGroup
+            root_message = "Errors while converting parameters"
+        else:
+            root_error = errors
+            root_message = message
 
-            @pint_xarray.expects(units)
-            def func(a):
-                return a
+        with pytest.raises(root_error, match=root_message) as excinfo:
+
+            @pint_xarray.expects(*units)
+            def func(a, b=1):
+                return a * b
 
             func(value)
+
+        if not multiple:
+            return
+
         group = excinfo.value
         assert len(group.exceptions) == 1, f"Found {len(group.exceptions)} exceptions"
         exc = group.exceptions[0]
