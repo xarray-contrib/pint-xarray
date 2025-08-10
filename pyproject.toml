@@ -127,6 +127,9 @@ xarray = "*"
 numpy = "*"
 scipy = "*"
 
+[tool.pixi.feature.nightly.dependencies]
+pytest-reportlog = ">=0.1.2"
+
 [tool.pixi.feature.docs.dependencies]
 sphinx = "*"
 sphinx-rtd-theme = ">=1.0"
