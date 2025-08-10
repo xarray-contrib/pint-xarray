@@ -91,6 +91,9 @@ class TestExpects:
         group = excinfo.value
         assert len(group.exceptions) == 1, f"Found {len(group.exceptions)} exceptions"
         exc = group.exceptions[0]
+        assert isinstance(
+            exc, error
+        ), f"Unexpected exception type: {type(exc)}, expected {error}"
         if not re.search(message, str(exc)):
             raise AssertionError(f"exception {exc!r} did not match pattern {message!r}")
 
@@ -233,5 +236,8 @@ class TestExpects:
         group = excinfo.value
         assert len(group.exceptions) == 1, f"Found {len(group.exceptions)} exceptions"
         exc = group.exceptions[0]
+        assert isinstance(
+            exc, error
+        ), f"Unexpected exception type: {type(exc)}, expected {error}"
         if not re.search(message, str(exc)):
             raise AssertionError(f"exception {exc!r} did not match pattern {message!r}")
