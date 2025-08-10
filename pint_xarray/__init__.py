@@ -10,7 +10,7 @@ from pint_xarray.index import PintIndex
 
 try:
     __version__ = version("pint-xarray")
-except Exception:
+except Exception:  # pragma: no cover
     # Local copy or not installed with setuptools.
     # Disable minimum version checks on downstream libraries.
     __version__ = "999"
