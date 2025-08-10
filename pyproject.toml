@@ -118,11 +118,21 @@ pytest-xdist = "*"
 [tool.pixi.feature.tests-py311.dependencies]
 python = "3.11.*"
 
+[tool.pixi.feature.tests-py311.tasks]
+tests = "pytest -n auto --cov=pint_xarray"
+
 [tool.pixi.feature.tests-py312.dependencies]
 python = "3.12.*"
 
+[tool.pixi.feature.tests-py312.tasks]
+tests = "pytest -n auto --cov=pint_xarray"
+
 [tool.pixi.feature.tests-py313.dependencies]
 python = "3.13.*"
+
+[tool.pixi.feature.tests-py313.tasks]
+doctests = "pytest --doctest-modules pint_xarray --ignore pint_xarray/tests"
+tests = "pytest -n auto --cov=pint_xarray"
 
 [tool.pixi.feature.nightly.pypi-options]
 extra-index-urls = [
@@ -139,6 +149,9 @@ scipy = "*"
 [tool.pixi.feature.nightly.dependencies]
 pytest-reportlog = ">=0.1.2"
 python = "3.13.*"
+
+[tool.pixi.feature.nightly.tasks]
+tests = "pytest -n auto --cov=pint_xarray --report-log=tests.jsonl"
 
 [tool.pixi.feature.docs.dependencies]
 sphinx = "*"
