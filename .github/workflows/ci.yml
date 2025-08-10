@@ -29,7 +29,7 @@ jobs:
           keyword: "[skip-ci]"
 
   ci:
-    name: ${{ matrix.env }} ${{ matrix.os }}
+    name: ${{ matrix.os }} ${{ matrix.env }}
     runs-on: ${{ matrix.os }}
     needs: detect-skip-ci-trigger
     defaults:
