@@ -18,6 +18,8 @@ What's new
   By `Justus Magin <https://github.com/keewis>`_.
 - Switch to using pixi for all dependency management (:pull:`314`).
   By `Justus Magin <https://github.com/keewis>`_.
+- Added the :py:func:`pint_xarray.expects` decorator to allow wrapping quantity-unaware functions (:issue:`141`, :pull:`316`).
+  By `Justus Magin <https://github.com/keewis>`_ and `Tom Nicholas <https://github.com/TomNicholas>`_.
 
 0.5.1 (10 Aug 2025)
 -------------------
