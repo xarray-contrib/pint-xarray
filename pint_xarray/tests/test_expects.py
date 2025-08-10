@@ -146,6 +146,7 @@ class TestExpects:
         (
             ((1, 2), ("m", "s"), (ureg.Quantity(1, "m"), ureg.Quantity(2, "s"))),
             ((1, 2), "m / s", ureg.Quantity(0.5, "m / s")),
+            ((1, 2), None, 0.5),
             (
                 (xr.DataArray(2), 2),
                 ("m", "s"),
