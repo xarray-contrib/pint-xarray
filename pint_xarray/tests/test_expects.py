@@ -50,13 +50,13 @@ class TestExpects:
             assert actual == expected
 
     @pytest.mark.parametrize(
-        ["value", "units", "errors", "message", "multiple"],
+        ["value", "units", "error", "message", "multiple"],
         (
             (
                 ureg.Quantity(1, "m"),
                 (None, None),
                 ValueError,
-                "quantity where none was expected",
+                "Passed in a quantity where none was expected",
                 True,
             ),
             (1, ("m", None), ValueError, "Attempting to convert non-quantity", True),
@@ -69,12 +69,12 @@ class TestExpects:
             ),
         ),
     )
-    def test_args_error(self, value, units, errors, message, multiple):
+    def test_args_error(self, value, units, error, message, multiple):
         if multiple:
             root_error = ExceptionGroup
             root_message = "Errors while converting parameters"
         else:
-            root_error = errors
+            root_error = error
             root_message = message
 
         with pytest.raises(root_error, match=root_message) as excinfo:
@@ -189,7 +189,7 @@ class TestExpects:
         [
             "return_value_units",
             "multiple_units",
-            "errors",
+            "error",
             "multiple_errors",
             "message",
         ],
@@ -206,14 +206,14 @@ class TestExpects:
             (1, False, TypeError, True, "units must be of type"),
         ),
     )
-    def test_return_value_errors(
-        self, return_value_units, multiple_units, errors, multiple_errors, message
+    def test_return_value_error(
+        self, return_value_units, multiple_units, error, multiple_errors, message
     ):
         if multiple_errors:
             root_error = ExceptionGroup
             root_message = "Errors while converting return values"
         else:
-            root_error = errors
+            root_error = error
             root_message = message
 
         with pytest.raises(root_error, match=root_message) as excinfo:
