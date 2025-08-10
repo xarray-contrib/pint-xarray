@@ -35,7 +35,7 @@ jobs:
 
       - name: import pint-xarray
         run: |
-          pixi run -e ${{ matrix.env }} python -c 'import pint_xarray'
+          pixi run -e doctests python -c 'import pint_xarray'
 
       - name: run doctests
         run: |
