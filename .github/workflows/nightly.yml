@@ -66,8 +66,7 @@ jobs:
       - name: setup environment
         uses: prefix-dev/setup-pixi@8ca4608ef7f4daeb54f5205b20d0b7cb42f11143 # 0.8.14
         with:
-          environments:
-            - nightly
+          environments: "nightly"
 
       - name: import pint-xarray
         run: |
