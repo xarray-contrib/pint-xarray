@@ -55,11 +55,11 @@ class TestExpects:
             (
                 ureg.Quantity(1, "m"),
                 (None, None),
-                ValueError,
+                TypeError,
                 "Passed in a quantity where none was expected",
                 True,
             ),
-            (1, ("m", None), ValueError, "Attempting to convert non-quantity", True),
+            (1, ("m", None), TypeError, "Attempting to convert non-quantity", True),
             (
                 1,
                 (None,),

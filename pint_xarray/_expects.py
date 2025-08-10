@@ -78,7 +78,7 @@ def expects(*args_units, return_value=None, **kwargs_units):
                             isinstance(value, (xr.DataArray, xr.Dataset))
                             and value.pint.units
                         ):
-                            raise ValueError(
+                            raise TypeError(
                                 "Passed in a quantity where none was expected"
                             )
                         continue
@@ -87,7 +87,7 @@ def expects(*args_units, return_value=None, **kwargs_units):
                     elif isinstance(value, (xr.DataArray, xr.Dataset)):
                         params.arguments[name] = value.pint.to(units).pint.dequantify()
                     else:
-                        raise ValueError(
+                        raise TypeError(
                             f"Attempting to convert non-quantity {value} to {units}."
                         )
                 except Exception as e:
