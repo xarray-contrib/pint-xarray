@@ -16,6 +16,8 @@ What's new
   ============ ==============  ==============
 
   By `Justus Magin <https://github.com/keewis>`_.
+- Switch to using pixi for all dependency management (:pull:`314`).
+  By `Justus Magin <https://github.com/keewis>`_.
 
 0.5.1 (10 Aug 2025)
 -------------------

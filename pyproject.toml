@@ -97,3 +97,87 @@ branch = true
 [tool.coverage.report]
 show_missing = true
 exclude_lines = ["pragma: no cover", "if TYPE_CHECKING"]
+
+[tool.pixi.workspace]
+channels = ["conda-forge"]
+platforms = ["linux-64", "osx-arm64", "win-64"]
+
+[tool.pixi.dependencies]
+numpy = "*"
+pint = "*"
+xarray = "*"
+
+[tool.pixi.pypi-dependencies]
+pint-xarray = { path = ".", editable = true }
+
+[tool.pixi.feature.tests.dependencies]
+pytest = ">=8"
+pytest-cov = "*"
+pytest-xdist = "*"
+
+[tool.pixi.feature.tests-py311.dependencies]
+python = "3.11.*"
+
+[tool.pixi.feature.tests-py311.tasks]
+tests = "pytest -n auto --cov=pint_xarray"
+
+[tool.pixi.feature.tests-py312.dependencies]
+python = "3.12.*"
+
+[tool.pixi.feature.tests-py312.tasks]
+tests = "pytest -n auto --cov=pint_xarray"
+
+[tool.pixi.feature.tests-py313.dependencies]
+python = "3.13.*"
+
+[tool.pixi.feature.tests-py313.tasks]
+doctests = "pytest --doctest-modules pint_xarray --ignore pint_xarray/tests"
+tests = "pytest -n auto --cov=pint_xarray"
+
+[tool.pixi.feature.nightly.pypi-options]
+extra-index-urls = [
+  "https://pypi.anaconda.org/scientific-python-nightly-wheels/simple",
+]
+
+[tool.pixi.feature.nightly.pypi-dependencies]
+pint-xarray = { path = ".", editable = true }
+pint = { git = "git+https://github.com/hgrecco/pint.git" }
+xarray = "*"
+numpy = "*"
+scipy = "*"
+
+[tool.pixi.feature.nightly.dependencies]
+pytest-reportlog = ">=0.1.2"
+python = "3.13.*"
+
+[tool.pixi.feature.nightly.tasks]
+tests = "pytest -n auto --cov=pint_xarray --report-log=tests.jsonl"
+
+[tool.pixi.feature.docs.dependencies]
+sphinx = "*"
+sphinx-rtd-theme = ">=1.0"
+sphinx-autosummary-accessors = "*"
+nbsphinx = "*"
+cf-xarray = ">=0.10"
+pooch = "*"
+netcdf4 = "*"
+ipython = "*"
+ipykernel = "*"
+jupyter_client = "*"
+matplotlib-base = "*"
+sphinx-autobuild = "*"
+python = "3.13.*"
+
+[tool.pixi.feature.docs.tasks]
+build-docs = { cmd = "rm -rf generated/; python -m sphinx -b html -w warnings.log -W -Tn -j auto . _build", cwd = "docs" }
+autobuild-docs = { cmd = "sphinx-autobuild -b html -w warnings.log -W -Tn -j auto . _build", cwd = "docs" }
+build-docs-rtd = { cmd = "python -m sphinx -b html -W -T -j auto . $READTHEDOCS_OUTPUT/html", cwd = "docs" }
+
+[tool.pixi.environments]
+tests = ["tests"]
+nightly = { features = ["tests", "nightly"], no-default-feature = true }
+docs = ["docs"]
+tests-py311 = ["tests", "tests-py311"]
+tests-py312 = ["tests", "tests-py312"]
+tests-py313 = ["tests", "tests-py313"]
+doctests = ["tests", "tests-py313"]
