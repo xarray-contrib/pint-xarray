@@ -67,12 +67,12 @@ def expects(*args_units, return_value=None, **kwargs_units):
     -------
     return_values : Any
         Return values of the wrapped function, either a single value or a tuple
-        of values. These will be given units according to return_units.
+        of values. These will be given units according to ``return_value``.
 
     Raises
     ------
     TypeError
-        If any of the units are not a valid type
+        If any of the units are not a valid type.
     ValueError
         If the number of arguments or return values does not match the number of
         units specified. Also thrown if any parameter does not have a unit
@@ -81,7 +81,6 @@ def expects(*args_units, return_value=None, **kwargs_units):
 
     Examples
     --------
-
     Decorating a function which takes one quantified input, but
     returns a non-data value (in this case a boolean).
 
