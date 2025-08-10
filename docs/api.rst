@@ -65,6 +65,13 @@ DataArray
    xarray.DataArray.pint.bfill
    xarray.DataArray.pint.interpolate_na
 
+Wrapping quantity-unaware functions
+-----------------------------------
+.. autosummary::
+   :toctree: generated/
+
+   pint_xarray.expects
+
 Testing
 -------
 
