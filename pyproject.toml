@@ -146,5 +146,3 @@ autobuild-docs = { cmd = "sphinx-autobuild -b html -w warnings.log -W -Tn -j aut
 tests = ["tests"]
 nightly = { features = ["tests", "nightly"], no-default-feature = true }
 docs = ["docs"]
-
-[tool.pixi.tasks]
