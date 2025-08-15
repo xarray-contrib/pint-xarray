@@ -190,7 +190,11 @@ def expects(*args_units, return_value=None, **kwargs_units):
                         raise TypeError(
                             f"Attempting to convert non-quantity {value} to {units}."
                         )
-                except Exception as e:
+                except (
+                    TypeError,
+                    pint.errors.UndefinedUnitError,
+                    pint.errors.DimensionalityError,
+                ) as e:
                     e.add_note(
                         f"expects: raised while trying to convert parameter {name}"
                     )
@@ -202,7 +206,6 @@ def expects(*args_units, return_value=None, **kwargs_units):
             result = func(*params.args, **params.kwargs)
 
             n_results = _number_of_results(result)
-
             if return_value is not None and (
                 (isinstance(result, tuple) ^ isinstance(return_value, tuple))
                 or (n_results != n_expected_results)
