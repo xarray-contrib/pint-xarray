@@ -173,6 +173,11 @@ build-docs = { cmd = "rm -rf generated/; python -m sphinx -b html -w warnings.lo
 autobuild-docs = { cmd = "sphinx-autobuild -b html -w warnings.log -W -Tn -j auto . _build", cwd = "docs" }
 build-docs-rtd = { cmd = "python -m sphinx -b html -W -T -j auto . $READTHEDOCS_OUTPUT/html", cwd = "docs" }
 
+[tool.pixi.feature.dev.dependencies]
+ipython = "*"
+ipdb = "*"
+python = "3.13.*"
+
 [tool.pixi.environments]
 tests = ["tests"]
 nightly = { features = ["tests", "nightly"], no-default-feature = true }
@@ -181,3 +186,4 @@ tests-py311 = ["tests", "tests-py311"]
 tests-py312 = ["tests", "tests-py312"]
 tests-py313 = ["tests", "tests-py313"]
 doctests = ["tests", "tests-py313"]
+dev = ["tests", "dev"]
