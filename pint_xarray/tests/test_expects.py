@@ -5,6 +5,7 @@ import pytest
 import xarray as xr
 
 import pint_xarray
+from pint_xarray.testing import assert_units_equal
 
 ureg = pint_xarray.unit_registry
 
@@ -188,6 +189,17 @@ class TestExpects:
         actual = func(1)
         assert actual is None
 
+    def test_return_value_none_error(self):
+        @pint_xarray.expects(return_value="Hz")
+        def func():
+            return None
+
+        with pytest.raises(
+            ValueError,
+            match="mismatched number of return values: expected 1 but got 0.",
+        ):
+            func()
+
     @pytest.mark.parametrize(
         [
             "return_value_units",
@@ -204,8 +216,20 @@ class TestExpects:
                 False,
                 "mismatched number of return values",
             ),
-            ("m", True, ValueError, False, "mismatched number of return values"),
-            (("m",), True, ValueError, False, "mismatched number of return values"),
+            (
+                "m",
+                True,
+                ValueError,
+                False,
+                "mismatched number of return values: expected 1 but got 2",
+            ),
+            (
+                ("m",),
+                True,
+                ValueError,
+                False,
+                "mismatched number of return values: expected 1 but got 2",
+            ),
             (1, False, TypeError, True, "units must be of type"),
         ),
     )
@@ -241,3 +265,20 @@ class TestExpects:
         ), f"Unexpected exception type: {type(exc)}, expected {error}"
         if not re.search(message, str(exc)):
             raise AssertionError(f"exception {exc!r} did not match pattern {message!r}")
+
+    def test_datasets(self):
+        @pint_xarray.expects({"m": "kg", "a": "m / s^2"}, return_value={"f": "newtons"})
+        def second_law(ds):
+            f_da = ds["m"] * ds["a"]
+            return f_da.to_dataset(name="f")
+
+        ds = xr.Dataset({"m": 0.1, "a": 10}).pint.quantify(
+            {"m": "tons", "a": "feet / second^2"}
+        )
+
+        expected = xr.Dataset({"f": ds["m"] * ds["a"]}).pint.to("newtons")
+
+        actual = second_law(ds)
+
+        assert_units_equal(actual, expected)
+        xr.testing.assert_allclose(actual, expected)
