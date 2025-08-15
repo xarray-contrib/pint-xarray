@@ -68,6 +68,13 @@ class TestExpects:
                 "Missing units for the following parameters: 'b'",
                 False,
             ),
+            (
+                ureg.Quantity(1, "m"),
+                ("nonsense_unit", None),
+                pint.errors.UndefinedUnitError,
+                "'nonsense_unit' is not defined in the unit registry",
+                True,
+            ),
         ),
     )
     def test_args_error(self, value, units, error, message, multiple):
@@ -231,6 +238,8 @@ class TestExpects:
                 "mismatched number of return values: expected 1 but got 2",
             ),
             (1, False, TypeError, True, "units must be of type"),
+            (("m",), False, ValueError, False, ".*expected a 1-sized tuple.*"),
+            ("m", 1, ValueError, False, ".*expected a single return value.*"),
         ),
     )
     def test_return_value_error(
@@ -247,7 +256,10 @@ class TestExpects:
 
             @pint_xarray.expects(a=None, b=None, return_value=return_value_units)
             def func(a, b):
-                if multiple_units:
+                if not isinstance(multiple_units, bool) and multiple_units == 1:
+                    print("return 1-tuple")
+                    return (a / b,)
+                elif multiple_units:
                     return a, b
                 else:
                     return a / b
