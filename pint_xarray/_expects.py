@@ -14,6 +14,15 @@ from pint_xarray.itertools import zip_mappings
 variable_parameters = (Parameter.VAR_POSITIONAL, Parameter.VAR_KEYWORD)
 
 
+def _number_of_results(result):
+    if isinstance(result, tuple):
+        return len(result)
+    elif result is None:
+        return 0
+    else:
+        return 1
+
+
 def expects(*args_units, return_value=None, **kwargs_units):
     """
     Decorator which ensures the inputs and outputs of the decorated
@@ -120,6 +129,8 @@ def expects(*args_units, return_value=None, **kwargs_units):
                 + ", ".join(map(repr, missing_params))
             )
 
+        n_expected_results = _number_of_results(return_value)
+
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             nonlocal return_value
@@ -190,15 +201,27 @@ def expects(*args_units, return_value=None, **kwargs_units):
 
             result = func(*params.args, **params.kwargs)
 
-            if (isinstance(result, tuple) ^ isinstance(return_value, tuple)) or (
-                isinstance(result, tuple) and len(result) != len(return_value)
+            n_results = _number_of_results(result)
+
+            if return_value is not None and (
+                (isinstance(result, tuple) ^ isinstance(return_value, tuple))
+                or (n_results != n_expected_results)
             ):
-                raise ValueError("mismatched number of return values")
+                message = "mismatched number of return values:"
+                if n_results != n_expected_results:
+                    message += f" expected {n_expected_results} but got {n_results}."
+                elif isinstance(result, tuple) and not isinstance(return_value, tuple):
+                    message += (
+                        " expected a single return value but got a 1-sized tuple."
+                    )
+                else:
+                    message += (
+                        " expected a 1-sized tuple but got a single return value."
+                    )
+                raise ValueError(message)
 
             if result is None:
                 return
-
-            n_results = len(result) if isinstance(result, tuple) else 1
 
             if not isinstance(result, tuple):
                 result = (result,)
