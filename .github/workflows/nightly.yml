@@ -70,13 +70,13 @@ jobs:
 
       - name: import pint-xarray
         run: |
-          pixi run -e ${{ matrix.env }} python -c 'import pint_xarray'
+          pixi run -e nightly python -c 'import pint_xarray'
 
       - name: run tests
         if: success()
         id: status
         run: |
-          pixi run -e ${{ matrix.env }} tests -rf --report-log=pytest-log.jsonl
+          pixi run -e nightly tests -rf --report-log=pytest-log.jsonl
 
       - name: report failures
         if: |
