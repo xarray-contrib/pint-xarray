@@ -16,7 +16,9 @@ class PintIndex(Index):
             The units of the indexed coordinates
         """
         if not isinstance(units, dict):
-            raise TypeError("Index units have to be a dict of coordinate to units.")
+            raise TypeError(
+                "Index units have to be a dict of coordinate names to units."
+            )
 
         self.index = index
         self.units = units

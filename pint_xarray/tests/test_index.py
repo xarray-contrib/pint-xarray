@@ -34,6 +34,13 @@ def test_init(base_index, units):
     assert index.units == {base_index.dim: units}
 
 
+def test_init_error():
+    base_index = PandasIndex(pd.Index([1, 2, 3]), dim="x")
+
+    with pytest.raises(TypeError, match="dict of coordinate names to units"):
+        PintIndex(index=base_index, units=ureg.Unit("s"))
+
+
 def test_replace():
     old_index = PandasIndex([1, 2, 3], dim="y")
     new_index = PandasIndex([0.1, 0.2, 0.3], dim="x")
