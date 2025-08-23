@@ -1,3 +1,5 @@
+import inspect
+
 from xarray import Variable
 from xarray.core.indexes import Index, PandasIndex
 
@@ -79,10 +81,22 @@ class PintIndex(Index):
         if self.units != other.units:
             return False
 
-        # Explicitly pass `exclude`, the index does not officially support
-        # indexes other than the PandasIndex
+        try:
+            from xarray.core.indexes import _wrap_index_equals
+
+            equals = _wrap_index_equals(self.index)
+            kwargs = {"exclude": exclude}
+        except ImportError:  # pragma: no cover
+            equals = self.index.equals
+            signature = inspect.signature(self.index.equals)
+
+            if "exclude" in signature.parameters:
+                kwargs = {"exclude": exclude}
+            else:
+                kwargs = {}
+
         # Last to avoid the potentially expensive comparison
-        return self.index.equals(other.index, exclude=exclude)
+        return equals(other.index, **kwargs)
 
     def roll(self, shifts):
         return self._replace(self.index.roll(shifts))
