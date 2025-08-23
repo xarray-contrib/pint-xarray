@@ -177,6 +177,8 @@ build-docs-rtd = { cmd = "python -m sphinx -b html -W -T -j auto . $READTHEDOCS_
 ipython = "*"
 ipdb = "*"
 python = "3.13.*"
+pooch = ">=1.8.2,<2"
+netcdf4 = ">=1.7.2,<2"
 
 [tool.pixi.environments]
 tests = ["tests"]
