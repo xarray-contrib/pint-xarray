@@ -284,3 +284,15 @@ def test_repr_inline(wrapped_index):
     assert "PintIndex" in actual
     assert wrapped_index.__class__.__name__ in actual
     assert "units" in actual
+
+
+@pytest.mark.parametrize("wrapped_index", (PandasIndex(pd.Index([1, 2]), dim="x"),))
+def test_repr(wrapped_index):
+    index = PintIndex(index=wrapped_index, units={"x": ureg.Unit("m")})
+
+    # TODO: parametrize
+    actual = repr(index)
+
+    assert "<PintIndex" in actual
+    assert "'x': 'm'" in actual
+    assert wrapped_index.__class__.__name__ in actual
