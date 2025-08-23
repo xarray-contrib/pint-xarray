@@ -42,10 +42,10 @@ def test_init_error():
 
 
 def test_replace():
-    old_index = PandasIndex([1, 2, 3], dim="y")
+    old_index = PandasIndex([1, 2, 3], dim="x")
     new_index = PandasIndex([0.1, 0.2, 0.3], dim="x")
 
-    old = PintIndex(index=old_index, units=ureg.Unit("m"))
+    old = PintIndex(index=old_index, units={"x": ureg.Unit("m")})
     new = old._replace(new_index)
 
     assert new.index.equals(new_index)
