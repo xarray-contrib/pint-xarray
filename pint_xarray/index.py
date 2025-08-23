@@ -79,7 +79,9 @@ class PintIndex(Index):
         if self.units != other.units:
             return False
 
-        # last to avoid the potentially expensive comparison
+        # Explicitly pass `exclude`, the index does not officially support
+        # indexes other than the PandasIndex
+        # Last to avoid the potentially expensive comparison
         return self.index.equals(other.index, exclude=exclude)
 
     def roll(self, shifts):
