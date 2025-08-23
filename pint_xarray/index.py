@@ -71,7 +71,7 @@ class PintIndex(Index):
     def reindex_like(self, other):
         raise NotImplementedError()
 
-    def equals(self, other):
+    def equals(self, other, *, exclude=None):
         if not isinstance(other, PintIndex):
             return False
 
@@ -79,8 +79,10 @@ class PintIndex(Index):
         if self.units != other.units:
             return False
 
-        # last to avoid the potentially expensive comparison
-        return self.index.equals(other.index)
+        # Explicitly pass `exclude`, the index does not officially support
+        # indexes other than the PandasIndex
+        # Last to avoid the potentially expensive comparison
+        return self.index.equals(other.index, exclude=exclude)
 
     def roll(self, shifts):
         return self._replace(self.index.roll(shifts))

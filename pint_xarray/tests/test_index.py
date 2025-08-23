@@ -205,6 +205,28 @@ def test_equals(other, expected):
     assert actual == expected
 
 
+@pytest.mark.filterwarnings("error")
+def test_align_equals_warning():
+    index1 = PintIndex(
+        index=PandasIndex(pd.Index([1, 2]), dim="x"),
+        units={"x": ureg.Unit("m")},
+    )
+    index2 = PintIndex(
+        index=PandasIndex(pd.Index([0, 1, 2]), dim="y"),
+        units={"y": ureg.Unit("m")},
+    )
+
+    ds = xr.Dataset(
+        {"a": (["y", "x"], [[-1, 1], [0, 2], [1, 3]])},
+        coords=xr.Coordinates(
+            {"x": [1, 2], "y": [0, 1, 2]}, indexes={"x": index1, "y": index2}
+        ),
+    )
+
+    # trigger comparison
+    ds["a"] * ds["x"] * ds["y"]
+
+
 @pytest.mark.parametrize(
     ["shifts", "expected_index"],
     (
