@@ -276,7 +276,7 @@ def test_getitem(indexer):
 
 @pytest.mark.parametrize("wrapped_index", (PandasIndex(pd.Index([1, 2]), dim="x"),))
 def test_repr_inline(wrapped_index):
-    index = PintIndex(index=wrapped_index, units=ureg.Unit("m"))
+    index = PintIndex(index=wrapped_index, units={"x": ureg.Unit("m")})
 
     # TODO: parametrize
     actual = index._repr_inline_(90)
