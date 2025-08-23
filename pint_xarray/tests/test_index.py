@@ -28,10 +28,10 @@ def indexer_equal(first, second):
 )
 @pytest.mark.parametrize("units", [ureg.Unit("m"), ureg.Unit("s")])
 def test_init(base_index, units):
-    index = PintIndex(index=base_index, units=units)
+    index = PintIndex(index=base_index, units={base_index.dim: units})
 
     assert index.index.equals(base_index)
-    assert index.units == units
+    assert index.units == {base_index.dim: units}
 
 
 def test_replace():

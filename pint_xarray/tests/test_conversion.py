@@ -252,7 +252,7 @@ class TestXarrayFunctions:
 
         index = PandasIndex(x, dim="x")
         if units.get("x") is not None:
-            index = PintIndex(index=index, units=units.get("x"))
+            index = PintIndex(index=index, units={"x": units.get("x")})
 
         obj = Dataset({"a": ("x", a), "b": ("x", b)}, coords={"u": ("x", u), "x": x})
         coords = Coordinates(
