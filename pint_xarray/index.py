@@ -105,6 +105,6 @@ class PintIndex(Index):
 
     def __repr__(self):
         formatted_units = {n: f"{u:~P}" for n, u in self.units.items()}
-        summary = f"<{self.__class__.__name__} (units={formatted_units}>"
+        summary = f"<{self.__class__.__name__} (units={formatted_units})>"
 
         return "\n".join([summary, repr(self.index)])
