@@ -28,17 +28,24 @@ def indexer_equal(first, second):
 )
 @pytest.mark.parametrize("units", [ureg.Unit("m"), ureg.Unit("s")])
 def test_init(base_index, units):
-    index = PintIndex(index=base_index, units=units)
+    index = PintIndex(index=base_index, units={base_index.dim: units})
 
     assert index.index.equals(base_index)
-    assert index.units == units
+    assert index.units == {base_index.dim: units}
+
+
+def test_init_error():
+    base_index = PandasIndex(pd.Index([1, 2, 3]), dim="x")
+
+    with pytest.raises(TypeError, match="dict of coordinate names to units"):
+        PintIndex(index=base_index, units=ureg.Unit("s"))
 
 
 def test_replace():
-    old_index = PandasIndex([1, 2, 3], dim="y")
+    old_index = PandasIndex([1, 2, 3], dim="x")
     new_index = PandasIndex([0.1, 0.2, 0.3], dim="x")
 
-    old = PintIndex(index=old_index, units=ureg.Unit("m"))
+    old = PintIndex(index=old_index, units={"x": ureg.Unit("m")})
     new = old._replace(new_index)
 
     assert new.index.equals(new_index)
@@ -276,10 +283,23 @@ def test_getitem(indexer):
 
 @pytest.mark.parametrize("wrapped_index", (PandasIndex(pd.Index([1, 2]), dim="x"),))
 def test_repr_inline(wrapped_index):
-    index = PintIndex(index=wrapped_index, units=ureg.Unit("m"))
+    index = PintIndex(index=wrapped_index, units={"x": ureg.Unit("m")})
 
     # TODO: parametrize
     actual = index._repr_inline_(90)
 
     assert "PintIndex" in actual
+    assert wrapped_index.__class__.__name__ in actual
+    assert "units" in actual
+
+
+@pytest.mark.parametrize("wrapped_index", (PandasIndex(pd.Index([1, 2]), dim="x"),))
+def test_repr(wrapped_index):
+    index = PintIndex(index=wrapped_index, units={"x": ureg.Unit("m")})
+
+    # TODO: parametrize
+    actual = repr(index)
+
+    assert "<PintIndex" in actual
+    assert "'x': 'm'" in actual
     assert wrapped_index.__class__.__name__ in actual

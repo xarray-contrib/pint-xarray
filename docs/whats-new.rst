@@ -22,6 +22,8 @@ What's new
   By `Justus Magin <https://github.com/keewis>`_ and `Tom Nicholas <https://github.com/TomNicholas>`_.
 - Follow the change in signature of :py:meth:`xarray.Index.equals` (:issue:`322`, :pull:`324`)
   By `Justus Magin <https://github.com/keewis>`_.
+- Add units to the inline ``repr`` and define a custom ``repr`` (:issue:`308`, :pull:`325`)
+  By `Justus Magin <https://github.com/keewis>`_.
 
 0.5.1 (10 Aug 2025)
 -------------------
