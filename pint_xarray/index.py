@@ -77,10 +77,15 @@ class PintIndex(Index):
         if not isinstance(other, PintIndex):
             return False
 
-        # for now we require exactly matching units to avoid the potentially expensive conversion
+        # for now we require exactly matching units to avoid the potentially
+        # expensive conversion
         if self.units != other.units:
             return False
 
+        # TODO:
+        # - remove try-except once we can drop xarray<2025.06.0
+        # - remove compat once we can require a version of xarray that completed
+        #   the deprecation cycle
         try:
             from xarray.core.indexes import _wrap_index_equals
 
