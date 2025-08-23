@@ -8,7 +8,6 @@ on:
     branches: [main]
   schedule:
     - cron: "0 0 * * *" # Daily "At 00:00" UTC
-
   workflow_dispatch:
 
 concurrency:
@@ -63,10 +62,17 @@ jobs:
           # need to fetch all tags to get a correct version
           fetch-depth: 0 # fetch all branches and tags
 
+      - name: remove lockfile
+        run: |
+          rm pixi.lock
+
       - name: setup environment
         uses: prefix-dev/setup-pixi@fef5c9568ca6c4ff7707bf840ab0692ba3f08293 # 0.9.0
         with:
           environments: "nightly"
+          locked: false
+          frozen: false
+          cache: false
 
       - name: import pint-xarray
         run: |
