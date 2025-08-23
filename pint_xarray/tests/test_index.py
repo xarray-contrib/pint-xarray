@@ -283,3 +283,4 @@ def test_repr_inline(wrapped_index):
 
     assert "PintIndex" in actual
     assert wrapped_index.__class__.__name__ in actual
+    assert "units" in actual

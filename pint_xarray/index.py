@@ -97,4 +97,8 @@ class PintIndex(Index):
         return self._replace(self.index[indexer])
 
     def _repr_inline_(self, max_width):
-        return f"{self.__class__.__name__}({self.index.__class__.__name__})"
+        name = self.__class__.__name__
+        wrapped_name = self.index.__class__.__name__
+
+        units = f"{{{', '.join(f'{n!r}: {u:~P}' for n, u in self.units.items())}}}"
+        return f"{name}({wrapped_name}, units={units})"
