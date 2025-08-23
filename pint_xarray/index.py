@@ -100,5 +100,5 @@ class PintIndex(Index):
         name = self.__class__.__name__
         wrapped_name = self.index.__class__.__name__
 
-        units = f"{{{', '.join(f'{n!r}: {u:~P}' for n, u in self.units.items())}}}"
-        return f"{name}({wrapped_name}, units={units})"
+        formatted_units = {n: f"{u:~P}" for n, u in self.units.items()}
+        return f"{name}({wrapped_name}, units={formatted_units})"
