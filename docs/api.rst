@@ -72,6 +72,13 @@ Wrapping quantity-unaware functions
 
    pint_xarray.expects
 
+Exceptions
+----------
+.. autosummary::
+   :toctree: generated/
+
+   pint_xarray.errors.PintExceptionGroup
+
 Testing
 -------
 
