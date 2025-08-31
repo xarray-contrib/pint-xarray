@@ -93,6 +93,7 @@ ban-relative-imports = "all"
 [tool.coverage.run]
 source = ["pint_xarray"]
 branch = true
+omit = ["pint_xarray/tests/*"]
 
 [tool.coverage.report]
 show_missing = true
