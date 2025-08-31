@@ -198,7 +198,7 @@ def attach_units(obj, units):
         if temporary_name in rejected_vars:
             rejected_vars[obj.name] = rejected_vars.pop(temporary_name)
 
-        raise ValueError(format_error_message(rejected_vars, "attach")) from e
+        raise format_error_message(rejected_vars, "attach") from e
 
     return new_obj
 
@@ -328,7 +328,7 @@ def convert_units(obj, units):
         if temporary_name in failed:
             failed[obj.name] = failed.pop(temporary_name)
 
-        raise ValueError(format_error_message(failed, "convert")) from e
+        raise format_error_message(failed, "convert") from e
 
     return new_obj
 
@@ -482,7 +482,7 @@ def convert_indexer_units(indexers, units):
             invalid[name] = e
 
     if invalid:
-        raise ValueError(format_error_message(invalid, "convert_indexers"))
+        raise format_error_message(invalid, "convert_indexers")
 
     return converted
 

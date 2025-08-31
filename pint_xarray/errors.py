@@ -1,42 +1,48 @@
-def format_error_message(mapping, op):
-    sep = "\n    " if len(mapping) == 1 else "\n -- "
-    if op == "attach":
-        message = "Cannot attach units:"
-        message = sep.join(
-            [message]
-            + [
-                f"cannot attach units to variable {key!r}: {unit} (reason: {str(e)})"
-                for key, (unit, e) in mapping.items()
-            ]
-        )
-    elif op == "parse":
-        message = "Cannot parse units:"
-        message = sep.join(
-            [message]
-            + [
-                f"invalid units for variable {key!r}: {unit} ({type}) (reason: {str(e)})"
-                for key, (unit, type, e) in mapping.items()
-            ]
-        )
-    elif op == "convert":
-        message = "Cannot convert variables:"
-        message = sep.join(
-            [message]
-            + [
-                f"incompatible units for variable {key!r}: {error}"
-                for key, error in mapping.items()
-            ]
-        )
-    elif op == "convert_indexers":
-        message = "Cannot convert indexers:"
-        message = sep.join(
-            [message]
-            + [
-                f"incompatible units for indexer for {key!r}: {error}"
-                for key, error in mapping.items()
-            ]
-        )
-    else:
+from collections.abc import Hashable
+from typing import Any
+
+
+class PintExceptionGroup(ExceptionGroup):
+    pass
+
+
+def _add_note(e: Exception, note: str) -> Exception:
+    e.add_note(note)
+
+    return e
+
+
+def format_error_message(mapping: dict[Hashable, Any], op: str) -> ExceptionGroup:
+    messages = {
+        "attach": "Cannot attach units",
+        "parse": "Cannot parse units",
+        "convert": "Cannot convert variables",
+        "convert_indexers": "Cannot convert indexers",
+    }
+    message = messages.get(op)
+    if message is None:  # pragma: no cover
         raise ValueError("invalid op")
 
-    return message
+    match op:
+        case "attach":
+            errors = [
+                _add_note(e, f"cannot attach units to variable {key!r}: {unit}")
+                for key, (unit, e) in mapping.items()
+            ]
+        case "parse":
+            errors = [
+                _add_note(e, f"invalid units for variable {key!r}: {unit} ({type})")
+                for key, (unit, type, e) in mapping.items()
+            ]
+        case "convert":
+            errors = [
+                _add_note(e, f"incompatible units for variable {key!r}")
+                for key, e in mapping.items()
+            ]
+        case "convert_indexers":
+            errors = [
+                _add_note(e, f"incompatible units for indexer for {key!r}")
+                for key, e in mapping.items()
+            ]
+
+    return PintExceptionGroup(message, errors)
