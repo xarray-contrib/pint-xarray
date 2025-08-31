@@ -8,7 +8,7 @@ from xarray.core.dtypes import NA
 
 from pint_xarray import conversion
 from pint_xarray.conversion import no_unit_values
-from pint_xarray.errors import format_error_message
+from pint_xarray.errors import create_exception_group
 
 _default = object()
 
@@ -355,7 +355,7 @@ class PintDataArrayAccessor:
                     invalid_units[name] = (reported_unit, type, e)
 
         if invalid_units:
-            raise ValueError(format_error_message(invalid_units, "parse"))
+            raise create_exception_group(invalid_units, "parse")
 
         existing_units = {
             name: unit
@@ -380,7 +380,7 @@ class PintDataArrayAccessor:
                 )
                 for name, (old, new) in overwritten_units.items()
             }
-            raise ValueError(format_error_message(errors, "attach"))
+            raise create_exception_group(errors, "attach")
 
         return self.da.pipe(conversion.strip_unit_attributes).pipe(
             conversion.attach_units, new_units
@@ -1091,7 +1091,7 @@ class PintDatasetAccessor:
                     invalid_units[name] = (reported_unit, type, e)
 
         if invalid_units:
-            raise ValueError(format_error_message(invalid_units, "parse"))
+            raise create_exception_group(invalid_units, "parse")
 
         existing_units = {
             name: unit
@@ -1116,7 +1116,7 @@ class PintDatasetAccessor:
                 )
                 for name, (old, new) in overwritten_units.items()
             }
-            raise ValueError(format_error_message(errors, "attach"))
+            raise create_exception_group(errors, "attach")
 
         return self.ds.pipe(conversion.strip_unit_attributes).pipe(
             conversion.attach_units, new_units

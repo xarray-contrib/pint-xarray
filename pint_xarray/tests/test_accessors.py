@@ -7,6 +7,7 @@ from numpy.testing import assert_array_equal
 from pint import Unit, UnitRegistry
 
 from pint_xarray import accessors, conversion
+from pint_xarray.errors import PintExceptionGroup
 from pint_xarray.index import PintIndex
 from pint_xarray.tests.utils import (
     assert_equal,
@@ -114,7 +115,11 @@ class TestQuantifyDataArray:
 
     def test_error_when_changing_units(self, example_quantity_da):
         da = example_quantity_da
-        with pytest.raises(ValueError, match="already has units"):
+        with pytest.RaisesGroup(
+            pytest.RaisesExc(ValueError, match="already has units"),
+            match="Cannot attach units",
+            check=lambda eg: isinstance(eg, PintExceptionGroup),
+        ):
             da.pint.quantify("s")
 
     def test_attach_no_units(self):
@@ -141,7 +146,11 @@ class TestQuantifyDataArray:
             dims="x",
             coords={"x": ("x", [-1, 0, 1], {"units": unit_registry.Unit("m")})},
         )
-        with pytest.raises(ValueError, match="already has units"):
+        with pytest.RaisesGroup(
+            pytest.RaisesExc(ValueError, match="already has units"),
+            match="Cannot attach units",
+            check=lambda eg: isinstance(eg, PintExceptionGroup),
+        ):
             arr.pint.quantify({"x": "s"})
 
     def test_dimension_coordinate_array(self):
@@ -157,7 +166,11 @@ class TestQuantifyDataArray:
         ds = xr.Dataset(coords={"x": ("x", [10], {"units": unit_registry.Unit("m")})})
         arr = ds.x
 
-        with pytest.raises(ValueError):
+        with pytest.RaisesGroup(
+            pytest.RaisesExc(ValueError, match="already has units"),
+            match="Cannot attach units",
+            check=lambda eg: isinstance(eg, PintExceptionGroup),
+        ):
             arr.pint.quantify({"x": "s"})
 
     def test_dimension_coordinate_array_already_quantified_same_units(self):
@@ -181,14 +194,24 @@ class TestQuantifyDataArray:
 
     def test_error_on_nonsense_units(self, example_unitless_da):
         da = example_unitless_da
-        with pytest.raises(ValueError, match=str(da.name)):
+        with pytest.RaisesGroup(
+            pytest.RaisesExc(
+                pint.UndefinedUnitError, match=rf"{da.name}: .+ \(parameter\)"
+            ),
+            match="Cannot parse units",
+            check=lambda eg: isinstance(eg, PintExceptionGroup),
+        ):
             da.pint.quantify(units="aecjhbav")
 
     def test_error_on_nonsense_units_attrs(self, example_unitless_da):
         da = example_unitless_da
         da.attrs["units"] = "aecjhbav"
-        with pytest.raises(
-            ValueError, match=rf"{da.name}: {da.attrs['units']} \(attribute\)"
+        with pytest.RaisesGroup(
+            pytest.RaisesExc(
+                pint.UndefinedUnitError, match=rf"{da.name}: .+ \(attribute\)"
+            ),
+            match="Cannot parse units",
+            check=lambda eg: isinstance(eg, PintExceptionGroup),
         ):
             da.pint.quantify()
 
@@ -355,7 +378,11 @@ class TestQuantifyDataSet:
         )
 
     def test_error_when_already_units(self, example_quantity_ds):
-        with pytest.raises(ValueError, match="already has units"):
+        with pytest.RaisesGroup(
+            pytest.RaisesExc(ValueError, match="already has units"),
+            match="Cannot attach units",
+            check=lambda eg: isinstance(eg, PintExceptionGroup),
+        ):
             example_quantity_ds.pint.quantify({"funds": "kg"})
 
     def test_attach_no_units(self):
@@ -382,25 +409,45 @@ class TestQuantifyDataSet:
         ds = xr.Dataset(
             coords={"x": ("x", [-1, 0, 1], {"units": unit_registry.Unit("m")})},
         )
-        with pytest.raises(ValueError, match="already has units"):
+        with pytest.RaisesGroup(
+            pytest.RaisesExc(ValueError, match="already has units"),
+            match="Cannot attach units",
+            check=lambda eg: isinstance(eg, PintExceptionGroup),
+        ):
             ds.pint.quantify({"x": "s"})
 
     def test_error_on_nonsense_units(self, example_unitless_ds):
         ds = example_unitless_ds
-        with pytest.raises(ValueError):
+        with pytest.RaisesGroup(
+            pytest.RaisesExc(
+                pint.UndefinedUnitError, match=r"'users': .+ \(parameter\)"
+            ),
+            match="Cannot parse units",
+            check=lambda eg: isinstance(eg, PintExceptionGroup),
+        ):
             ds.pint.quantify(units={"users": "aecjhbav"})
 
     def test_error_on_nonsense_units_attrs(self, example_unitless_ds):
         ds = example_unitless_ds
         ds.users.attrs["units"] = "aecjhbav"
-        with pytest.raises(
-            ValueError, match=rf"'users': {ds.users.attrs['units']} \(attribute\)"
+        with pytest.RaisesGroup(
+            pytest.RaisesExc(
+                pint.UndefinedUnitError, match=r"'users': .+ \(attribute\)"
+            ),
+            match="Cannot parse units",
+            check=lambda eg: isinstance(eg, PintExceptionGroup),
         ):
             ds.pint.quantify()
 
     def test_error_indicates_problematic_variable(self, example_unitless_ds):
         ds = example_unitless_ds
-        with pytest.raises(ValueError, match="'users'"):
+        with pytest.RaisesGroup(
+            pytest.RaisesExc(
+                pint.UndefinedUnitError, match=r"'users': aecjhbav \(parameter\)"
+            ),
+            match="Cannot parse units",
+            check=lambda eg: isinstance(eg, PintExceptionGroup),
+        ):
             ds.pint.quantify(units={"users": "aecjhbav"})
 
     def test_existing_units(self, example_quantity_ds):
