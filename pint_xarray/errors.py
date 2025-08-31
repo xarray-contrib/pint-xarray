@@ -2,7 +2,7 @@ from collections.abc import Hashable
 from typing import Any
 
 
-class PintExceptionGroup(ExceptionGroup):
+class PintExceptionGroup(ExceptionGroup, ValueError):
     pass
 
 
