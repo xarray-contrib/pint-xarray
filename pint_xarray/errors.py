@@ -3,6 +3,11 @@ from typing import Any
 
 
 class PintExceptionGroup(ExceptionGroup, ValueError):
+    """Exception group for errors related to unit operations
+
+    Raised whenever there's the possibility of multiple errors.
+    """
+
     pass
 
 
