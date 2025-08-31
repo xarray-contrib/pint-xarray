@@ -6,6 +6,7 @@ from xarray import Coordinates, DataArray, Dataset, Variable
 from xarray.core.indexes import PandasIndex
 
 from pint_xarray import conversion
+from pint_xarray.errors import PintExceptionGroup
 from pint_xarray.index import PintIndex
 from pint_xarray.tests.utils import (
     assert_array_equal,
@@ -303,7 +304,7 @@ class TestXarrayFunctions:
             pytest.param(
                 "none",
                 {"a": Unit("g"), "b": Unit("Pa"), "u": Unit("ms"), "x": Unit("mm")},
-                ValueError,
+                PintExceptionGroup,
                 "(?s)Cannot convert variables:.+'u'",
                 id="none-with units",
             ),
@@ -318,7 +319,7 @@ class TestXarrayFunctions:
             pytest.param(
                 "data",
                 {"a": Unit("s"), "b": Unit("m")},
-                ValueError,
+                PintExceptionGroup,
                 "(?s)Cannot convert variables:.+'a'",
                 id="data-incompatible units",
             ),
@@ -339,7 +340,7 @@ class TestXarrayFunctions:
             pytest.param(
                 "dims",
                 {"x": Unit("ms")},
-                ValueError,
+                PintExceptionGroup,
                 "(?s)Cannot convert variables:.+'x'",
                 id="dims-incompatible units",
             ),
@@ -360,7 +361,7 @@ class TestXarrayFunctions:
             pytest.param(
                 "coords",
                 {"u": Unit("mm")},
-                ValueError,
+                PintExceptionGroup,
                 "(?s)Cannot convert variables:.+'u'",
                 id="coords-incompatible units",
             ),
@@ -403,7 +404,7 @@ class TestXarrayFunctions:
             obj = obj["a"]
 
         if error is not None:
-            with pytest.raises(error, match=match):
+            with pytest.RaisesGroup(error, match=match):
                 conversion.convert_units(obj, units)
 
             return
