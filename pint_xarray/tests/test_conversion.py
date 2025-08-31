@@ -614,7 +614,7 @@ class TestXarrayFunctions:
 
 class TestIndexerFunctions:
     @pytest.mark.parametrize(
-        ["indexers", "units", "expected", "error", "match"],
+        ["indexers", "units", "expected", "error", "suberrors"],
         (
             pytest.param(
                 {"x": 1}, {"x": None}, {"x": 1}, None, None, id="scalar-no units"
@@ -623,8 +623,8 @@ class TestIndexerFunctions:
                 {"x": 1},
                 {"x": "dimensionless"},
                 None,
-                ValueError,
-                "(?s)Cannot convert indexers:.+'x'",
+                PintExceptionGroup,
+                {"x": (ValueError, "'x'")},
                 id="scalar-dimensionless",
             ),
             pytest.param(
@@ -719,23 +719,30 @@ class TestIndexerFunctions:
                 {"x": slice(Quantity(1, "m"), Quantity(2, "m"))},
                 {"x": Unit("ms")},
                 None,
-                ValueError,
-                "(?s)Cannot convert indexers:.+'x'",
+                PintExceptionGroup,
+                {"x": (pint.DimensionalityError, "'x'")},
                 id="slice-incompatible units",
             ),
             pytest.param(
                 {"x": slice(1000, Quantity(2000, "ms"))},
                 {"x": Unit("s")},
                 None,
-                ValueError,
-                "(?s)Cannot convert indexers:.+'x'",
+                PintExceptionGroup,
+                {"x": (pint.DimensionalityError, "'x'")},
                 id="slice-incompatible units-mixed",
             ),
         ),
     )
-    def test_convert_indexer_units(self, indexers, units, expected, error, match):
+    def test_convert_indexer_units(self, indexers, units, expected, error, suberrors):
         if error is not None:
-            with pytest.raises(error, match=match):
+            matchers = [
+                pytest.RaisesExc(err, match=match) for err, match in suberrors.values()
+            ]
+            with pytest.RaisesGroup(
+                *matchers,
+                match="Cannot convert indexers",
+                check=lambda eg: isinstance(eg, PintExceptionGroup),
+            ):
                 conversion.convert_indexer_units(indexers, units)
         else:
             actual = conversion.convert_indexer_units(indexers, units)
