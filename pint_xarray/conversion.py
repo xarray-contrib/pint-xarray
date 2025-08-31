@@ -5,7 +5,7 @@ import pint
 from xarray import Coordinates, DataArray, Dataset, IndexVariable, Variable
 
 from pint_xarray.compat import call_on_dataset
-from pint_xarray.errors import format_error_message
+from pint_xarray.errors import create_exception_group
 from pint_xarray.index import PintIndex
 
 no_unit_values = ("none", None)
@@ -198,7 +198,7 @@ def attach_units(obj, units):
         if temporary_name in rejected_vars:
             rejected_vars[obj.name] = rejected_vars.pop(temporary_name)
 
-        raise ValueError(format_error_message(rejected_vars, "attach")) from e
+        raise create_exception_group(rejected_vars, "attach") from None
 
     return new_obj
 
@@ -328,7 +328,7 @@ def convert_units(obj, units):
         if temporary_name in failed:
             failed[obj.name] = failed.pop(temporary_name)
 
-        raise ValueError(format_error_message(failed, "convert")) from e
+        raise create_exception_group(failed, "convert") from None
 
     return new_obj
 
@@ -482,7 +482,7 @@ def convert_indexer_units(indexers, units):
             invalid[name] = e
 
     if invalid:
-        raise ValueError(format_error_message(invalid, "convert_indexers"))
+        raise create_exception_group(invalid, "convert_indexers")
 
     return converted
 

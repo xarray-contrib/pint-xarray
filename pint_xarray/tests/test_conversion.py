@@ -2,10 +2,12 @@ import numpy as np
 import pandas as pd
 import pint
 import pytest
+from tlz.dicttoolz import dissoc
 from xarray import Coordinates, DataArray, Dataset, Variable
 from xarray.core.indexes import PandasIndex
 
 from pint_xarray import conversion
+from pint_xarray.errors import PintExceptionGroup
 from pint_xarray.index import PintIndex
 from pint_xarray.tests.utils import (
     assert_array_equal,
@@ -297,76 +299,73 @@ class TestXarrayFunctions:
 
     @pytest.mark.parametrize("type", ("DataArray", "Dataset"))
     @pytest.mark.parametrize(
-        ["variant", "units", "error", "match"],
+        ["variant", "units", "error", "suberrors"],
         (
-            pytest.param("none", {}, None, None, id="none-no units"),
+            pytest.param("none", {}, None, {}, id="none-no units"),
             pytest.param(
                 "none",
                 {"a": Unit("g"), "b": Unit("Pa"), "u": Unit("ms"), "x": Unit("mm")},
-                ValueError,
-                "(?s)Cannot convert variables:.+'u'",
+                PintExceptionGroup,
+                {
+                    "a": (pint.DimensionalityError, "'a'"),
+                    "b": (pint.DimensionalityError, "'b'"),
+                    "u": (pint.DimensionalityError, "'u'"),
+                    "x": (ValueError, "'x'"),
+                },
                 id="none-with units",
             ),
-            pytest.param("data", {}, None, None, id="data-no units"),
+            pytest.param("data", {}, None, {}, id="data-no units"),
             pytest.param(
                 "data",
                 {"a": Unit("g"), "b": Unit("Pa")},
                 None,
-                None,
+                {},
                 id="data-compatible units",
             ),
             pytest.param(
                 "data",
                 {"a": Unit("s"), "b": Unit("m")},
-                ValueError,
-                "(?s)Cannot convert variables:.+'a'",
+                PintExceptionGroup,
+                {
+                    "a": (pint.DimensionalityError, "'a'"),
+                    "b": (pint.DimensionalityError, "'b'"),
+                },
                 id="data-incompatible units",
             ),
+            pytest.param("dims", {}, None, {}, id="dims-no units"),
             pytest.param(
-                "dims",
-                {},
-                None,
-                None,
-                id="dims-no units",
-            ),
-            pytest.param(
-                "dims",
-                {"x": Unit("mm")},
-                None,
-                None,
-                id="dims-compatible units",
+                "dims", {"x": Unit("mm")}, None, {}, id="dims-compatible units"
             ),
             pytest.param(
                 "dims",
                 {"x": Unit("ms")},
-                ValueError,
-                "(?s)Cannot convert variables:.+'x'",
+                PintExceptionGroup,
+                {"x": (ValueError, "'x'")},
                 id="dims-incompatible units",
             ),
-            pytest.param(
-                "coords",
-                {},
-                None,
-                None,
-                id="coords-no units",
-            ),
+            pytest.param("coords", {}, None, {}, id="coords-no units"),
             pytest.param(
                 "coords",
                 {"u": Unit("ms")},
                 None,
-                None,
+                {"u": (pint.DimensionalityError, "'u'")},
                 id="coords-compatible units",
             ),
             pytest.param(
                 "coords",
                 {"u": Unit("mm")},
-                ValueError,
-                "(?s)Cannot convert variables:.+'u'",
+                PintExceptionGroup,
+                {
+                    "u": (
+                        pint.DimensionalityError,
+                        "incompatible units for variable 'u'",
+                    )
+                },
                 id="coords-incompatible units",
             ),
         ),
     )
-    def test_convert_units(self, type, variant, units, error, match):
+    def test_convert_units(self, type, variant, units, error, suberrors):
         variants = {
             "none": {"a": None, "b": None, "u": None, "x": None},
             "data": {"a": Unit("kg"), "b": Unit("hPa"), "u": None, "x": None},
@@ -401,9 +400,17 @@ class TestXarrayFunctions:
         )
         if type == "DataArray":
             obj = obj["a"]
+            suberrors = dissoc(suberrors, "b")
 
         if error is not None:
-            with pytest.raises(error, match=match):
+            matchers = [
+                pytest.RaisesExc(err, match=match) for err, match in suberrors.values()
+            ]
+            with pytest.RaisesGroup(
+                *matchers,
+                match="Cannot convert variables",
+                check=lambda eg: isinstance(eg, PintExceptionGroup),
+            ):
                 conversion.convert_units(obj, units)
 
             return
@@ -607,7 +614,7 @@ class TestXarrayFunctions:
 
 class TestIndexerFunctions:
     @pytest.mark.parametrize(
-        ["indexers", "units", "expected", "error", "match"],
+        ["indexers", "units", "expected", "error", "suberrors"],
         (
             pytest.param(
                 {"x": 1}, {"x": None}, {"x": 1}, None, None, id="scalar-no units"
@@ -616,8 +623,8 @@ class TestIndexerFunctions:
                 {"x": 1},
                 {"x": "dimensionless"},
                 None,
-                ValueError,
-                "(?s)Cannot convert indexers:.+'x'",
+                PintExceptionGroup,
+                {"x": (ValueError, "'x'")},
                 id="scalar-dimensionless",
             ),
             pytest.param(
@@ -712,23 +719,30 @@ class TestIndexerFunctions:
                 {"x": slice(Quantity(1, "m"), Quantity(2, "m"))},
                 {"x": Unit("ms")},
                 None,
-                ValueError,
-                "(?s)Cannot convert indexers:.+'x'",
+                PintExceptionGroup,
+                {"x": (pint.DimensionalityError, "'x'")},
                 id="slice-incompatible units",
             ),
             pytest.param(
                 {"x": slice(1000, Quantity(2000, "ms"))},
                 {"x": Unit("s")},
                 None,
-                ValueError,
-                "(?s)Cannot convert indexers:.+'x'",
+                PintExceptionGroup,
+                {"x": (pint.DimensionalityError, "'x'")},
                 id="slice-incompatible units-mixed",
             ),
         ),
     )
-    def test_convert_indexer_units(self, indexers, units, expected, error, match):
+    def test_convert_indexer_units(self, indexers, units, expected, error, suberrors):
         if error is not None:
-            with pytest.raises(error, match=match):
+            matchers = [
+                pytest.RaisesExc(err, match=match) for err, match in suberrors.values()
+            ]
+            with pytest.RaisesGroup(
+                *matchers,
+                match="Cannot convert indexers",
+                check=lambda eg: isinstance(eg, PintExceptionGroup),
+            ):
                 conversion.convert_indexer_units(indexers, units)
         else:
             actual = conversion.convert_indexer_units(indexers, units)

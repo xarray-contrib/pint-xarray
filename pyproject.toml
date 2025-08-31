@@ -93,6 +93,7 @@ ban-relative-imports = "all"
 [tool.coverage.run]
 source = ["pint_xarray"]
 branch = true
+omit = ["pint_xarray/tests/*"]
 
 [tool.coverage.report]
 show_missing = true
@@ -110,10 +111,16 @@ xarray = "*"
 [tool.pixi.pypi-dependencies]
 pint-xarray = { path = ".", editable = true }
 
+[tool.pixi.feature.optional-deps.dependencies]
+dask = "*"
+scipy = "*"
+bottleneck = "*"
+
 [tool.pixi.feature.tests.dependencies]
 pytest = ">=8"
 pytest-cov = "*"
 pytest-xdist = "*"
+cytoolz = "*"
 
 [tool.pixi.feature.tests-py311.dependencies]
 python = "3.11.*"
@@ -181,11 +188,11 @@ pooch = ">=1.8.2,<2"
 netcdf4 = ">=1.7.2,<2"
 
 [tool.pixi.environments]
-tests = ["tests"]
+tests = ["optional-deps", "tests"]
 nightly = { features = ["tests", "nightly"], no-default-feature = true }
 docs = ["docs"]
-tests-py311 = ["tests", "tests-py311"]
-tests-py312 = ["tests", "tests-py312"]
-tests-py313 = ["tests", "tests-py313"]
-doctests = ["tests", "tests-py313"]
-dev = ["tests", "dev"]
+tests-py311 = ["optional-deps", "tests", "tests-py311"]
+tests-py312 = ["optional-deps", "tests", "tests-py312"]
+tests-py313 = ["optional-deps", "tests", "tests-py313"]
+doctests = ["optional-deps", "tests", "tests-py313"]
+dev = ["optional-deps", "tests", "dev"]
