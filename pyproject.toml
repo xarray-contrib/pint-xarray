@@ -111,6 +111,11 @@ xarray = "*"
 [tool.pixi.pypi-dependencies]
 pint-xarray = { path = ".", editable = true }
 
+[tool.pixi.feature.optional-deps.dependencies]
+dask = "*"
+scipy = "*"
+bottleneck = "*"
+
 [tool.pixi.feature.tests.dependencies]
 pytest = ">=8"
 pytest-cov = "*"
@@ -183,11 +188,11 @@ pooch = ">=1.8.2,<2"
 netcdf4 = ">=1.7.2,<2"
 
 [tool.pixi.environments]
-tests = ["tests"]
+tests = ["optional-deps", "tests"]
 nightly = { features = ["tests", "nightly"], no-default-feature = true }
 docs = ["docs"]
-tests-py311 = ["tests", "tests-py311"]
-tests-py312 = ["tests", "tests-py312"]
-tests-py313 = ["tests", "tests-py313"]
-doctests = ["tests", "tests-py313"]
-dev = ["tests", "dev"]
+tests-py311 = ["optional-deps", "tests", "tests-py311"]
+tests-py312 = ["optional-deps", "tests", "tests-py312"]
+tests-py313 = ["optional-deps", "tests", "tests-py313"]
+doctests = ["optional-deps", "tests", "tests-py313"]
+dev = ["optional-deps", "tests", "dev"]

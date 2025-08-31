@@ -6965,8 +6965,8 @@ packages:
     timestamp: 1755321351815
   - pypi: ./
     name: pint-xarray
-    version: 0.5.2.dev20+gaab14e839.d20250831
-    sha256: 918152aa07bc0e77b258f5a2c9d2ad89adfbe90e69f8dbd1fb4159ca18b16931
+    version: 0.5.2.dev24+gff9566877.d20250831
+    sha256: 4b7d41351bf09e2d1758d3514c43dd6b766285e18c0f5354d21445068caa3656
     requires_dist:
       - xarray>=2023.7.0
       - numpy>=1.26
