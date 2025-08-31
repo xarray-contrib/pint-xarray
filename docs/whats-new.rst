@@ -2,6 +2,10 @@
 
 What's new
 ==========
+0.6.1 (*unreleased*)
+--------------------
+
+
 0.6.0 (31 Aug 2025)
 -------------------
 - Bump dependency versions (:pull:`313`):
