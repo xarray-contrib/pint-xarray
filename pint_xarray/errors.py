@@ -12,7 +12,7 @@ def _add_note(e: Exception, note: str) -> Exception:
     return e
 
 
-def construct_exception_group(mapping: dict[Hashable, Any], op: str) -> ExceptionGroup:
+def create_exception_group(mapping: dict[Hashable, Any], op: str) -> ExceptionGroup:
     match op:
         case "attach":
             message = "Cannot attach units"
