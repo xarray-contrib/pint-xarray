@@ -24,6 +24,8 @@ What's new
   By `Justus Magin <https://github.com/keewis>`_.
 - Add units to the inline ``repr`` and define a custom ``repr`` (:issue:`308`, :pull:`325`)
   By `Justus Magin <https://github.com/keewis>`_.
+- Collect multiple errors into a specific exception group (:pull:`329`)
+  By `Justus Magin <https://github.com/keewis>`_.
 
 0.5.1 (10 Aug 2025)
 -------------------
