@@ -114,6 +114,7 @@ pint-xarray = { path = ".", editable = true }
 pytest = ">=8"
 pytest-cov = "*"
 pytest-xdist = "*"
+cytoolz = "*"
 
 [tool.pixi.feature.tests-py311.dependencies]
 python = "3.11.*"
