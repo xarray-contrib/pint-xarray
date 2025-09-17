@@ -17,6 +17,8 @@ import itertools
 import re
 
 import astropy
+import astropy.coordinates
+import astropy.time
 import astropy.units
 from xarray import Coordinates, DataArray, Dataset, IndexVariable, Variable
 
@@ -34,11 +36,15 @@ datetime_re = r"\d{4}-\d{2}-\d{2}(?:[ T]\d{2}:\d{2}:\d{2}(?:\.\d+)?)?"
 datetime_units_re = re.compile(rf"{time_units_re} since {datetime_re}")
 
 
+AstropyType = astropy.units.Quantity | astropy.time.TimeBase
+AstropyUnitType = astropy.units.UnitBase | astropy.units.FunctionUnitBase
+
+
 def is_datetime_unit(unit):
     return isinstance(unit, str) and datetime_units_re.match(unit) is not None
 
 
-def array_attach_unit(data, unit) -> astropy.units.Quantity:
+def array_attach_unit(data, unit) -> AstropyType:
     """attach a unit to the data
 
     Parameters
@@ -55,7 +61,7 @@ def array_attach_unit(data, unit) -> astropy.units.Quantity:
     if unit in no_unit_values:
         return data
 
-    if not isinstance(unit, astropy.units.UnitBase):
+    if not isinstance(unit, AstropyUnitType | dict):
         raise ValueError(f"cannot use {unit!r} as a unit")
 
     if isinstance(data, astropy.units.Quantity):
@@ -67,7 +73,33 @@ def array_attach_unit(data, unit) -> astropy.units.Quantity:
             f"already has units {data.unit}"
         )
 
-    return astropy.units.Quantity(data, unit)
+    if isinstance(unit, dict):
+        match unit["class"].lower():
+            case "time":
+                return astropy.time.Time(
+                    data,
+                    format=unit["format"],
+                    scale=unit["scale"],
+                    precision=unit["precision"],
+                )
+            case "timedelta":
+                return astropy.time.TimeDelta(
+                    data,
+                    format=unit["format"],
+                    scale=unit["scale"],
+                    precision=unit["precision"],
+                )
+            case "longitude":
+                return astropy.coordinates.Longitude(data, unit=unit["unit"])
+            case "latitude":
+                return astropy.coordinates.Latitude(data, unit=unit["unit"])
+            case "distance":
+                return astropy.coordinates.Distance(data, unit=unit["unit"])
+
+    if isinstance(unit, astropy.units.LogUnit):
+        return astropy.units.LogQuantity(data, unit)
+    else:
+        return astropy.units.Quantity(data, unit)
 
 
 def array_convert_unit(data, unit, equivalencies) -> astropy.units.Quantity:
@@ -111,13 +143,32 @@ def array_convert_unit(data, unit, equivalencies) -> astropy.units.Quantity:
     return data
 
 
-def array_extract_unit(data):
+def array_extract_unit(data) -> dict | astropy.units.Unit | astropy.units.LogUnit:
     """extract the unit of an array
 
     If ``data`` is not a quantity, the units are ``None``
     """
     try:
-        return data.unit
+        if isinstance(
+            data,
+            (
+                astropy.coordinates.Longitude,
+                astropy.coordinates.Latitude,
+                astropy.coordinates.Distance,
+            ),
+        ):
+            return {"class": data.__class__.__name__.lower(), "unit": str(data.unit)}
+        elif isinstance(data, astropy.time.TimeBase):
+            return {
+                "class": data.__class__.__name__.lower(),
+                "format": data.format,
+                "scale": data.scale,
+                "precision": data.precision,
+            }
+        elif isinstance(data, astropy.units.Quantity):
+            return data.unit
+        else:
+            return None
     except AttributeError:
         return None
 
@@ -125,7 +176,10 @@ def array_extract_unit(data):
 def array_strip_unit(data):
     """strip the unit of a quantity"""
     try:
-        return data.value
+        if isinstance(data, (astropy.units.Quantity, astropy.time.TimeBase)):
+            return data.value
+        else:
+            return data
     except AttributeError:
         return data
 
@@ -405,7 +459,7 @@ def extract_unit_attributes(obj, attr="units"):
 
 
 def strip_units_variable(var):
-    if not isinstance(var.data, astropy.units.Quantity):
+    if not isinstance(var.data, AstropyType):
         return var
 
     data = array_strip_unit(var.data)

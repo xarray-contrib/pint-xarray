@@ -18,11 +18,16 @@ from typing import Final
 
 import astropy
 import astropy.units
-from xarray import register_dataarray_accessor, register_dataset_accessor
+from xarray import (
+    register_dataarray_accessor,
+    register_dataset_accessor,
+    register_datatree_accessor,
+)
 from xarray.core.dtypes import NA
 
 from astropy_xarray import conversion
-from astropy_xarray.conversion import no_unit_values
+from astropy_xarray.conversion import AstropyUnitType, no_unit_values
+from astropy_xarray.coordinates.sky_coord import dataset_to_skycoord
 from astropy_xarray.errors import format_error_message
 
 # sentinel to fallback to attribute unit, then value container type
@@ -64,7 +69,7 @@ def units_to_str_or_none(mapping, unit_format):
     formatter = str if not unit_format else lambda v: unit_format.format(v)
 
     return {
-        key: formatter(value) if isinstance(value, astropy.units.UnitBase) else value
+        key: formatter(value) if isinstance(value, AstropyUnitType) else value
         for key, value in mapping.items()
     }
 
@@ -95,6 +100,8 @@ def _decide_unit(unit, unit_attribute):
         return unit
     elif unit is _default:
         if unit_attribute in no_unit_values:
+            return unit_attribute
+        if isinstance(unit_attribute, dict):
             return unit_attribute
         if isinstance(unit_attribute, astropy.units.UnitBase):
             unit = unit_attribute
@@ -1718,3 +1725,47 @@ class AstropyDatasetAccessor:
         )
 
         return conversion.attach_units(interpolated, units)
+
+    def to_sky_coord(self):
+        """TODO"""
+        return dataset_to_skycoord(self.ds)
+
+
+@register_datatree_accessor("astropy")
+class AstropyDataTreeAccessor:
+    """
+    Access methods for DataTree with units using Astropy.
+
+    Methods and attributes can be accessed through the `.astropy` attribute.
+    """
+
+    def __init__(self, dt):
+        self.dt = dt
+
+    def quantify(self, units=_default, **unit_kwargs):
+        from xarray import DataTree
+
+        def breadth_first_quantify(dt: DataTree):
+            quantified_ds = (
+                dt.dataset.astropy.quantify(units=_default, **unit_kwargs)
+                if dt.dataset is not None
+                else None
+            )
+            children = {k: breadth_first_quantify(v) for k, v in dt.children.items()}
+            return DataTree(dataset=quantified_ds, children=children)
+
+        return breadth_first_quantify(self.dt)
+
+    def dequantify(self, format=None):
+        from xarray import DataTree
+
+        def breadth_first_dequantify(dt: DataTree):
+            dequantified_ds = (
+                dt.dataset.astropy.dequantify(format=format)
+                if dt.dataset is not None
+                else None
+            )
+            children = {k: breadth_first_dequantify(v) for k, v in dt.children.items()}
+            return DataTree(dataset=dequantified_ds, children=children)
+
+        return breadth_first_dequantify(self.dt)

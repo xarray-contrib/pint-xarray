@@ -90,6 +90,8 @@ def last_n_items(array, n_desired):
 # based on xarray.core.formatting.format_item
 def format_item(x, quote_strings=True):
     """Returns a succinct summary of an object as a string"""
+    if isinstance(x, np.str_):
+        return repr(str(x)) if quote_strings else x
     if isinstance(x, (str, bytes)):
         return repr(x) if quote_strings else x
     elif isinstance(x, float):
