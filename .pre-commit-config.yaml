@@ -1,7 +1,6 @@
 ci:
   autoupdate_schedule: weekly
 
-# https://pre-commit.com/
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
