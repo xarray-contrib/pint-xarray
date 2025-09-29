@@ -31,13 +31,13 @@ repos:
     hooks:
       - id: black-jupyter
   - repo: https://github.com/keewis/blackdoc
-    rev: v0.4.1
+    rev: v0.4.2
     hooks:
       - id: blackdoc
         additional_dependencies: ["black==25.9.0"]
       - id: blackdoc-autoupdate-black
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.13.1
+    rev: v0.13.2
     hooks:
       - id: ruff
         args: [--fix]
