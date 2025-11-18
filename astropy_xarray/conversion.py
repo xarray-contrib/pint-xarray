@@ -89,6 +89,8 @@ def array_attach_unit(data, unit) -> AstropyType:
                     scale=unit["scale"],
                     precision=unit["precision"],
                 )
+            case "angle":
+                return astropy.coordinates.Angle(data, unit=unit["unit"])
             case "longitude":
                 return astropy.coordinates.Longitude(data, unit=unit["unit"])
             case "latitude":

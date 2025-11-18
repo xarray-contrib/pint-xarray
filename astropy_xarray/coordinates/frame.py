@@ -7,15 +7,11 @@ from astropy.coordinates import (
     BaseRepresentation,
     CartesianDifferential,
     CartesianRepresentation,
-    CylindricalDifferential,
     CylindricalRepresentation,
     EarthLocation,
-    SphericalCosLatDifferential,
-    SphericalDifferential,
     SphericalRepresentation,
-    UnitSphericalCosLatDifferential,
-    UnitSphericalDifferential,
-    UnitSphericalRepresentation,
+    frame_transform_graph,
+    representation,
 )
 from astropy.coordinates.builtin_frames import (
     CIRS,
@@ -247,6 +243,7 @@ def load_frame(frame_dict: dict, with_data: bool = False) -> BaseCoordinateFrame
             data=load_representation(
                 representation_type,
                 differential_type,
+                None,
                 {
                     k: u.Quantity(**v)
                     for k, v in frame_dict.get("data").items()
@@ -258,47 +255,71 @@ def load_frame(frame_dict: dict, with_data: bool = False) -> BaseCoordinateFrame
 
 
 def load_representation(
-    representation_type: str, differential_type: str | None, data: dict[str, np.ndarray]
+    representation_type: str,
+    differential_type: str | None,
+    frame_name: str | None,
+    data: dict[str, np.ndarray],
 ) -> BaseRepresentation:
-    match representation_type:
-        case "unitspherical":
-            RepresentationClass = UnitSphericalRepresentation
-        case "spherical":
-            RepresentationClass = SphericalRepresentation
-        case "cartesian":
-            RepresentationClass = CartesianRepresentation
-        case "cylindrical":
-            RepresentationClass = CylindricalRepresentation
-        case _:
-            raise NotImplementedError(representation_type)
-    match differential_type:
-        case "unitspherical":
-            DifferentialClass = UnitSphericalDifferential
-        case "unitsphericalcoslat":
-            DifferentialClass = UnitSphericalCosLatDifferential
-        case "spherical":
-            DifferentialClass = SphericalDifferential
-        case "sphericalcoslat":
-            DifferentialClass = SphericalCosLatDifferential
-        case "cartesian":
-            DifferentialClass = CartesianDifferential
-        case "cylindrical":
-            DifferentialClass = CylindricalDifferential
-        case None:
-            DifferentialClass = None
-        case _:
-            raise NotImplementedError(differential_type)
-    differentials = (
-        DifferentialClass(
-            **{key: data[key] for key in DifferentialClass.attr_classes.keys()},
+    RepresentationClass = representation.REPRESENTATION_CLASSES.get(representation_type)
+    DifferentialClass = representation.DIFFERENTIAL_CLASSES.get(differential_type)
+
+    if frame_name is None:
+        # using data component names
+        differentials = (
+            DifferentialClass(
+                **{key: data[key] for key in DifferentialClass.attr_classes.keys()},
+                copy=False,
+            )
+            if DifferentialClass is not None
+            else None
+        )
+
+        return RepresentationClass(
+            **{key: data[key] for key in RepresentationClass.attr_classes.keys()},
+            differentials=differentials,
             copy=False,
         )
-        if DifferentialClass is not None
-        else None
-    )
+    else:
+        # using frame component names
+        frame_type: BaseCoordinateFrame = frame_transform_graph.lookup_name(frame_name)
+        diff_to_data = (
+            dict(
+                zip(
+                    tuple(DifferentialClass.attr_classes),
+                    frame_type._get_representation_info()[DifferentialClass]["names"],
+                )
+            )
+            if DifferentialClass is not None
+            else {}
+        )
+        rep_to_data = (
+            dict(
+                zip(
+                    tuple(RepresentationClass.attr_classes),
+                    frame_type._get_representation_info()[RepresentationClass]["names"],
+                )
+            )
+            if RepresentationClass is not None
+            else {}
+        )
 
-    return RepresentationClass(
-        **{key: data[key] for key in RepresentationClass.attr_classes.keys()},
-        differentials=differentials,
-        copy=False,
-    )
+        differentials = (
+            DifferentialClass(
+                **{
+                    key: data[diff_to_data[key]]
+                    for key in DifferentialClass.attr_classes.keys()
+                },
+                copy=False,
+            )
+            if DifferentialClass is not None
+            else None
+        )
+
+        return RepresentationClass(
+            **{
+                key: data[rep_to_data[key]]
+                for key in RepresentationClass.attr_classes.keys()
+            },
+            differentials=differentials,
+            copy=False,
+        )

@@ -17,6 +17,7 @@ from importlib.metadata import version
 
 import astropy.units
 
+import astropy_xarray.time_compat
 from astropy_xarray import accessors, formatting, testing  # noqa: F401
 from astropy_xarray.index import AstropyIndex
 
