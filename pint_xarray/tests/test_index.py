@@ -260,11 +260,12 @@ def test_roll(shifts, expected_index):
 @pytest.mark.parametrize("name_dict", ({"y2": "y3"}, {"y2": "y1"}))
 def test_rename(name_dict, dims_dict):
     wrapped_index = PandasIndex(pd.Index([1, 2], name="y2"), dim="y")
-    index = PintIndex(index=wrapped_index, units={"y": ureg.Unit("m")})
+    index = PintIndex(index=wrapped_index, units={"y2": ureg.Unit("m")})
 
     actual = index.rename(name_dict, dims_dict)
     expected = PintIndex(
-        index=wrapped_index.rename(name_dict, dims_dict), units=index.units
+        index=wrapped_index.rename(name_dict, dims_dict),
+        units={name_dict["y2"]: ureg.Unit("m")},
     )
 
     assert actual.equals(expected)
