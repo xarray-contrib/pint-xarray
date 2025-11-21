@@ -4,7 +4,8 @@ What's new
 ==========
 0.6.1 (*unreleased*)
 --------------------
-
+- Properly rename the coordinate units (:pull:`351`).
+  By `Justus Magin <https://github.com/keewis>`_.
 
 0.6.0 (31 Aug 2025)
 -------------------
