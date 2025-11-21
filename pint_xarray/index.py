@@ -112,7 +112,10 @@ class PintIndex(Index):
         return self._replace(self.index.roll(shifts))
 
     def rename(self, name_dict, dims_dict):
-        return self._replace(self.index.rename(name_dict, dims_dict))
+        new_units = {new: self.units[old] for old, new in name_dict.items()}
+        return self.__class__(
+            index=self.index.rename(name_dict, dims_dict), units=new_units
+        )
 
     def __getitem__(self, indexer):
         return self._replace(self.index[indexer])
