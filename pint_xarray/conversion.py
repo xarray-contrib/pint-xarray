@@ -296,7 +296,7 @@ def convert_units_dataset(obj, units):
         try:
             converted_index = convert_units_index(idx, idx_vars, idx_units)
             indexes.update({k: converted_index for k in idx_vars})
-            index_vars.update(converted_index.create_variables())
+            index_vars.update(converted_index.create_variables(idx_vars))
         except (ValueError, pint.errors.PintTypeError) as e:
             names = tuple(idx_vars)
             failed[names] = e
