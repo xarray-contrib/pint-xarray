@@ -67,8 +67,7 @@ def _(report: CollectReport):
 def format_report(reports, py_version):
     newline = "\n"
     summaries = newline.join(format_summary(r) for r in reports)
-    message = textwrap.dedent(
-        """\
+    message = textwrap.dedent("""\
         <details><summary>Python {py_version} Test Summary</summary>
 
         ```
@@ -76,8 +75,7 @@ def format_report(reports, py_version):
         ```
 
         </details>
-        """
-    ).format(summaries=summaries, py_version=py_version)
+        """).format(summaries=summaries, py_version=py_version)
     return message
 
 
