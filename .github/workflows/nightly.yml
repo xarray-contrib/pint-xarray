@@ -20,7 +20,7 @@ jobs:
     if: |
       github.repository_owner == 'xarray-contrib'
       && (github.event_name == 'push' || github.event_name == 'pull_request')
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     outputs:
       triggered: ${{ steps.detect-trigger.outputs.trigger-found }}
     steps:
