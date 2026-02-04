@@ -418,11 +418,12 @@ class TestXarrayFunctions:
         expected_a = convert_quantity(q_a, units.get("a", original_units.get("a")))
         expected_b = convert_quantity(q_b, units.get("b", original_units.get("b")))
         expected_u = convert_quantity(q_u, units.get("u", original_units.get("u")))
-        expected_x = convert_quantity(q_x, units.get("x"))
+        expected_x = convert_quantity(q_x, units.get("x", original_units.get("x")))
         expected_index = PandasIndex(pd.Index(strip_quantity(expected_x)), "x")
-        if units.get("x") is not None:
+        expected_index_units = units.get("x", original_units.get("x"))
+        if expected_index_units is not None:
             expected_index = PintIndex(
-                index=expected_index, units={"x": units.get("x")}
+                index=expected_index, units={"x": expected_index_units}
             )
 
         expected = Dataset(
