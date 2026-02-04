@@ -21,24 +21,20 @@ pytest-cov = "*"
 pytest-xdist = "*"
 cytoolz = "*"
 
+[feature.tests.tasks]
+tests = { cmd = "pytest --cov=pint_xarray", cwd = ".", default-environment = "dev" }
+
 [feature.tests-py311.dependencies]
 python = "3.11.*"
 
-[feature.tests-py311.tasks]
-tests = "pytest -n auto --cov=pint_xarray"
-
 [feature.tests-py312.dependencies]
 python = "3.12.*"
-
-[feature.tests-py312.tasks]
-tests = "pytest -n auto --cov=pint_xarray"
 
 [feature.tests-py313.dependencies]
 python = "3.13.*"
 
 [feature.tests-py313.tasks]
 doctests = "pytest --doctest-modules pint_xarray --ignore pint_xarray/tests"
-tests = "pytest -n auto --cov=pint_xarray"
 
 [feature.nightly.pypi-options]
 extra-index-urls = [
