@@ -673,6 +673,39 @@ def test_to(obj, units, expected, error):
             id="Dataset-incompatible units",
         ),
         pytest.param(
+            xr.Dataset(
+                {
+                    "x": (
+                        "x",
+                        [10, 20, 30],
+                        {"units": unit_registry.Unit("dm"), "long_name": "length"},
+                    ),
+                    "y": (
+                        "y",
+                        [60, 120],
+                        {"units": unit_registry.Unit("s"), "long_name": "time"},
+                    ),
+                }
+            ),
+            {"x": Quantity([10, 30], "dm"), "y": Quantity([60], "s")},
+            xr.Dataset(
+                {
+                    "x": (
+                        "x",
+                        [10, 30],
+                        {"units": unit_registry.Unit("dm"), "long_name": "length"},
+                    ),
+                    "y": (
+                        "y",
+                        [60],
+                        {"units": unit_registry.Unit("s"), "long_name": "time"},
+                    ),
+                }
+            ),
+            None,
+            id="Dataset-coords with attrs",
+        ),
+        pytest.param(
             xr.DataArray(
                 [[0, 1], [2, 3], [4, 5]],
                 dims=("x", "y"),
