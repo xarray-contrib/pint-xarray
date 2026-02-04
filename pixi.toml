@@ -1,0 +1,97 @@
+[workspace]
+channels = ["conda-forge"]
+platforms = ["linux-64", "osx-arm64", "win-64"]
+
+[dependencies]
+numpy = "*"
+pint = "*"
+xarray = "*"
+
+[pypi-dependencies]
+pint-xarray = { path = ".", editable = true }
+
+[feature.optional-deps.dependencies]
+dask = "*"
+scipy = "*"
+bottleneck = "*"
+
+[feature.tests.dependencies]
+pytest = ">=8"
+pytest-cov = "*"
+pytest-xdist = "*"
+cytoolz = "*"
+
+[feature.tests-py311.dependencies]
+python = "3.11.*"
+
+[feature.tests-py311.tasks]
+tests = "pytest -n auto --cov=pint_xarray"
+
+[feature.tests-py312.dependencies]
+python = "3.12.*"
+
+[feature.tests-py312.tasks]
+tests = "pytest -n auto --cov=pint_xarray"
+
+[feature.tests-py313.dependencies]
+python = "3.13.*"
+
+[feature.tests-py313.tasks]
+doctests = "pytest --doctest-modules pint_xarray --ignore pint_xarray/tests"
+tests = "pytest -n auto --cov=pint_xarray"
+
+[feature.nightly.pypi-options]
+extra-index-urls = [
+  "https://pypi.anaconda.org/scientific-python-nightly-wheels/simple",
+]
+
+[feature.nightly.pypi-dependencies]
+pint-xarray = { path = ".", editable = true }
+pint = { git = "git+https://github.com/hgrecco/pint.git" }
+xarray = "*"
+numpy = "*"
+scipy = "*"
+
+[feature.nightly.dependencies]
+pytest-reportlog = ">=0.1.2"
+python = "3.13.*"
+
+[feature.nightly.tasks]
+tests = "pytest -n auto --cov=pint_xarray --report-log=tests.jsonl"
+
+[feature.docs.dependencies]
+sphinx = "*"
+sphinx-rtd-theme = ">=1.0"
+sphinx-autosummary-accessors = "*"
+nbsphinx = "*"
+cf-xarray = ">=0.10"
+pooch = "*"
+netcdf4 = "*"
+ipython = "*"
+ipykernel = "*"
+jupyter_client = "*"
+matplotlib-base = "*"
+sphinx-autobuild = "*"
+python = "3.13.*"
+
+[feature.docs.tasks]
+build-docs = { cmd = "rm -rf generated/; python -m sphinx -b html -w warnings.log -W -Tn -j auto . _build", cwd = "docs" }
+autobuild-docs = { cmd = "sphinx-autobuild -b html -w warnings.log -W -Tn -j auto . _build", cwd = "docs" }
+build-docs-rtd = { cmd = "python -m sphinx -b html -W -T -j auto . $READTHEDOCS_OUTPUT/html", cwd = "docs" }
+
+[feature.dev.dependencies]
+ipython = "*"
+ipdb = "*"
+python = "3.13.*"
+pooch = ">=1.8.2,<2"
+netcdf4 = ">=1.7.2,<2"
+
+[environments]
+tests = ["optional-deps", "tests"]
+nightly = { features = ["tests", "nightly"], no-default-feature = true }
+docs = ["docs"]
+tests-py311 = ["optional-deps", "tests", "tests-py311"]
+tests-py312 = ["optional-deps", "tests", "tests-py312"]
+tests-py313 = ["optional-deps", "tests", "tests-py313"]
+doctests = ["optional-deps", "tests", "tests-py313"]
+dev = ["optional-deps", "tests", "dev"]
