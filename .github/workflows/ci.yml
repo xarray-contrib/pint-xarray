@@ -16,7 +16,7 @@ jobs:
   detect-skip-ci-trigger:
     name: "Detect CI Trigger: [skip-ci]"
     if: github.event_name == 'push' || github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     outputs:
       triggered: ${{ steps.detect-trigger.outputs.trigger-found }}
     steps:
@@ -28,24 +28,45 @@ jobs:
         with:
           keyword: "[skip-ci]"
 
+  cache-pixi-lock:
+    name: "Cache pixi lock"
+    needs: detect-skip-ci-trigger
+    runs-on: ubuntu-slim
+    if: |
+      always()
+      && github.repository == 'xarray-contrib/pint-xarray'
+      && (
+        github.event_name == 'workflow_dispatch' || github.event_name == 'push'
+        || (
+          github.event_name == 'pull_request'
+          && (
+            needs.detect-skip-ci-trigger.outputs.triggered == 'false'
+            && !contains(github.event.pull_request.labels.*.name, 'skip-ci')
+          )
+        )
+      )
+
+    outputs:
+      cache-key: ${{ steps.pixi-lock.outputs.cache-key }}
+      pixi-version: ${{ steps.pixi-lock.outputs.pixi-version }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - uses: Parcels-code/pixi-lock/create-and-cache@5cbd7a155fa24aa0711ec0a9aad9ede0819e84a1 # v0.1.0
+        id: pixi-lock
+
   ci:
     name: ${{ matrix.os }} ${{ matrix.env }}
     runs-on: ${{ matrix.os }}
-    needs: detect-skip-ci-trigger
+    needs: cache-pixi-lock
     defaults:
       run:
         shell: bash -l {0}
 
     env:
       FORCE_COLOR: 3
-
-    if: |
-      always()
-      && github.repository == 'xarray-contrib/pint-xarray'
-      && (
-        github.event_name == 'workflow_dispatch'
-        || needs.detect-skip-ci-trigger.outputs.triggered == 'false'
-      )
 
     strategy:
       fail-fast: false
@@ -60,9 +81,16 @@ jobs:
           # need to fetch all tags to get a correct version
           fetch-depth: 0 # fetch all branches and tags
 
-      - name: setup environment
-        uses: prefix-dev/setup-pixi@82d477f15f3a381dbcc8adc1206ce643fe110fb7 # 0.9.3
+      - uses: Parcels-code/pixi-lock/restore@5cbd7a155fa24aa0711ec0a9aad9ede0819e84a1 # v0.1.0
         with:
+          cache-key: ${{ needs.cache-pixi-lock.outputs.cache-key }}
+
+      - name: setup environment
+        uses: prefix-dev/setup-pixi@a0af7a228712d6121d37aba47adf55c1332c9c2e # 0.9.4
+        with:
+          pixi-version: "${{ needs.cache-pixi-lock.outputs.pixi-version }}"
+          frozen: true
+          cache: true
           environments: "${{ matrix.env }}"
 
       - name: investigate env variables
