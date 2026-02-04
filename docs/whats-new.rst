@@ -8,6 +8,8 @@ What's new
   By `Justus Magin <https://github.com/keewis>`_.
 - Don't rely on ``xarray``'s default behavior regarding ``attrs`` in :py:func:`pint_xarray.expects` (:issue:`360`, :pull:`367`)
   By `Justus Magin <https://github.com/keewis>`_.
+- Fix quantifying a existing index and adjust the index conversion tests (:pull:`368`)
+  By `Justus Magin <https://github.com/keewis>`_.
 
 0.6.0 (31 Aug 2025)
 -------------------
