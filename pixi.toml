@@ -53,9 +53,6 @@ scipy = "*"
 pytest-reportlog = ">=0.1.2"
 python = "3.13.*"
 
-[feature.nightly.tasks]
-tests = "pytest -n auto --cov=pint_xarray --report-log=tests.jsonl"
-
 [feature.docs.dependencies]
 sphinx = "*"
 sphinx-rtd-theme = ">=1.0"
