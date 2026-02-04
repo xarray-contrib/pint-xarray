@@ -34,6 +34,9 @@ python = "3.12.*"
 [feature.py313.dependencies]
 python = "3.13.*"
 
+[feature.py314.dependencies]
+python = "3.14.*"
+
 [feature.nightly.pypi-options]
 extra-index-urls = [
   "https://pypi.anaconda.org/scientific-python-nightly-wheels/simple",
