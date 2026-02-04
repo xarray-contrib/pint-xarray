@@ -35,8 +35,8 @@ jobs:
 
       - name: import pint-xarray
         run: |
-          pixi run -e doctests python -c 'import pint_xarray'
+          pixi run -e ci-py313 python -c 'import pint_xarray'
 
       - name: run doctests
         run: |
-          pixi run -e doctests doctests
+          pixi run -e ci-py313 doctests
