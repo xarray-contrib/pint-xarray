@@ -6,6 +6,8 @@ What's new
 --------------------
 - Properly rename the coordinate units (:pull:`351`).
   By `Justus Magin <https://github.com/keewis>`_.
+- Don't rely on ``xarray``'s default behavior regarding ``attrs`` in :py:func:`pint_xarray.expects` (:issue:`360`, :pull:`367`)
+  By `Justus Magin <https://github.com/keewis>`_.
 
 0.6.0 (31 Aug 2025)
 -------------------
