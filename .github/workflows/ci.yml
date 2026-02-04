@@ -16,7 +16,7 @@ jobs:
   detect-skip-ci-trigger:
     name: "Detect CI Trigger: [skip-ci]"
     if: github.event_name == 'push' || github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     outputs:
       triggered: ${{ steps.detect-trigger.outputs.trigger-found }}
     steps:
