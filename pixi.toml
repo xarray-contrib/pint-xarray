@@ -1,0 +1,90 @@
+[workspace]
+channels = ["conda-forge"]
+platforms = ["linux-64", "osx-arm64", "win-64"]
+
+[dependencies]
+numpy = "*"
+pint = "*"
+xarray = "*"
+
+[pypi-dependencies]
+pint-xarray = { path = ".", editable = true }
+
+[feature.optional-deps.dependencies]
+dask = "*"
+scipy = "*"
+bottleneck = "*"
+
+[feature.tests.dependencies]
+pytest = ">=8"
+pytest-cov = "*"
+pytest-xdist = "*"
+cytoolz = "*"
+
+[feature.tests.tasks]
+tests = { cmd = "pytest -n auto --cov=pint_xarray", cwd = ".", default-environment = "dev" }
+doctests = { cmd = "pytest --doctest-modules pint_xarray --ignore pint_xarray/tests", cwd = ".", default-environment = "dev" }
+
+[feature.py311.dependencies]
+python = "3.11.*"
+
+[feature.py312.dependencies]
+python = "3.12.*"
+
+[feature.py313.dependencies]
+python = "3.13.*"
+
+[feature.py314.dependencies]
+python = "3.14.*"
+
+[feature.nightly.pypi-options]
+extra-index-urls = [
+  "https://pypi.anaconda.org/scientific-python-nightly-wheels/simple",
+]
+
+[feature.nightly.pypi-dependencies]
+pint-xarray = { path = ".", editable = true }
+pint = { git = "git+https://github.com/hgrecco/pint.git" }
+xarray = "*"
+numpy = "*"
+scipy = "*"
+
+[feature.nightly.dependencies]
+pytest-reportlog = ">=0.1.2"
+python = "3.13.*"
+
+[feature.docs.dependencies]
+sphinx = "*"
+sphinx-rtd-theme = ">=1.0"
+sphinx-autosummary-accessors = "*"
+nbsphinx = "*"
+cf-xarray = ">=0.10"
+pooch = "*"
+netcdf4 = "*"
+ipython = "*"
+ipykernel = "*"
+jupyter_client = "*"
+matplotlib-base = "*"
+sphinx-autobuild = "*"
+python = "3.13.*"
+
+[feature.docs.tasks]
+build-docs = { cmd = "rm -rf generated/; python -m sphinx -b html -w warnings.log -W -Tn -j auto . _build", cwd = "docs" }
+autobuild-docs = { cmd = "sphinx-autobuild -b html -w warnings.log -W -Tn -j auto . _build", cwd = "docs" }
+build-docs-rtd = { cmd = "python -m sphinx -b html -W -T -j auto . $READTHEDOCS_OUTPUT/html", cwd = "docs" }
+
+[feature.dev.dependencies]
+ipython = "*"
+ipdb = "*"
+pooch = ">=1.8.2,<2"
+netcdf4 = ">=1.7.2,<2"
+
+[environments]
+tests = ["optional-deps", "tests"]
+nightly = { features = ["tests", "nightly"], no-default-feature = true }
+docs = ["docs"]
+ci-py311 = ["optional-deps", "tests", "py311"]
+ci-py312 = ["optional-deps", "tests", "py312"]
+ci-py313 = ["optional-deps", "tests", "py313"]
+ci-py314 = ["optional-deps", "tests", "py314"]
+dev = ["optional-deps", "tests", "py313", "dev"]

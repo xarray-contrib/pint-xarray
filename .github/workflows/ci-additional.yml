@@ -29,14 +29,14 @@ jobs:
           fetch-depth: 0 # fetch all branches and tags
 
       - name: setup environment
-        uses: prefix-dev/setup-pixi@82d477f15f3a381dbcc8adc1206ce643fe110fb7 # 0.9.3
+        uses: prefix-dev/setup-pixi@a0af7a228712d6121d37aba47adf55c1332c9c2e # 0.9.4
         with:
-          environments: "doctests"
+          environments: "ci-py313"
 
       - name: import pint-xarray
         run: |
-          pixi run -e doctests python -c 'import pint_xarray'
+          pixi run -e ci-py313 python -c 'import pint_xarray'
 
       - name: run doctests
         run: |
-          pixi run -e doctests doctests
+          pixi run -e ci-py313 doctests
