@@ -8,7 +8,7 @@ import pint.testing
 import xarray as xr
 
 from pint_xarray.accessors import get_registry
-from pint_xarray.conversion import extract_units
+from pint_xarray.conversion import extract_units, strip_units
 from pint_xarray.itertools import zip_mappings
 
 variable_parameters = (Parameter.VAR_POSITIONAL, Parameter.VAR_KEYWORD)
@@ -185,7 +185,7 @@ def expects(*args_units, return_value=None, **kwargs_units):
                     if isinstance(value, pint.Quantity):
                         params.arguments[name] = value.m_as(units)
                     elif isinstance(value, (xr.DataArray, xr.Dataset)):
-                        params.arguments[name] = value.pint.to(units).pint.dequantify()
+                        params.arguments[name] = strip_units(value.pint.to(units))
                     else:
                         raise TypeError(
                             f"Attempting to convert non-quantity {value} to {units}."
