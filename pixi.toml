@@ -22,7 +22,7 @@ pytest-xdist = "*"
 cytoolz = "*"
 
 [feature.tests.tasks]
-tests = { cmd = "pytest --cov=pint_xarray", cwd = ".", default-environment = "dev" }
+tests = { cmd = "pytest -n auto --cov=pint_xarray", cwd = ".", default-environment = "dev" }
 doctests = { cmd = "pytest --doctest-modules pint_xarray --ignore pint_xarray/tests", cwd = ".", default-environment = "dev" }
 
 [feature.py311.dependencies]
