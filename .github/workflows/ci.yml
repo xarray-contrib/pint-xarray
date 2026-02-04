@@ -71,7 +71,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        env: ["tests-py311", "tests-py312", "tests-py313"]
+        env: ["ci-py311", "ci-py313", "ci-py314"]
         os: ["ubuntu-latest", "macos-latest", "windows-latest"]
 
     steps:
