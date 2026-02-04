@@ -24,13 +24,13 @@ cytoolz = "*"
 [feature.tests.tasks]
 tests = { cmd = "pytest --cov=pint_xarray", cwd = ".", default-environment = "dev" }
 
-[feature.tests-py311.dependencies]
+[feature.py311.dependencies]
 python = "3.11.*"
 
-[feature.tests-py312.dependencies]
+[feature.py312.dependencies]
 python = "3.12.*"
 
-[feature.tests-py313.dependencies]
+[feature.py313.dependencies]
 python = "3.13.*"
 
 [feature.tests-py313.tasks]
@@ -78,7 +78,6 @@ build-docs-rtd = { cmd = "python -m sphinx -b html -W -T -j auto . $READTHEDOCS_
 [feature.dev.dependencies]
 ipython = "*"
 ipdb = "*"
-python = "3.13.*"
 pooch = ">=1.8.2,<2"
 netcdf4 = ">=1.7.2,<2"
 
@@ -86,8 +85,9 @@ netcdf4 = ">=1.7.2,<2"
 tests = ["optional-deps", "tests"]
 nightly = { features = ["tests", "nightly"], no-default-feature = true }
 docs = ["docs"]
-tests-py311 = ["optional-deps", "tests", "tests-py311"]
-tests-py312 = ["optional-deps", "tests", "tests-py312"]
-tests-py313 = ["optional-deps", "tests", "tests-py313"]
-doctests = ["optional-deps", "tests", "tests-py313"]
-dev = ["optional-deps", "tests", "dev"]
+ci-py311 = ["optional-deps", "tests", "py311"]
+ci-py312 = ["optional-deps", "tests", "py312"]
+ci-py313 = ["optional-deps", "tests", "py313"]
+ci-py314 = ["optional-deps", "tests", "py314"]
+doctests = ["optional-deps", "tests", "py313"]
+dev = ["optional-deps", "tests", "py313", "dev"]
