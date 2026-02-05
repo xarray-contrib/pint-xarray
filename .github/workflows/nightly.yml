@@ -83,7 +83,7 @@ jobs:
       - name: report failures
         if: |
           failure()
-          && steps.tests.outcome == 'failure'
+          && steps.status.outcome == 'failure'
           && github.event_name == 'schedule'
         uses: scientific-python/issue-from-pytest-log@v1
         with:
