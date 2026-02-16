@@ -35,7 +35,7 @@ repos:
         additional_dependencies: ["black==26.1.0"]
       - id: blackdoc-autoupdate-black
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.14.14
+    rev: v0.15.1
     hooks:
       - id: ruff
         args: ["--fix"]
