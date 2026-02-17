@@ -30,6 +30,7 @@ def importorskip(name):
 has_dask_array, requires_dask_array = importorskip("dask.array")
 has_scipy, requires_scipy = importorskip("scipy")
 has_bottleneck, requires_bottleneck = importorskip("bottleneck")
+has_zarr, requires_zarr = importorskip("zarr")
 
 
 @contextmanager

@@ -1,10 +1,10 @@
 from collections.abc import Generator
+from typing import Any
 
 import astropy.units as u
 import numpy as np
 import pytest
 import xarray as xr
-import zarr.storage as zs
 from astropy.coordinates import (
     Angle,
     BaseCoordinateFrame,
@@ -47,7 +47,7 @@ from astropy.coordinates.builtin_frames import (
     Supergalactic,
 )
 from astropy.time import Time
-from zarr.abc.store import Store
+from xarray.tests import requires_zarr
 
 from astropy_xarray.coordinates import (
     dataset_to_skycoord,
@@ -180,11 +180,14 @@ def test_cartesian_direction_components(representation, expected_base, expected_
 
 
 @pytest.fixture(name="store", scope="session")
-def store_fixture() -> Generator[Store, None, None]:
+def store_fixture() -> Generator[Any, None, None]:
+    import zarr.storage as zs
+
     with zs.MemoryStore() as store:
         yield store
 
 
+@requires_zarr
 @pytest.mark.parametrize(
     "representation",
     [

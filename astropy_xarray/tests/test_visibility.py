@@ -7,13 +7,13 @@ import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
-import zarr.storage as zs
 from astropy.coordinates import (
     GCRS,
     ICRS,
     AltAz,
     SkyCoord,
 )
+from xarray.tests import requires_zarr
 
 from astropy_xarray.coordinates import (
     dataset_to_skycoord,
@@ -132,6 +132,7 @@ def generate_baselines(antenna_count) -> list[tuple[int, int]]:
     return baselines
 
 
+@requires_zarr
 def test_simple_visibility_dataset():
     a = 4  # antennas
     b = int(a * (a - 1) / 2)  # baselines
@@ -221,6 +222,8 @@ def test_simple_visibility_dataset():
     ds_out = astropy_decode_msgpack(m)
     xr.testing.assert_identical(VISIBILITY, ds_out)
 
+    import zarr.storage as zs
+
     store = zs.MemoryStore()
 
     VISIBILITY.astropy.dequantify().to_zarr(store, mode="w", consolidated=True)
@@ -235,6 +238,7 @@ def test_simple_visibility_dataset():
     np.testing.assert_array_equal(actual, expected, strict=True)
 
 
+@requires_zarr
 @pytest.mark.parametrize(
     "skycoords,frame,unit",
     [
@@ -360,6 +364,8 @@ def test_visibility_dataset(skycoords: list[SkyCoord], frame, unit):
     m = astropy_encode_msgpack(VISIBILITY)
     ds_out = astropy_decode_msgpack(m)
     xr.testing.assert_identical(VISIBILITY, ds_out)
+
+    import zarr.storage as zs
 
     store = zs.MemoryStore()
 

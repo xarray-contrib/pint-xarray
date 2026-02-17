@@ -1,5 +1,6 @@
 import astropy.units as u
 import numpy.testing
+import pytest
 from astropy.coordinates import (
     CartesianDifferential,
     CartesianRepresentation,
@@ -40,6 +41,7 @@ def test_frame_conversion_aliasing():
     numpy.testing.assert_array_equal(sc.pm_ra_cosdec, sc2.pm_ra_cosdec)
 
 
+@pytest.mark.xfail(reason="astropy 6.0.0 skycoords not supported")
 def test_frame_conversion_components():
     sc = SkyCoord(
         ICRS().realize_frame(
