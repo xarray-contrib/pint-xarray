@@ -1,66 +1,21 @@
 import astropy.units as u
-import numpy as np
 import numpy.testing
-import pytest
-import xarray as xr
-import zarr.storage as zs
 from astropy.coordinates import (
-    Angle,
-    BaseCoordinateFrame,
-    BaseRepresentation,
     CartesianDifferential,
     CartesianRepresentation,
-    CylindricalDifferential,
-    CylindricalRepresentation,
-    Distance,
-    EarthLocation,
-    Latitude,
-    Longitude,
     SkyCoord,
-    SphericalCosLatDifferential,
-    SphericalRepresentation,
-    UnitSphericalCosLatDifferential,
-    UnitSphericalDifferential,
-    UnitSphericalRepresentation,
 )
-from astropy.coordinates.builtin_frames import (
-    CIRS,
-    FK4,
-    FK5,
-    GCRS,
-    HCRS,
-    ICRS,
-    ITRS,
-    AltAz,
-    CustomBarycentricEcliptic,
-    Galactic,
-    GalacticLSR,
-    Galactocentric,
-    GeocentricMeanEcliptic,
-    GeocentricTrueEcliptic,
-    HADec,
-    HeliocentricEclipticIAU76,
-    HeliocentricMeanEcliptic,
-    HeliocentricTrueEcliptic,
-    PrecessedGeocentric,
-    Supergalactic,
-)
-from astropy.time import Time
-from zarr.abc.store import Store
+from astropy.coordinates.builtin_frames import ICRS
 
 from astropy_xarray.coordinates import (
-    dataset_to_skycoord,
     skycoord_to_dataset,
 )
 from astropy_xarray.coordinates.sky_coord import (
-    DatasetRepresentation,
     _skycoord_component_names,
-    _skycoord_differential_component_names,
-    _skycoord_representation_component_names,
 )
 
 
-def test_regression():
+def test_frame_conversion_aliasing():
     sc = SkyCoord(
         ICRS().realize_frame(
             CartesianRepresentation(
@@ -85,7 +40,7 @@ def test_regression():
     numpy.testing.assert_array_equal(sc.pm_ra_cosdec, sc2.pm_ra_cosdec)
 
 
-def test_convert_regression():
+def test_frame_conversion_components():
     sc = SkyCoord(
         ICRS().realize_frame(
             CartesianRepresentation(
@@ -101,8 +56,16 @@ def test_convert_regression():
         )
     )
 
-    skycoord_to_dataset(sc, None, representation=DatasetRepresentation.FRAME)
-    skycoord_to_dataset(sc, None, representation=DatasetRepresentation.FRAME_DEFAULT)
+    assert list(_skycoord_component_names(sc)) == [
+        "x",
+        "y",
+        "z",
+        "v_x",
+        "v_y",
+        "v_z",
+    ]
+
+    skycoord_to_dataset(sc, None)
 
     sc2 = SkyCoord(
         ICRS().realize_frame(
@@ -112,13 +75,11 @@ def test_convert_regression():
         )
     )
 
-    assert list(_skycoord_component_names(sc2, True, True)) == list(
-        _skycoord_component_names(sc2, True, False)
-    )
-
-    print(skycoord_to_dataset(sc2, None, representation=DatasetRepresentation.FRAME))
-    print(
-        skycoord_to_dataset(
-            sc2, None, representation=DatasetRepresentation.FRAME_DEFAULT
-        )
-    )
+    assert list(_skycoord_component_names(sc2)) == [
+        "ra",
+        "dec",
+        "distance",
+        "pm_ra_cosdec",
+        "pm_dec",
+        "radial_velocity",
+    ]
