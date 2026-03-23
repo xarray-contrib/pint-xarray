@@ -12,6 +12,8 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions: {}
+
 jobs:
   detect-skip-ci-trigger:
     name: "Detect CI Trigger: [skip-ci]"
@@ -20,10 +22,11 @@ jobs:
     outputs:
       triggered: ${{ steps.detect-trigger.outputs.trigger-found }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 2
-      - uses: xarray-contrib/ci-trigger@v1
+          persist-credentials: false
+      - uses: xarray-contrib/ci-trigger@10cd2bfec3484946a4058a421ddf9cfad101e715 # v1.2.1
         id: detect-trigger
         with:
           keyword: "[skip-ci]"
@@ -76,10 +79,11 @@ jobs:
 
     steps:
       - name: checkout the repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           # need to fetch all tags to get a correct version
           fetch-depth: 0 # fetch all branches and tags
+          persist-credentials: false
 
       - uses: Parcels-code/pixi-lock/restore@5cbd7a155fa24aa0711ec0a9aad9ede0819e84a1 # v0.1.0
         with:
@@ -109,7 +113,7 @@ jobs:
           pixi run -e ${{ matrix.env }} tests --cov-report=xml
 
       - name: Upload code coverage to Codecov
-        uses: codecov/codecov-action@v5.5.3
+        uses: codecov/codecov-action@1af58845a975a7985b0beb0cbe6fbbb71a41dbad # v5.5.3
         with:
           token: "${{ secrets.CODECOV_TOKEN }}"
           files: ./coverage.xml
