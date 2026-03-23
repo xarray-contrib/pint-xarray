@@ -2,6 +2,9 @@
 
 What's new
 ==========
+0.6.2 (*unreleased*)
+--------------------
+
 0.6.1 (23 Mar 2026)
 -------------------
 - Properly rename the coordinate units (:pull:`351`).
