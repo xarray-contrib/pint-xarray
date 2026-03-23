@@ -2,10 +2,15 @@
 
 What's new
 ==========
+0.6.2 (*unreleased*)
+--------------------
+
 0.6.1 (23 Mar 2026)
 -------------------
 - Properly rename the coordinate units (:pull:`351`).
   By `Justus Magin <https://github.com/keewis>`_.
+- Prevent stripping coordinate attrs when using ``.pint.sel`` (:pull:`355`)
+  By `simonkeys <https://github.com/simonkeys>`_.
 - Don't rely on ``xarray``'s default behavior regarding ``attrs`` in :py:func:`pint_xarray.expects` (:issue:`360`, :pull:`367`)
   By `Justus Magin <https://github.com/keewis>`_.
 - Fix quantifying a existing index and adjust the index conversion tests (:pull:`368`)
