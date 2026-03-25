@@ -18,15 +18,16 @@ classifiers = [
   "License :: OSI Approved :: Apache Software License",
   "Operating System :: OS Independent",
   "Programming Language :: Python",
+  "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Topic :: Scientific/Engineering",
 ]
-requires-python = ">=3.11"
+requires-python = ">=3.10"
 dependencies = [
   "numpy>=1.23,<2.3.0",
   "xarray>=2022.06.0,<=2025.4.0",
-  "astropy>=7.0.0,<7.2.0",
+  "astropy>=6.1.0,<7.2.0",
   "pandas>=2.3.0,<3.0.0",
 ]
 dynamic = ["version"]
@@ -40,7 +41,6 @@ test = [
   "pytest>=8.0",
   "pytest-cov",
   "dask[array]",
-  "zarr>=3.0.0; python_version >= '3.11'",
   "msgpack>=1.1.2",
   "msgpack_numpy>=0.4.8",
   "cf_xarray>=0.10.6",
@@ -110,8 +110,7 @@ known-first-party = ["astropy_xarray"]
 known-third-party = ["xarray"]
 
 [tool.ruff.lint.flake8-tidy-imports]
-# Disallow all relative imports.
-ban-relative-imports = "all"
+ban-relative-imports = "all" # Disallow all relative imports.
 
 [tool.coverage.run]
 source = ["astropy_xarray"]

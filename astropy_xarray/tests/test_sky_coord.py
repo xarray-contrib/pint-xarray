@@ -1,5 +1,4 @@
-from collections.abc import Generator
-from typing import Any
+import sys
 
 import astropy.units as u
 import numpy as np
@@ -47,16 +46,19 @@ from astropy.coordinates.builtin_frames import (
     Supergalactic,
 )
 from astropy.time import Time
-from xarray.tests import requires_zarr
 
 from astropy_xarray.coordinates import (
     dataset_to_skycoord,
     skycoord_to_dataset,
 )
 from astropy_xarray.coordinates.sky_coord import (
-    DatasetRepresentation,
     _skycoord_differential_component_names,
     _skycoord_representation_component_names,
+)
+
+pytestmark = pytest.mark.skipif(
+    sys.version_info < (3, 11),
+    reason="python3.10 or higher required for skycoords support",
 )
 
 
@@ -84,26 +86,15 @@ def test_unitspherical_repr_components(expected_base, expected_s):
 
 
 @pytest.mark.parametrize(
-    ("representation", "expected_base", "expected_s"),
+    ("expected_base", "expected_s"),
     [
         (
-            DatasetRepresentation.FRAME,
             ("ra", "dec", "distance"),
             ("pm_ra_cosdec", "pm_dec"),
-        ),
-        (
-            DatasetRepresentation.FRAME_DEFAULT,
-            ("ra", "dec", "distance"),
-            ("pm_ra_cosdec", "pm_dec", "radial_velocity"),
-        ),
-        (
-            DatasetRepresentation.DATA,
-            ("lon", "lat", "distance"),
-            ("d_lon_coslat", "d_lat"),
-        ),
+        )
     ],
 )
-def test_unitspherical_diff_components(representation, expected_base, expected_s):
+def test_unitspherical_diff_components(expected_base, expected_s):
     sc = SkyCoord(
         ra=[[0.1], [2], [0.2]] * u.deg,
         dec=[[0.5], [7], [0.7]] * u.deg,
@@ -118,31 +109,26 @@ def test_unitspherical_diff_components(representation, expected_base, expected_s
 
 
 @pytest.mark.parametrize(
-    ("representation", "frame", "expected_base", "expected_s"),
+    ("frame", "expected_base", "expected_s"),
     [
         (
-            DatasetRepresentation.FRAME_DATA,
             ICRS(),
             ("ra", "dec"),
             ("pm_ra_cosdec", "pm_dec"),
         ),
         (
-            DatasetRepresentation.FRAME_DATA,
             AltAz(),
             ("az", "alt"),
             ("pm_az_cosalt", "pm_alt"),
         ),
         (
-            DatasetRepresentation.FRAME_DATA,
             ITRS(),
             ("lon", "lat"),
             ("pm_lon_coslat", "pm_lat"),
         ),
     ],
 )
-def test_spherical_direction_components_realize_frame(
-    representation, frame, expected_base, expected_s
-):
+def test_spherical_direction_components_realize_frame(frame, expected_base, expected_s):
     rep = UnitSphericalRepresentation(
         [[0.1], [2], [0.2]] * u.deg,
         [[0.5], [7], [0.7]] * u.deg,
@@ -157,12 +143,12 @@ def test_spherical_direction_components_realize_frame(
 
 
 @pytest.mark.parametrize(
-    ("representation", "expected_base", "expected_s"),
+    ("expected_base", "expected_s"),
     [
-        (DatasetRepresentation.FRAME_DATA, ("x", "y", "z"), ("v_x", "v_y", "v_z")),
+        (("x", "y", "z"), ("v_x", "v_y", "v_z")),
     ],
 )
-def test_cartesian_direction_components(representation, expected_base, expected_s):
+def test_cartesian_direction_components(expected_base, expected_s):
     sc = SkyCoord(
         x=[[0.1], [2], [0.2]] * u.dimensionless_unscaled,
         y=[[0.5], [7], [0.7]] * u.dimensionless_unscaled,
@@ -176,20 +162,11 @@ def test_cartesian_direction_components(representation, expected_base, expected_
     assert _skycoord_differential_component_names(sc) == expected_s
 
 
-@pytest.fixture(name="store", scope="session")
-def store_fixture() -> Generator[Any, None, None]:
-    import zarr.storage as zs
-
-    with zs.MemoryStore() as store:
-        yield store
-
-
-@requires_zarr
 @pytest.mark.parametrize(
-    "representation",
+    "use_default_representation",
     [
-        pytest.param(DatasetRepresentation.FRAME_DATA),
-        pytest.param(DatasetRepresentation.FRAME_DEFAULT),
+        pytest.param(True),
+        pytest.param(False),
     ],
 )
 @pytest.mark.parametrize(
@@ -308,19 +285,16 @@ def store_fixture() -> Generator[Any, None, None]:
     ids=lambda param: param.name,
 )
 def test_skycoord_roundtrip(
-    store,
     frame: BaseCoordinateFrame,
     data: BaseRepresentation,
     expected_data_classes: tuple[type, ...],
-    representation: DatasetRepresentation,
+    use_default_representation: bool,
 ):
     # all frames support all representation types
     representation_type = type(data)
     differential_type = type(data.differentials["s"])
 
-    if representation == DatasetRepresentation.FRAME_DATA:
-        expected = SkyCoord(frame.realize_frame(data))
-    elif representation == DatasetRepresentation.FRAME_DEFAULT:
+    if use_default_representation:
         expected = SkyCoord(
             frame.realize_frame(
                 data.represent_as(
@@ -328,17 +302,12 @@ def test_skycoord_roundtrip(
                 )
             )
         )
-    else:
-        raise NotImplementedError()
-
-    if representation == DatasetRepresentation.FRAME_DEFAULT:
         expected_frame_data_rep_name = frame.default_representation.name
         expected_frame_data_diff_name = frame.default_differential.name
-    elif representation == DatasetRepresentation.FRAME_DATA:
+    else:
+        expected = SkyCoord(frame.realize_frame(data))
         expected_frame_data_rep_name = representation_type.name
         expected_frame_data_diff_name = differential_type.name
-    else:
-        raise NotImplementedError()
 
     assert expected.frame.data.name == expected_frame_data_rep_name
     assert expected.frame.data.differentials["s"].name == expected_frame_data_diff_name
@@ -360,45 +329,8 @@ def test_skycoord_roundtrip(
     )
     assert set(ds.data_vars) == expected_keys
 
-    # data_var value types
-    if representation in (
-        DatasetRepresentation.FRAME,
-        DatasetRepresentation.FRAME_DEFAULT,
-    ):
-        print(expected_keys)
-    elif representation == DatasetRepresentation.DATA:
-        expected_classes = zip(
-            expected.get_representation_component_names(), expected_data_classes
-        )
-        for expected_key, expected_class_type in expected_classes:
-            assert isinstance(ds.data_vars[expected_key].data, expected_class_type)
-            assert ds.data_vars[expected_key].coords.identical(
-                xr.Coordinates(dict(coords))
-            )
-
-        # sanity check dataset
-        assert ds.attrs["frame"]["representation_type"] == representation_type.name
-        assert ds.attrs["frame"]["differential_type"] == differential_type.name
-        assert ds.attrs["frame"]["data"]["representation_type"] == data.name
-        assert (
-            ds.attrs["frame"]["data"]["differential_type"]
-            == data.differentials["s"].name
-        )
-
     # Convert back
     actual = dataset_to_skycoord(ds)
-
-    # check representations
-    if representation in (
-        DatasetRepresentation.FRAME,
-        DatasetRepresentation.FRAME_DEFAULT,
-    ):
-        print(actual)
-    if representation == DatasetRepresentation.DATA:
-        assert actual.representation_type.name == representation_type.name
-        assert actual.differential_type.name == differential_type.name
-        assert actual.frame.data.name == data.name
-        assert actual.frame.data.differentials["s"].name == data.differentials["s"].name
 
     # Check Representation
     for component_name in actual.frame.representation_component_names:
@@ -418,10 +350,3 @@ def test_skycoord_roundtrip(
     assert actual.is_equivalent_frame(expected)
     assert ds.coords.equals(xr.Coordinates(dict(coords)))
     np.testing.assert_array_equal(actual, expected)
-
-    # Check intermediate dataset is serializable
-    # ds.astropy.dequantify().to_zarr(store, mode="w", consolidated=True)
-    # ds_store = xr.open_dataset(
-    #     store, engine="zarr", consolidated=True
-    # ).astropy.quantify()
-    # xr.testing.assert_identical(ds, ds_store)

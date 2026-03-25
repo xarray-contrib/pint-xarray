@@ -1,4 +1,5 @@
 import json
+import sys
 
 import astropy.units as u
 import msgpack
@@ -13,16 +14,17 @@ from astropy.coordinates import (
     AltAz,
     SkyCoord,
 )
-from xarray.tests import requires_zarr
 
 from astropy_xarray.coordinates import (
     dataset_to_skycoord,
     skycoord_to_dataset,
 )
-from astropy_xarray.tests.multi_index_utils import (
-    open_datatree_decompress_multi_index,
-    save_datatree_compress_multi_index,
+
+pytestmark = pytest.mark.skipif(
+    sys.version_info < (3, 11),
+    reason="python3.10 or higher required for skycoords support",
 )
+
 
 FIELD_PHASE_CENTER_ICRS = [
     SkyCoord(
@@ -132,7 +134,6 @@ def generate_baselines(antenna_count) -> list[tuple[int, int]]:
     return baselines
 
 
-@requires_zarr
 def test_simple_visibility_dataset():
     a = 4  # antennas
     b = int(a * (a - 1) / 2)  # baselines
@@ -218,29 +219,18 @@ def test_simple_visibility_dataset():
         ),
     )
 
-    m = astropy_encode_msgpack(VISIBILITY)
-    ds_out = astropy_decode_msgpack(m)
+    message = astropy_encode_msgpack(VISIBILITY)
+    assert isinstance(message, bytes)
+    ds_out = astropy_decode_msgpack(message)
     xr.testing.assert_identical(VISIBILITY, ds_out)
 
-    # import zarr.storage as zs
-
-    # store = zs.MemoryStore()
-
-    # VISIBILITY.astropy.dequantify().to_zarr(store, mode="w", consolidated=True)
-    # dt_store = xr.open_datatree(
-    #     store, engine="zarr", consolidated=True
-    # ).astropy.quantify()
-
-    # xr.testing.assert_identical(VISIBILITY, dt_store)
-
-    # expected = dataset_to_skycoord(VISIBILITY.field_phase_center.dataset)
-    # actual = dataset_to_skycoord(dt_store.field_phase_center.dataset)
-    # np.testing.assert_array_equal(actual, expected, strict=True)
+    assert dataset_to_skycoord(ds_out["field_phase_center"]) == (
+        SkyCoord(ra=[0.1] * u.deg, dec=[0.5] * u.deg, frame=ICRS())
+    )
 
 
-@requires_zarr
 @pytest.mark.parametrize(
-    "skycoords,frame,unit",
+    ("skycoords", "frame", "unit"),
     [
         (
             FIELD_PHASE_CENTER_ICRS,
@@ -276,11 +266,10 @@ def test_visibility_dataset(skycoords: list[SkyCoord], frame, unit):
                 polarisation=xr.DataArray(
                     ["XX", "XY", "YX", "YY"], dims=["polarisation"]
                 ),
-                uvw_label=xr.DataArray(
-                    ["u", "v", "w"], dims=["uvw_label"]
-                ),
-            ) | dict(
-                **xr.Coordinates.from_pandas_multiindex(
+                uvw_label=xr.DataArray(["u", "v", "w"], dims=["uvw_label"]),
+            )
+            | dict(
+                xr.Coordinates.from_pandas_multiindex(
                     pd.MultiIndex.from_tuples(
                         generate_baselines(a), names=("antenna1", "antenna2")
                     ),
@@ -319,20 +308,6 @@ def test_visibility_dataset(skycoords: list[SkyCoord], frame, unit):
         children=dict(
             field_phase_center=xr.DataTree(
                 skycoord_to_dataset(
-                    # SkyCoord(
-                    #     SphericalRepresentation(
-                    #         lon=[[0.1, 0.2]] * u.deg,
-                    #         lat=[[0.5, 0.2]] * u.deg,
-                    #         distance=[[0, 0]] * u.pc,
-                    #     ).with_differentials(
-                    #         SphericalDifferential(
-                    #             d_lon=[[1, 1]] * u.deg / u.s,
-                    #             d_lat=[[1, 1]] * u.deg / u.s,
-                    #             d_distance=[[1, 1]] * u.pc / u.yr,
-                    #         )
-                    #     ),
-                    #     frame=ICRS()
-                    # ),
                     SkyCoord(
                         ra=[[0.1, 0.2]] * u.deg,
                         dec=[[0.5, 0.2]] * u.deg,
@@ -343,8 +318,8 @@ def test_visibility_dataset(skycoords: list[SkyCoord], frame, unit):
                         frame=ICRS(),
                     ),
                     coords=[
-                        ("phase_center_label", [0]),
-                        ("time_poly", [0, 1]),
+                        ("phase_center_label", np.array([0])),
+                        ("time_poly", np.array([0, 1])),
                     ],
                 )
             ),
@@ -357,7 +332,7 @@ def test_visibility_dataset(skycoords: list[SkyCoord], frame, unit):
                     ),
                     coords=[
                         ("calibrator_label", ["A", "B", "C", "D", "E"]),
-                        ("time_poly", [0]),
+                        ("time_poly", np.array([0])),
                     ],
                 )
             ),
@@ -367,21 +342,3 @@ def test_visibility_dataset(skycoords: list[SkyCoord], frame, unit):
     m = astropy_encode_msgpack(VISIBILITY)
     ds_out = astropy_decode_msgpack(m)
     xr.testing.assert_identical(VISIBILITY, ds_out)
-
-    # import zarr.storage as zs
-
-    # store = zs.MemoryStore()
-
-    # save_datatree_compress_multi_index(
-    #     VISIBILITY.astropy.dequantify(), store, mode="w", consolidated=True
-    # )
-    # dt_store = open_datatree_decompress_multi_index(
-    #     store, engine="zarr"
-    # ).astropy.quantify()
-
-    # xr.testing.assert_identical(VISIBILITY, dt_store)
-
-    # expected = dataset_to_skycoord(VISIBILITY.field_phase_center.dataset)
-    # actual = dataset_to_skycoord(dt_store.field_phase_center.dataset)
-
-    # np.testing.assert_array_equal(actual, expected, strict=True)

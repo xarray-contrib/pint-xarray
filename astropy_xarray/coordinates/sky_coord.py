@@ -1,6 +1,5 @@
 import itertools
 from collections.abc import Generator
-from enum import Enum, auto
 
 import astropy.units as u
 import numpy as np
@@ -8,35 +7,6 @@ import xarray as xr
 from astropy.coordinates import SkyCoord
 
 from astropy_xarray.coordinates.frame import dump_frame, load_frame, load_representation
-
-
-class DatasetRepresentation(Enum):
-    FRAME = auto()
-    """
-    Frame selected repesentation and differential component names, simplifying for any `unitspherical` types in data.
-
-    Same as `get_representation_component_names()` and `get_differential_component_names()`
-    """
-
-    FRAME_FULL = auto()
-    """
-    Frame selected repesentation and differential component names.
-
-    Same as `get_representation_component_names()` and `get_differential_component_names()`
-    """
-
-    FRAME_DEFAULT = auto()
-    """Frame default components names."""
-
-    FRAME_DATA = auto()
-    """
-    Frame component names from resetting the display representation and differential to match the data.
-
-    Guarentees roundtrip accuracy.
-    """
-
-    DATA = auto()
-    """Data representation components. Guarentees roundtrip accuracy."""
 
 
 def _skycoord_representation_component_names(
