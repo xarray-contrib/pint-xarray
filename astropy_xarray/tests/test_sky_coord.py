@@ -59,20 +59,17 @@ from astropy_xarray.coordinates.sky_coord import (
     _skycoord_representation_component_names,
 )
 
-# TODO: Test without diffs!
-
 
 @pytest.mark.parametrize(
-    ("representation", "expected_base", "expected_s"),
+    ("expected_base", "expected_s"),
     [
         (
-            DatasetRepresentation.FRAME_DATA,
             ("ra", "dec"),
             ("pm_ra_cosdec", "pm_dec", "radial_velocity"),
         ),
     ],
 )
-def test_unitspherical_repr_components(representation, expected_base, expected_s):
+def test_unitspherical_repr_components(expected_base, expected_s):
     sc = SkyCoord(
         ra=[[0.1], [2], [0.2]] * u.deg,
         dec=[[0.5], [7], [0.7]] * u.deg,
@@ -115,8 +112,8 @@ def test_unitspherical_diff_components(representation, expected_base, expected_s
         pm_dec=[[0.002], [0.002], [0.002]] * u.deg / u.yr,
     )
     expected_str = str(sc)
-    _skycoord_representation_component_names(sc) == expected_base
-    _skycoord_differential_component_names(sc) == expected_s
+    assert _skycoord_representation_component_names(sc) == expected_base
+    assert _skycoord_differential_component_names(sc) == expected_s
     assert str(sc) == expected_str
 
 
