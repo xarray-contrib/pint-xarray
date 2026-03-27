@@ -3,14 +3,14 @@
 What's new
 ==========
 
-0.2 (TBD)
----------
+0.2.0 (28 Mar 2026)
+-------------------
 
 - Added `coordinates` submodule with `dataset_to_skycoord` and `skycoord_to_dataset` explicit conversion functions for working with :py:class:`astropy.coordinates.SkyCoord`.
 - Added :py:meth:`Dataset.astropy.to_skycoord` accessor.
 
-0.1 (17 Jul 2025)
------------------
+0.1.0 (17 Jul 2025)
+-------------------
 
 - Added `equivalencies` parameter to :py:meth:`DataArray.astropy.to` and :py:meth:`Dataset.astropy.to`.
 - Removed `registry` parameter from :py:meth:`DataArray.astropy.quantify` and :py:meth:`Dataset.astropy.quantify`.
