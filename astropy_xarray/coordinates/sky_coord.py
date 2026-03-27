@@ -105,7 +105,6 @@ def dataset_to_skycoord(ds: xr.Dataset) -> SkyCoord:
 
     Args:
         ds: skycoord dataset.
-        use_frame_names: True if frame component names are used a data_vars. Defaults to True.
 
     Returns:
         SkyCoord object.
