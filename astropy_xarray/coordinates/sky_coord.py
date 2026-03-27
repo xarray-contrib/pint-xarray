@@ -100,7 +100,7 @@ def skycoord_to_dataset(
     )
 
 
-def dataset_to_skycoord(ds: xr.Dataset, use_frame_names: bool = True) -> SkyCoord:
+def dataset_to_skycoord(ds: xr.Dataset) -> SkyCoord:
     """Convert a SkyCoord-based Dataset with metadata attributes to a SkyCoord.
 
     Args:
@@ -115,7 +115,7 @@ def dataset_to_skycoord(ds: xr.Dataset, use_frame_names: bool = True) -> SkyCoor
     frame._data = load_representation(
         ds.attrs["frame"]["data"]["representation_type"],
         ds.attrs["frame"]["data"].get("differential_type"),
-        ds.attrs["frame"]["name"] if use_frame_names else None,
+        ds.attrs["frame"]["name"],
         {k: v.data for k, v in dsq.data_vars.items()},
     )
     frame.representation_type = ds.attrs["frame"]["representation_type"]

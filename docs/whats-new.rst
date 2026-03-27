@@ -2,6 +2,12 @@
 
 What's new
 ==========
+
+0.2 (TBD)
+---------
+
+- Added `coordinates` submodule with `dataset_to_skycoord` and `skycoord_to_dataset` excplit conversion functions for working with :py:class:`astropy.coordinates.SkyCoord`.
+
 0.1 (17 Jul 2025)
 -----------------
 
