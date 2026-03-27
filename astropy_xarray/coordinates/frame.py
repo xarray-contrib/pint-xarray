@@ -57,13 +57,13 @@ from astropy_xarray.coordinates.representation import (
 def dump_frame(frame: BaseCoordinateFrame, with_data: bool = False) -> dict:
     ser = {
         "name": frame.name,
-        "representation_type": frame.representation_type.name,
-        "differential_type": frame.differential_type.name,
+        "representation_type": frame.representation_type.get_name(),
+        "differential_type": frame.differential_type.get_name(),
     }
     if frame.has_data:
-        ser["data"] = {"representation_type": frame.data.name}
+        ser["data"] = {"representation_type": frame.data.get_name()}
         if "s" in frame.data.differentials:
-            ser["data"]["differential_type"] = frame.data.differentials["s"].name
+            ser["data"]["differential_type"] = frame.data.differentials["s"].get_name()
         if with_data:
             for component in frame.data.components:
                 quantity: u.Quantity = getattr(frame.data, component)

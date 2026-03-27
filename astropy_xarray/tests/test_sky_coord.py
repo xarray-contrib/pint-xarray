@@ -1,5 +1,3 @@
-import sys
-
 import astropy.units as u
 import numpy as np
 import pytest
@@ -54,11 +52,6 @@ from astropy_xarray.coordinates import (
 from astropy_xarray.coordinates.sky_coord import (
     _skycoord_differential_component_names,
     _skycoord_representation_component_names,
-)
-
-pytestmark = pytest.mark.skipif(
-    sys.version_info < (3, 11),
-    reason="python3.10 or higher required for skycoords support",
 )
 
 
@@ -302,15 +295,18 @@ def test_skycoord_roundtrip(
                 )
             )
         )
-        expected_frame_data_rep_name = frame.default_representation.name
-        expected_frame_data_diff_name = frame.default_differential.name
+        expected_frame_data_rep_name = frame.default_representation.get_name()
+        expected_frame_data_diff_name = frame.default_differential.get_name()
     else:
         expected = SkyCoord(frame.realize_frame(data))
-        expected_frame_data_rep_name = representation_type.name
-        expected_frame_data_diff_name = differential_type.name
+        expected_frame_data_rep_name = representation_type.get_name()
+        expected_frame_data_diff_name = differential_type.get_name()
 
-    assert expected.frame.data.name == expected_frame_data_rep_name
-    assert expected.frame.data.differentials["s"].name == expected_frame_data_diff_name
+    assert expected.frame.data.get_name() == expected_frame_data_rep_name
+    assert (
+        expected.frame.data.differentials["s"].get_name()
+        == expected_frame_data_diff_name
+    )
 
     coords = [
         ("calibrator_name", ["a1", "a2"]),

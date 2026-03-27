@@ -1,5 +1,4 @@
 import json
-import sys
 
 import astropy.units as u
 import msgpack
@@ -19,12 +18,6 @@ from astropy_xarray.coordinates import (
     dataset_to_skycoord,
     skycoord_to_dataset,
 )
-
-pytestmark = pytest.mark.skipif(
-    sys.version_info < (3, 11),
-    reason="python3.10 or higher required for skycoords support",
-)
-
 
 FIELD_PHASE_CENTER_ICRS = [
     SkyCoord(
