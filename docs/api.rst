@@ -5,6 +5,11 @@ This page contains a auto-generated summary of ``astropy-xarray``'s API.
 .. autosummary::
    :toctree: generated/
 
+   astropy_xarray.coordinates.dataset_to_skycoord
+   astropy_xarray.coordinates.skycoord_to_dataset
+   astropy_xarray.coordinates.load_frame
+   astropy_xarray.coordinates.load_representation
+
 Dataset
 -------
 .. autosummary::

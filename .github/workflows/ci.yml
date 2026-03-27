@@ -78,7 +78,7 @@ jobs:
 
       - name: install dependencies
         run: |
-          python -m pip install -r ci/requirements.txt
+          python -m pip install ".[test]"
 
       - name: install astropy-xarray
         run: python -m pip install --no-deps .

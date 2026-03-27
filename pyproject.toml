@@ -25,9 +25,10 @@ classifiers = [
 ]
 requires-python = ">=3.10"
 dependencies = [
-  "numpy >= 1.23",
-  "xarray >= 2022.06.0",
-  "astropy >= 5.0.0",
+  "numpy>=1.23,<2.3.0",
+  "xarray>=2022.06.0,<=2025.4.0",
+  "astropy>=6.1.0,<7.2.0",
+  "pandas>=2.3.0,<3.0.0",
 ]
 dynamic = ["version"]
 
@@ -38,6 +39,12 @@ Documentation = "https://astropy-xarray.readthedocs.io/en/stable"
 [project.optional-dependencies]
 test = [
   "pytest>=8.0",
+  "pytest-cov",
+  "dask[array]",
+  "msgpack>=1.1.2",
+  "msgpack_numpy>=0.4.8",
+  "cf_xarray>=0.10.6",
+  "bottleneck",
 ]
 docs = [
   "sphinx>=8.0",
@@ -103,8 +110,7 @@ known-first-party = ["astropy_xarray"]
 known-third-party = ["xarray"]
 
 [tool.ruff.lint.flake8-tidy-imports]
-# Disallow all relative imports.
-ban-relative-imports = "all"
+ban-relative-imports = "all" # Disallow all relative imports.
 
 [tool.coverage.run]
 source = ["astropy_xarray"]
