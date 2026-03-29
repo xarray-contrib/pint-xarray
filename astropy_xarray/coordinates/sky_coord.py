@@ -5,8 +5,11 @@ import astropy.units as u
 import numpy as np
 import xarray as xr
 from astropy.coordinates import SkyCoord
+from astropy.utils import ShapedLikeNDArray
 
 from astropy_xarray.coordinates.frame import dump_frame, load_frame, load_representation
+
+_ArrayLike = list | np.ndarray | ShapedLikeNDArray
 
 
 def _skycoord_representation_component_names(
@@ -68,19 +71,26 @@ def _skycoord_components(skycoord: SkyCoord) -> dict[str, u.Quantity]:
 
 def _skycoord_to_dataarrays(
     skycoord: SkyCoord,
-    coords: list[tuple[str, list]] | None = None,
+    coords: dict[str, tuple[str, _ArrayLike] | _ArrayLike] | None = None,
 ) -> dict[str, xr.DataArray]:
+
+    dims = (
+        [
+            coords[key][0] if isinstance(coords[key], tuple) else key
+            for key in coords.keys()
+        ]
+        if coords is not None
+        else None
+    )
     return {
-        name: xr.DataArray(
-            data=component, coords=dict(coords) if coords is not None else None
-        )
+        name: xr.DataArray(data=component, coords=coords, dims=dims)
         for name, component in _skycoord_components(skycoord).items()
     }
 
 
 def skycoord_to_dataset(
     skycoord: SkyCoord,
-    coords: list[tuple[str, np.ndarray]] | None = None,
+    coords: dict[str, tuple[str, _ArrayLike] | _ArrayLike] | None = None,
 ) -> xr.Dataset:
     """Convert a SkyCoord object to an xarray Dataset.
 
@@ -92,7 +102,7 @@ def skycoord_to_dataset(
         quantified dataset.
     """
     return xr.Dataset(
-        coords=dict(coords) if coords is not None else None,
+        coords=coords if coords is not None else None,
         data_vars=_skycoord_to_dataarrays(skycoord, coords),
         attrs=dict(
             frame=dump_frame(skycoord.frame),

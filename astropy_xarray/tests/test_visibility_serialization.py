@@ -191,9 +191,9 @@ def test_simple_visibility_dataset():
             field_phase_center=xr.DataTree(
                 skycoord_to_dataset(
                     SkyCoord(ra=[0.1] * u.deg, dec=[0.5] * u.deg, frame=ICRS()),
-                    coords=[
-                        ("time_poly", [0]),
-                    ],
+                    coords={
+                        "time_poly": [0],
+                    },
                 )
             ),
             # extensions
@@ -203,10 +203,10 @@ def test_simple_visibility_dataset():
                         ra=[[0.5], [1.5], [0.2], [0.9], [1.1]] * u.deg,
                         dec=[[1.2], [0.8], [0.6], [1.0], [1.5]] * u.deg,
                     ),
-                    coords=[
-                        ("calibrator_label", ["A", "B", "C", "D", "E"]),
-                        ("time_poly", [0]),
-                    ],
+                    coords={
+                        "calibrator_label": ["A", "B", "C", "D", "E"],
+                        "time_poly": [0],
+                    },
                 )
             ),
         ),
@@ -310,10 +310,10 @@ def test_visibility_dataset(skycoords: list[SkyCoord], frame, unit):
                         radial_velocity=[[1, 1]] * u.pc / u.yr,
                         frame=ICRS(),
                     ),
-                    coords=[
-                        ("phase_center_label", np.array([0])),
-                        ("time_poly", np.array([0, 1])),
-                    ],
+                    coords={
+                        "phase_center_label": np.array([0]),
+                        "time_poly": np.array([0, 1]),
+                    },
                 )
             ),
             # extensions
@@ -323,10 +323,10 @@ def test_visibility_dataset(skycoords: list[SkyCoord], frame, unit):
                         ra=[[0.5], [1.5], [0.2], [0.9], [1.1]] * u.deg,
                         dec=[[1.2], [0.8], [0.6], [1.0], [1.5]] * u.deg,
                     ),
-                    coords=[
-                        ("calibrator_label", ["A", "B", "C", "D", "E"]),
-                        ("time_poly", np.array([0])),
-                    ],
+                    coords={
+                        "calibrator_label": ["A", "B", "C", "D", "E"],
+                        "time_poly": np.array([0]),
+                    },
                 )
             ),
         ),
