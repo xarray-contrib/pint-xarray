@@ -99,17 +99,17 @@ from astropy_xarray.coordinates.sky_coord import (
 )
 
 sc = skycoord_to_dataset(
-   SkyCoord(
-      ra=[[2, 6, 7, 4]] * u.deg,
-      dec=[[4, 7, 4, 3]] * u.deg,
-      pm_ra_cosdec=[[1, 1, 1, 1]] * u.mas / u.yr,
-      pm_dec=[[1, 1, 1, 1]] * u.mas / u.yr,
-      frame="icrs",
-   ),
-   coords={
-      "timestamp": ("time", Time([1.7e9], format='unix')),
-      "field_label": ("field", ["a", "b", "c", "d"]),
-   }
+    SkyCoord(
+        ra=[[2, 6, 7, 4]] * u.deg,
+        dec=[[4, 7, 4, 3]] * u.deg,
+        pm_ra_cosdec=[[1, 1, 1, 1]] * u.mas / u.yr,
+        pm_dec=[[1, 1, 1, 1]] * u.mas / u.yr,
+        frame="icrs",
+    ),
+    coords={
+        "timestamp": ("time", Time([1.7e9], format="unix")),
+        "field_label": ("field", ["a", "b", "c", "d"]),
+    },
 )
 sc
 ```
