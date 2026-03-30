@@ -110,7 +110,7 @@ sc
 
 output:
 
-```python
+```
 <xarray.Dataset> Size: 152B
 Dimensions:       (time: 1, field: 4)
 Coordinates:
