@@ -14,7 +14,7 @@ A convenience wrapper for using [astropy](https://www.astropy.org) with
 
 To convert the variables of a `Dataset` to quantities, use accessor `.astropy.quantify()`:
 
-```{code-block} python
+```python
 import astropy_xarray
 import xarray as xr
 
@@ -45,7 +45,7 @@ Data variables:
 
 to convert to different units, use accessor `.astropy.to()`:
 
-```{code-block} python
+```python
 c = q.astropy.to({"a": "ms", "b": "km"})
 c
 ```
@@ -64,9 +64,13 @@ Data variables:
 to convert back to non-quantities for portability, use accessor `.astropy.dequantify()`:
 
 ```python
-In [5]: d = c.astropy.dequantify()
-   ...: d
-Out[5]:
+d = c.astropy.dequantify()
+d
+```
+
+output:
+
+```
 <xarray.Dataset> Size: 48B
 Dimensions:  (x: 3, y: 3)
 Dimensions without coordinates: x, y
@@ -79,7 +83,7 @@ Data variables:
 
 To convert a `astropy.skyCoord` to a `Dataset`, use `skycoord_to_dataset()`.
 
-```{code-block} python
+```python
 import astropy.units as u
 from astropy.coordinates import ICRS, SkyCoord
 from astropy.time import Time
@@ -106,7 +110,7 @@ sc
 
 output:
 
-```{code-block} python
+```python
 <xarray.Dataset> Size: 152B
 Dimensions:       (time: 1, field: 4)
 Coordinates:
