@@ -308,10 +308,10 @@ def test_skycoord_roundtrip(
         == expected_frame_data_diff_name
     )
 
-    coords = [
-        ("calibrator_name", ["a1", "a2"]),
-        ("time_polynomial", [0]),
-    ]
+    coords = {
+        "calibrator_name": ["a1", "a2"],
+        "time_polynomial": [0],
+    }
     ds = skycoord_to_dataset(expected, coords=coords)
 
     # data_var keys

@@ -35,6 +35,7 @@ Dataset
    xarray.Dataset.astropy.ffill
    xarray.Dataset.astropy.bfill
    xarray.Dataset.astropy.interpolate_na
+   xarray.Dataset.astropy.to_skycoord
 
 DataArray
 ---------

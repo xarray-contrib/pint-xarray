@@ -7,7 +7,7 @@ import astropy_xarray.formatting
 
 def time_inline_repr(time: Time, max_width: int):
     value = time.datetime64
-    scale_repr = f"{time.format} {time.scale}"
+    scale_repr = f"{time.scale} {time.format}"
     if isinstance(value, np.ndarray):
         data_repr = astropy_xarray.formatting.format_array_flat(
             value, max_width - len(scale_repr) - 3
@@ -22,7 +22,7 @@ def time_inline_repr(time: Time, max_width: int):
 
 def time_delta_inline_repr(time: TimeDelta, max_width: int):
     value = time.value
-    scale_repr = f"{time.format} {time.scale}"
+    scale_repr = f"{time.scale} {time.format}"
     if isinstance(value, np.ndarray):
         data_repr = astropy_xarray.formatting.format_array_flat(
             value, max_width - len(scale_repr) - 3

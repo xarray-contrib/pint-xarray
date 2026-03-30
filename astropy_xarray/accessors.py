@@ -1726,8 +1726,8 @@ class AstropyDatasetAccessor:
 
         return conversion.attach_units(interpolated, units)
 
-    def to_sky_coord(self):
-        """TODO"""
+    def to_skycoord(self):
+        """Convert a SkyCoord-based Dataset with metadata attributes to a SkyCoord."""
         return dataset_to_skycoord(self.ds)
 
 

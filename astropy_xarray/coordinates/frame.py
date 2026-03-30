@@ -1,3 +1,4 @@
+from importlib.metadata import version
 from types import NoneType
 
 import astropy.units as u
@@ -36,6 +37,7 @@ from astropy.coordinates.builtin_frames import (
     Supergalactic,
 )
 from astropy.time import Time
+from packaging.version import Version
 
 from astropy_xarray.coordinates.core import (
     dump_quantity,
@@ -53,17 +55,29 @@ from astropy_xarray.coordinates.representation import (
     load_optional_earthlocation,
 )
 
+if Version(version("astropy")) < Version("7.0.0"):
+
+    def get_name_compat(representation):
+        return representation.get_name()
+
+else:
+    # 7.0.0 and above raises deprecation warnings when using get_name()
+    def get_name_compat(representation):
+        return representation.name
+
 
 def dump_frame(frame: BaseCoordinateFrame, with_data: bool = False) -> dict:
     ser = {
         "name": frame.name,
-        "representation_type": frame.representation_type.get_name(),
-        "differential_type": frame.differential_type.get_name(),
+        "representation_type": get_name_compat(frame.representation_type),
+        "differential_type": get_name_compat(frame.differential_type),
     }
     if frame.has_data:
-        ser["data"] = {"representation_type": frame.data.get_name()}
+        ser["data"] = {"representation_type": get_name_compat(frame.data)}
         if "s" in frame.data.differentials:
-            ser["data"]["differential_type"] = frame.data.differentials["s"].get_name()
+            ser["data"]["differential_type"] = get_name_compat(
+                frame.data.differentials["s"]
+            )
         if with_data:
             for component in frame.data.components:
                 quantity: u.Quantity = getattr(frame.data, component)
