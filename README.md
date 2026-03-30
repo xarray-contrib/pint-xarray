@@ -12,8 +12,6 @@ A convenience wrapper for using [astropy](https://www.astropy.org) with
 
 ## Simple Usage
 
-To convert the variables of a `Dataset` to quantities, use accessor `.astropy.quantify()`:
-
 ```python
 import astropy_xarray
 import xarray as xr
@@ -31,10 +29,18 @@ Dimensions without coordinates: x, y
 Data variables:
     a        (x) int64 24B 0 1 2
     b        (y) int64 24B -3 5 1
+```
 
-In [3]: q = ds.astropy.quantify(a="s")
-   ...: q
-Out[3]:
+To convert the variables of a `Dataset` to quantities, use accessor `.astropy.quantify()`:
+
+```python
+q = ds.astropy.quantify(a="s")
+q
+```
+
+output:
+
+```
 <xarray.Dataset> Size: 48B
 Dimensions:  (x: 3, y: 3)
 Dimensions without coordinates: x, y
