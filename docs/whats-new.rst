@@ -3,13 +3,13 @@
 What's new
 ==========
 
-0.2.0 (30 Mar 2026)
+0.2.0 (31 Mar 2026)
 -------------------
 
 - Added `coordinates` submodule with `dataset_to_skycoord` and `skycoord_to_dataset` explicit conversion functions for working with :py:class:`astropy.coordinates.SkyCoord`.
 - Added support for specialized quantities:
   - :py:class:`astropy.time.Time`
-  - :py:class:`astropy.time.DeltaTime`
+  - :py:class:`astropy.time.TimeDelta`
   - :py:class:`astropy.coordinates.Angle`
   - :py:class:`astropy.coordinates.Longitude`
   - :py:class:`astropy.coordinates.Latitude`
