@@ -19,7 +19,7 @@ What's new
 
 - Added :py:meth:`Dataset.astropy.to_skycoord` accessor.
 
-By `Callan Gray <https://github.com/calgray>`_.
+  By `Callan Gray <https://github.com/calgray>`_.
 
 0.1.0 (17 Jul 2025)
 -------------------

@@ -1,3 +1,5 @@
+# astropy-xarray
+
 [![CI](https://github.com/calgray/astropy-xarray/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/calgray/astropy-xarray/actions/workflows/ci.yml)
 [![code coverage](https://codecov.io/gh/calgray/astropy-xarray/branch/main/graph/badge.svg)](https://codecov.io/gh/calgray/astropy-xarray)
 [![docs](https://readthedocs.org/projects/astropy-xarray/badge/?version=latest)](https://astropy-xarray.readthedocs.io)
@@ -5,9 +7,11 @@
 [![codestyle](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/python/black)
 [![conda-forge](https://img.shields.io/conda/vn/conda-forge/astropy-xarray)](https://github.com/conda-forge/astropy-xarray-feedstock)
 
-# astropy-xarray
+<p align="center">
+ <img width="50%" src="docs/img/astropy_xarray_logo.svg">
+</p>
 
-A convenience wrapper for using [astropy](https://www.astropy.org) with
+Seamless interoperability between [astropy](https://www.astropy.org) and
 [xarray](https://xarray.pydata.org).
 
 ## Simple Usage

@@ -1,6 +1,11 @@
 astropy-xarray
 ==============
-A convenience wrapper for using `astropy`_ in `xarray`_ objects.
+
+.. image:: img/astropy_xarray_logo.svg
+   :align: center
+   :width: 50%
+
+Seamless interoperability between `astropy`_ and `xarray`_.
 
 .. _astropy: https://docs.astropy.org/en/latest/
 .. _xarray: https://xarray.pydata.org/en/stable
