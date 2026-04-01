@@ -8,13 +8,15 @@ What's new
 
 - Added `coordinates` submodule with `dataset_to_skycoord` and `skycoord_to_dataset` explicit conversion functions for working with :py:class:`astropy.coordinates.SkyCoord`.
 - Added support for specialized quantities:
-  - :py:class:`astropy.time.Time`
-  - :py:class:`astropy.time.TimeDelta`
-  - :py:class:`astropy.coordinates.Angle`
-  - :py:class:`astropy.coordinates.Longitude`
-  - :py:class:`astropy.coordinates.Latitude`
-  - :py:class:`astropy.coordinates.Distance`
-  - :py:class:`astropy.units.LogQuantity`
+
+  * :py:class:`astropy.time.Time`
+  * :py:class:`astropy.time.TimeDelta`
+  * :py:class:`astropy.coordinates.Angle`
+  * :py:class:`astropy.coordinates.Longitude`
+  * :py:class:`astropy.coordinates.Latitude`
+  * :py:class:`astropy.coordinates.Distance`
+  * :py:class:`astropy.units.LogQuantity`
+
 - Added :py:meth:`Dataset.astropy.to_skycoord` accessor.
 
 By `Callan Gray <https://github.com/calgray>`_.
