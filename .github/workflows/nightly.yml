@@ -14,6 +14,8 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions: {}
+
 jobs:
   detect-test-upstream-trigger:
     name: "Detect CI Trigger: [test-upstream]"
@@ -24,10 +26,11 @@ jobs:
     outputs:
       triggered: ${{ steps.detect-trigger.outputs.trigger-found }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           fetch-depth: 2
-      - uses: xarray-contrib/ci-trigger@v1.2
+          persist-credentials: false
+      - uses: xarray-contrib/ci-trigger@10cd2bfec3484946a4058a421ddf9cfad101e715 # v1.2.1
         id: detect-trigger
         with:
           keyword: "[test-upstream]"
@@ -57,13 +60,14 @@ jobs:
 
     steps:
       - name: checkout the repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           # need to fetch all tags to get a correct version
           fetch-depth: 0 # fetch all branches and tags
+          persist-credentials: false
 
       - name: setup environment
-        uses: prefix-dev/setup-pixi@5185adfbffb4bd703da3010310260805d89ebb11 # 0.9.6
+        uses: prefix-dev/setup-pixi@5185adfbffb4bd703da3010310260805d89ebb11 # v0.9.6
         with:
           environments: "nightly"
           locked: false
@@ -80,11 +84,33 @@ jobs:
         run: |
           pixi run -e nightly tests -rf --report-log=pytest-log.jsonl
 
+      - name: upload the log file
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: log file
+          path: pytest-log.jsonl
+
+  create-issue:
+    name: Report failures
+    runs-on: ubuntu-latest
+    needs: upstream-dev
+
+    if: |
+      always()
+      && needs.upstream-dev.result == 'failure'
+      && github.repository == 'xarray-contrib/pint-xarray'
+      && github.event_name == 'schedule'
+
+    permissions:
+      issues: write # open issues if the tests failed
+
+    steps:
+      - name: download log file
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: log file
+
       - name: report failures
-        if: |
-          failure()
-          && steps.status.outcome == 'failure'
-          && github.event_name == 'schedule'
-        uses: scientific-python/issue-from-pytest-log@v1
+        uses: scientific-python/issue-from-pytest-log@8e905db353437cda1d6a773de245343fbfc940dd # v1.5.0
         with:
           log-path: pytest-log.jsonl
