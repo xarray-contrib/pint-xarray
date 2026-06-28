@@ -22,7 +22,7 @@ jobs:
     outputs:
       triggered: ${{ steps.detect-trigger.outputs.trigger-found }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           fetch-depth: 2
           persist-credentials: false
@@ -68,18 +68,20 @@ jobs:
       run:
         shell: bash -l {0}
 
-    env:
-      FORCE_COLOR: 3
-
     strategy:
       fail-fast: false
       matrix:
         env: ["ci-py311", "ci-py313", "ci-py314"]
         os: ["ubuntu-latest", "macos-latest", "windows-latest"]
 
+    env:
+      FORCE_COLOR: 3
+      ENV: ${{ matrix.env }}
+      RUNNER_OS: ${{ matrix.os }}
+
     steps:
       - name: checkout the repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           # need to fetch all tags to get a correct version
           fetch-depth: 0 # fetch all branches and tags
@@ -90,7 +92,7 @@ jobs:
           cache-key: ${{ needs.cache-pixi-lock.outputs.cache-key }}
 
       - name: setup environment
-        uses: prefix-dev/setup-pixi@5185adfbffb4bd703da3010310260805d89ebb11 # 0.9.6
+        uses: prefix-dev/setup-pixi@5185adfbffb4bd703da3010310260805d89ebb11 # v0.9.6
         with:
           pixi-version: "${{ needs.cache-pixi-lock.outputs.pixi-version }}"
           frozen: true
@@ -99,23 +101,22 @@ jobs:
 
       - name: investigate env variables
         run: |
-          echo PYTHON_VERSION=$(pixi run -e ${{ matrix.env }} python -c 'import sys; print(".".join(map(str, sys.version_info[:2])))') >> $GITHUB_ENV
-          echo RUNNER_OS="${{ matrix.os }}"
+          echo PYTHON_VERSION=$(pixi run -e $ENV python -c 'import sys; print(".".join(map(str, sys.version_info[:2])))') >> $GITHUB_ENV
 
       - name: import pint-xarray
         run: |
-          pixi run -e ${{ matrix.env }} python -c 'import pint_xarray'
+          pixi run -e $ENV python -c 'import pint_xarray'
 
       - name: run tests
         if: success()
         id: status
         run: |
-          pixi run -e ${{ matrix.env }} tests --cov-report=xml
+          pixi run -e $ENV tests --cov-report=xml
 
       - name: Upload code coverage to Codecov
-        uses: codecov/codecov-action@v7.0.0
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
         with:
-          token: "${{ secrets.CODECOV_TOKEN }}"
+          token: "${{ secrets.CODECOV_TOKEN }}" # zizmor: ignore[secrets-outside-env] codecov token
           files: ./coverage.xml
           flags: unittests
           env_vars: RUNNER_OS,PYTHON_VERSION
