@@ -9,7 +9,7 @@ repos:
       - id: end-of-file-fixer
       - id: check-docstring-first
   - repo: https://github.com/rbubley/mirrors-prettier
-    rev: v3.8.4
+    rev: v3.9.1
     hooks:
       - id: prettier
         args: ["--cache-location=.prettier_cache/cache"]
@@ -29,7 +29,7 @@ repos:
     hooks:
       - id: black-jupyter
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
-    rev: v1.23.1
+    rev: v1.26.1
     hooks:
       - id: zizmor
   - repo: https://github.com/keewis/blackdoc
@@ -39,7 +39,7 @@ repos:
         additional_dependencies: ["black==26.5.1"]
       - id: blackdoc-autoupdate-black
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.18
+    rev: v0.15.20
     hooks:
       - id: ruff
         args: ["--fix"]
