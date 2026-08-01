@@ -26,7 +26,7 @@ jobs:
     outputs:
       triggered: ${{ steps.detect-trigger.outputs.trigger-found }}
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 2
           persist-credentials: false
@@ -60,14 +60,14 @@ jobs:
 
     steps:
       - name: checkout the repository
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           # need to fetch all tags to get a correct version
           fetch-depth: 0 # fetch all branches and tags
           persist-credentials: false
 
       - name: setup environment
-        uses: prefix-dev/setup-pixi@5185adfbffb4bd703da3010310260805d89ebb11 # v0.9.6
+        uses: prefix-dev/setup-pixi@a09b6247153796b190642a2b53fac4241043cf6f # v0.10.0
         with:
           environments: "nightly"
           locked: false
@@ -111,6 +111,6 @@ jobs:
           name: log file
 
       - name: report failures
-        uses: scientific-python/issue-from-pytest-log@8e905db353437cda1d6a773de245343fbfc940dd # v1.5.0
+        uses: scientific-python/issue-from-pytest-log@054799b34bd75a5fd6c86277a4a8a575224e60c6 # v1.6.1
         with:
           log-path: pytest-log.jsonl
