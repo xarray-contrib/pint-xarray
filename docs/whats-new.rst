@@ -4,6 +4,7 @@ What's new
 ==========
 0.6.2 (*unreleased*)
 --------------------
+- Document preserving coordinate units when swapping dimensions (:issue:`361`).
 
 0.6.1 (23 Mar 2026)
 -------------------
