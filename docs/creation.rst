@@ -69,9 +69,9 @@ could do so using the :py:attr:`DataArray.name` attribute:
 
     In [7]: da.pint.quantify({da.name: "J", "lat": "degree", "lon": "degree"})
 
-However, `xarray`_ currently doesn't support `units in indexes`_, so the new units were set
-as attributes. To really observe the changes the ``quantify`` methods make, we
-have to first swap the dimensions:
+Quantifying dimension coordinates also creates unit-aware indexes. To keep these
+coordinates outside indexes instead, we can swap their dimensions before
+quantifying:
 
 .. ipython::
 
@@ -114,6 +114,39 @@ or overwrite the default registry:
    Without it, python scalars wrapped by :py:class:`pint.Quantity` may raise errors or
    have their units stripped.
 
+Swapping dimensions with units
+------------------------------
+When a quantified coordinate becomes a dimension coordinate,
+:py:meth:`DataArray.swap_dims` or :py:meth:`Dataset.swap_dims` may create a default
+``xarray`` index that strips its units. Dequantify before swapping dimensions, then
+quantify again to restore the units and create a unit-aware index:
+
+.. ipython:: python
+
+    measurements = xr.DataArray(
+        [280, 282, 285],
+        dims="time",
+        coords={
+            "time": ("time", [0, 1, 2], {"units": "s"}),
+            "height": ("time", [0, 100, 200], {"units": "m"}),
+        },
+        attrs={"units": "K"},
+    ).pint.quantify()
+
+    swapped = (
+        measurements.pint.dequantify()
+        .swap_dims({"time": "height"})
+        .pint.quantify(unit_registry=measurements.pint.registry)
+    )
+    swapped
+    swapped.height.pint.units
+
+The data retain their kelvin units, and both coordinates retain their units:
+``height`` in meters and ``time`` in seconds. Passing the original registry also
+preserves custom unit definitions when quantifying again. The same
+dequantify--swap--quantify sequence works for a :py:class:`Dataset`; pass its
+original unit registry explicitly if it uses custom units.
+
 Saving with units
 -----------------
 In order to not lose the units when saving to disk, we first have to call the
@@ -132,4 +165,3 @@ whatever `pint`_ wrapped.
 
 .. _pint: https://pint.readthedocs.io/en/stable/
 .. _xarray: https://docs.xarray.dev/en/stable/
-.. _units in indexes: https://github.com/pydata/xarray/issues/1603
